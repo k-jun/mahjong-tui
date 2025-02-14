@@ -11,6 +11,3 @@ deno run -A src/main.ts
 ```bash
 deno test -A
 ```
-
-## TODO
-https://socket.io/docs/v4/adapter/ を理解する。
