@@ -20,4 +20,8 @@ export class Room {
     leave(id: string) {
         this.users = this.users.filter((user) => user.id !== id);
     }
+
+    size() {
+        return this.users.length;
+    }
 }

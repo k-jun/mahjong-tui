@@ -39,4 +39,11 @@ Deno.test("Room", async (t) => {
     expect(room.users.length).toBe(1);
     expect(room.users[0].id).toBe("user2");
   });
+
+  await t.step("size returns the number of users in the room", () => {
+    const room = new Room();
+    room.join("user1");
+    room.join("user2");
+    expect(room.size()).toBe(2);
+  });
 });

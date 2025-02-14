@@ -67,10 +67,9 @@ export const OnServerLeaveRoom = (
     if (name != id && name in rooms) {
       const room = rooms[name];
       room.leave(id);
-      if (room.users.length == 0) {
+      if (room.size() == 0) {
         delete rooms[name];
       }
     }
   });
 };
-
