@@ -51,7 +51,7 @@ export const OnServerJoinRoom = (
     if (name != id) {
       let room = rooms[name.toString()];
       if (room == undefined) {
-        room = new Room(name.toString());
+        room = new Room();
         rooms[name.toString()] = room;
       }
       room.join(id);

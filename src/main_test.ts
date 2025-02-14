@@ -1,11 +1,7 @@
 import { expect } from "jsr:@std/expect";
 import { io as ioc, type Socket as ClientSocket } from "npm:socket.io-client";
 import { Room } from "../models/room.ts";
-import {
-    OnAll,
-    OnServerJoinRoom,
-    OnServerLeaveRoom,
-} from "./main.ts";
+import { OnAll, OnServerJoinRoom, OnServerLeaveRoom } from "./main.ts";
 import {
     Server,
     Socket as ServerSocket,
@@ -43,7 +39,7 @@ describe("Socket.IO Server", () => {
     });
 
     it("join-room && leave-room", async () => {
-        rooms["test-room"] = new Room("test-room");
+        rooms["test-room"] = new Room();
         clientSocket.emit("join");
         await delay(1000);
         expect(rooms["test-room"].users[0].id).toEqual(serverSocket.id);

@@ -3,11 +3,9 @@ import { User } from "./user.ts";
 const defaultRoomSize = 4;
 
 export class Room {
-    name: string;
     users: User[];
 
-    constructor(name: string) {
-        this.name = name;
+    constructor() {
         this.users = [];
     }
 
