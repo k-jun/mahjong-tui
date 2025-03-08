@@ -1,7 +1,7 @@
 import {
-    OnServerConnection,
-    OnServerJoinRoom,
-    OnServerLeaveRoom,
+  OnServerConnection,
+  OnServerJoinRoom,
+  OnServerLeaveRoom,
 } from "./server.ts";
 
 import { Server } from "https://deno.land/x/socket_io@0.2.1/mod.ts";
@@ -17,6 +17,6 @@ OnServerJoinRoom(io, rooms);
 OnServerLeaveRoom(io, rooms);
 
 await Deno.serve({
-    handler: io.handler(),
-    port: port,
+  handler: io.handler(),
+  port: port,
 });
