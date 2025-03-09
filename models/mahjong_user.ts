@@ -110,16 +110,16 @@ export class MahjongUser extends User {
     return result;
   }
 
-  canPon(pai: MahjongPai, fromWho: Player): MahjongPaiSet[] {
+  canPon(paiCall: MahjongPai, fromWho: Player): MahjongPaiSet[] {
     const result = [];
 
-    const paiHits = this.paiHand.filter((e) => e.fmt == pai.fmt);
+    const paiHits = this.paiHand.filter((e) => e.fmt == paiCall.fmt);
     // the red pai comes first, as the red pai has the smallest id.
     paiHits.sort((a, b) => a.id - b.id);
     if (paiHits.length >= 2) {
       result.push(
         new MahjongPaiSet({
-          paiCall: [pai],
+          paiCall: [paiCall],
           paiRest: paiHits.slice(0, 2),
           type: PaiSetType.MINKO,
           fromWho,
@@ -130,7 +130,7 @@ export class MahjongUser extends User {
     if (paiHits.length >= 3 && paiHits.some((e) => e.isAka())) {
       result.push(
         new MahjongPaiSet({
-          paiCall: [pai],
+          paiCall: [paiCall],
           paiRest: paiHits.slice(1, 3),
           type: PaiSetType.MINKO,
           fromWho,
@@ -141,15 +141,15 @@ export class MahjongUser extends User {
     return result;
   }
 
-  canMinkan(pai: MahjongPai, fromWho: Player): MahjongPaiSet[] {
+  canMinkan(paiCall: MahjongPai, fromWho: Player): MahjongPaiSet[] {
     const result = [];
-    const paiHits = this.paiHand.filter((e) => e.fmt == pai.fmt);
+    const paiHits = this.paiHand.filter((e) => e.fmt == paiCall.fmt);
 
     if (paiHits.length >= 3) {
       result.push(
         new MahjongPaiSet({
           paiRest: paiHits,
-          paiCall: [pai],
+          paiCall: [paiCall],
           type: PaiSetType.MINKAN,
           fromWho,
         }),
@@ -233,14 +233,14 @@ export class MahjongUser extends User {
     return result;
   }
 
-  canRon(params: params, paiRon: MahjongPai) {
+  canRon(params: params, paiCall: MahjongPai) {
     params.options.isTsumo = false;
     params.options.isRichi = this.isRichi;
 
     const x = new Tokuten({
       ...params,
       paiRest: this.paiHand,
-      paiLast: paiRon,
+      paiLast: paiCall,
       paiSets: this.paiCall,
     }).count();
     return x.han != 0;
