@@ -1,6 +1,4 @@
 import { Pai, PaiSet, PaiSetType, Player } from "@k-jun/mahjong";
-import { Mahjong } from "./mahjong.ts";
-import { parseXPendingConsumers } from "https://deno.land/x/socket_io@0.2.1/vendor/deno.land/x/redis@v0.27.1/stream.ts";
 
 export class MahjongPai extends Pai {
   isOpen: boolean;
