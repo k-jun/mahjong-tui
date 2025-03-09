@@ -1,8 +1,8 @@
 import { MahjongUser } from "./mahjong_user.ts";
-import { MahjongPai } from "./mahjong_pai.ts";
+import { MahjongPai, MahjongPaiSet } from "./mahjong_pai.ts";
 import { expect } from "jsr:@std/expect";
 
-import { Player } from "@k-jun/mahjong";
+import { PaiSetType, Player } from "@k-jun/mahjong";
 
 Deno.test("MahjongUser", async (t) => {
   await t.step("should initialize with empty arrays", () => {
@@ -154,5 +154,426 @@ Deno.test("MahjongUser", async (t) => {
     const results = user.canPon(ponPai, Player.KAMICHA);
 
     expect(results.length).toBe(0);
+  });
+
+  await t.step("should handle basic minkan", () => {
+    const user = new MahjongUser("test-user");
+    user.setHandPais([
+      new MahjongPai("p3"),
+      new MahjongPai("p3"),
+      new MahjongPai("p3"),
+    ]);
+
+    const kanPai = new MahjongPai("p3");
+    const results = user.canMinkan(kanPai, Player.TOIMEN);
+
+    expect(results.length).toBe(1);
+    expect(results[0].paiRest.map((p) => p.fmt)).toEqual(["p3", "p3", "p3"]);
+    expect(results[0].paiCall.map((p) => p.fmt)).toEqual(["p3"]);
+    expect(results[0].type).toBe(PaiSetType.MINKAN);
+    expect(results[0].fromWho).toBe(Player.TOIMEN);
+  });
+
+  await t.step("should handle minkan with red five", () => {
+    const user = new MahjongUser("test-user");
+    user.setHandPais([
+      new MahjongPai(52), // Red 5 pin
+      new MahjongPai(53), // Normal 5 pin
+      new MahjongPai(54), // Normal 5 pin
+    ]);
+
+    const kanPai = new MahjongPai("p5");
+    const results = user.canMinkan(kanPai, Player.SHIMOCHA);
+
+    expect(results.length).toBe(1);
+    expect(results[0].paiRest.map((p) => p.id)).toEqual([52, 53, 54]);
+    expect(results[0].paiCall.map((p) => p.fmt)).toEqual(["p5"]);
+    expect(results[0].type).toBe(PaiSetType.MINKAN);
+    expect(results[0].fromWho).toBe(Player.SHIMOCHA);
+  });
+
+  await t.step("should return empty array when minkan is not possible", () => {
+    const user = new MahjongUser("test-user");
+    user.setHandPais([
+      new MahjongPai("p3"),
+      new MahjongPai("p3"),
+      new MahjongPai("p4"),
+    ]);
+
+    const kanPai = new MahjongPai("p3");
+    const results = user.canMinkan(kanPai, Player.KAMICHA);
+
+    expect(results.length).toBe(0);
+  });
+
+  await t.step("should handle basic ankan", () => {
+    const user = new MahjongUser("test-user");
+    user.setHandPais([
+      new MahjongPai("p3"),
+      new MahjongPai("p3"),
+      new MahjongPai("p3"),
+      new MahjongPai("p3"),
+    ]);
+
+    const results = user.canAnkan();
+
+    expect(results.length).toBe(1);
+    expect(results[0].paiRest.map((p) => p.fmt)).toEqual([
+      "p3",
+      "p3",
+      "p3",
+      "p3",
+    ]);
+    expect(results[0].type).toBe(PaiSetType.ANKAN);
+  });
+
+  await t.step("should handle ankan with tsumo pai", () => {
+    const user = new MahjongUser("test-user");
+    user.setHandPais([
+      new MahjongPai("p3"),
+      new MahjongPai("p3"),
+      new MahjongPai("p3"),
+    ]);
+    user.setPaiTsumo(new MahjongPai("p3"));
+
+    const results = user.canAnkan();
+
+    expect(results.length).toBe(1);
+    expect(results[0].paiRest.map((p) => p.fmt)).toEqual([
+      "p3",
+      "p3",
+      "p3",
+      "p3",
+    ]);
+    expect(results[0].type).toBe(PaiSetType.ANKAN);
+    expect(results[0].fromWho).toBe(Player.JICHA);
+  });
+
+  await t.step("should handle ankan with red five", () => {
+    const user = new MahjongUser("test-user");
+    user.setHandPais([
+      new MahjongPai(52), // Red 5 pin
+      new MahjongPai(53), // Normal 5 pin
+      new MahjongPai(54), // Normal 5 pin
+      new MahjongPai(55), // Normal 5 pin
+    ]);
+
+    const results = user.canAnkan();
+
+    expect(results.length).toBe(1);
+    expect(results[0].paiRest.map((p) => p.id)).toEqual([52, 53, 54, 55]);
+    expect(results[0].type).toBe(PaiSetType.ANKAN);
+    expect(results[0].fromWho).toBe(Player.JICHA);
+  });
+
+  await t.step("should return empty array when ankan is not possible", () => {
+    const user = new MahjongUser("test-user");
+    user.setHandPais([
+      new MahjongPai("p3"),
+      new MahjongPai("p3"),
+      new MahjongPai("p3"),
+    ]);
+    user.setPaiTsumo(new MahjongPai("p4"));
+
+    const results = user.canAnkan();
+
+    expect(results.length).toBe(0);
+  });
+
+  await t.step("should handle kakan with tsumo pai", () => {
+    const user = new MahjongUser("test-user");
+    user.paiCall.push(
+      new MahjongPaiSet({
+        paiCall: [new MahjongPai(0)],
+        paiRest: [new MahjongPai(1), new MahjongPai(2)],
+        type: PaiSetType.MINKO,
+        fromWho: Player.TOIMEN,
+      }),
+    );
+    user.setPaiTsumo(new MahjongPai(3));
+
+    const results = user.canKakan();
+
+    expect(results.length).toBe(1);
+    expect(results[0].paiCall.map((p) => p.id)).toEqual([0, 3]);
+    expect(results[0].paiRest.map((p) => p.id)).toEqual([1, 2]);
+    expect(results[0].type).toBe(PaiSetType.KAKAN);
+  });
+
+  await t.step("should return empty array when kakan is not possible", () => {
+    const user = new MahjongUser("test-user");
+    user.paiCall.push(
+      new MahjongPaiSet({
+        paiCall: [new MahjongPai("p3")],
+        paiRest: [new MahjongPai("p3"), new MahjongPai("p3")],
+        type: PaiSetType.MINKO,
+        fromWho: Player.TOIMEN,
+      }),
+    );
+    user.setPaiTsumo(new MahjongPai("p4")); // Different pai
+
+    const results = user.canKakan();
+    expect(results.length).toBe(0);
+  });
+
+  await t.step("should return empty array when no tsumo pai", () => {
+    const user = new MahjongUser("test-user");
+    user.paiCall.push(
+      new MahjongPaiSet({
+        paiCall: [new MahjongPai("p3")],
+        paiRest: [new MahjongPai("p3"), new MahjongPai("p3")],
+        type: PaiSetType.MINKO,
+        fromWho: Player.TOIMEN,
+      }),
+    );
+
+    const results = user.canKakan();
+    expect(results.length).toBe(0);
+  });
+
+  await t.step("should return true when hand can form tenpai", () => {
+    const user = new MahjongUser("test-user");
+    user.setHandPais([
+      // 1-2-3 pin sequence
+      new MahjongPai("p1"),
+      new MahjongPai("p2"),
+      new MahjongPai("p3"),
+      // 1-2-3 pin sequence
+      new MahjongPai("p1"),
+      new MahjongPai("p2"),
+      new MahjongPai("p3"),
+      // 5-5-5 pin triplet
+      new MahjongPai("p5"),
+      new MahjongPai("p5"),
+      new MahjongPai("p5"),
+      // 7-8-9 pin sequence
+      new MahjongPai("p7"),
+      new MahjongPai("p8"),
+      new MahjongPai("p9"),
+      // others
+      new MahjongPai("z1"),
+    ]);
+    user.setPaiTsumo(new MahjongPai("s1"));
+
+    expect(user.canRichi()).toEqual([
+      new MahjongPai("z1"),
+      new MahjongPai("s1"),
+    ]);
+  });
+
+  await t.step(
+    "should detect kokushi musou (thirteen orphans) as tenpai",
+    () => {
+      const user = new MahjongUser("test-user");
+      user.setHandPais([
+        // Terminals
+        new MahjongPai("p1"),
+        new MahjongPai("p9"),
+        new MahjongPai("s1"),
+        new MahjongPai("s9"),
+        new MahjongPai("m1"),
+        new MahjongPai("m9"),
+        // Honor tiles
+        new MahjongPai("z1"), // East
+        new MahjongPai("z2"), // South
+        new MahjongPai("z3"), // West
+        new MahjongPai("z4"), // North
+        new MahjongPai("z5"), // White
+        new MahjongPai("z6"), // Green
+        new MahjongPai("z7"), // Red
+      ]);
+      user.setPaiTsumo(new MahjongPai("s5"));
+
+      expect(user.canRichi()).toEqual([new MahjongPai("s5")]);
+    },
+  );
+
+  await t.step("should not detect incomplete kokushi musou as tenpai", () => {
+    const user = new MahjongUser("test-user");
+    user.setHandPais([
+      // Missing some terminals/honors
+      new MahjongPai("p1"),
+      new MahjongPai("p9"),
+      new MahjongPai("s1"),
+      new MahjongPai("s9"),
+      new MahjongPai("m1"),
+      new MahjongPai("m9"),
+      new MahjongPai("z1"),
+      new MahjongPai("z2"),
+      new MahjongPai("z3"),
+      new MahjongPai("z4"),
+      new MahjongPai("z5"),
+      new MahjongPai("z6"),
+      new MahjongPai("p2"), // Non-terminal tile
+    ]);
+    user.setPaiTsumo(new MahjongPai("p3")); // Non-terminal tile
+
+    expect(user.canRichi()).toEqual([]);
+  });
+
+  await t.step("should detect basic ron opportunity", () => {
+    const user = new MahjongUser("test-user");
+    user.setHandPais([
+      new MahjongPai("p2"),
+      new MahjongPai("p3"),
+      new MahjongPai("p4"),
+      new MahjongPai("s2"),
+      new MahjongPai("s2"),
+      new MahjongPai("s2"),
+      new MahjongPai("m3"),
+      new MahjongPai("m4"),
+      new MahjongPai("m5"),
+      new MahjongPai("z1"),
+      new MahjongPai("z1"),
+      new MahjongPai("z1"),
+      new MahjongPai("z2"),
+    ]);
+
+    const ronPai = new MahjongPai("z2"); // Completes the p2-p3-p4 sequence
+    const params = {
+      paiBakaze: new MahjongPai("z1"),
+      paiJikaze: new MahjongPai("z1"),
+      paiDora: [],
+      paiDoraUra: [],
+      options: {
+        isTsumo: false,
+        isRichi: false,
+        isOya: false,
+      },
+    };
+
+    expect(user.canRon(params, ronPai)).toBe(true);
+  });
+
+  await t.step("should not detect ron when hand is not winning", () => {
+    const user = new MahjongUser("test-user");
+    user.setHandPais([
+      new MahjongPai("p1"),
+      new MahjongPai("p2"),
+      new MahjongPai("p3"),
+      new MahjongPai("s1"),
+      new MahjongPai("s2"),
+      new MahjongPai("s3"),
+      new MahjongPai("m1"),
+      new MahjongPai("m2"),
+      new MahjongPai("m3"),
+      new MahjongPai("z1"),
+      new MahjongPai("z2"),
+      new MahjongPai("z3"),
+    ]);
+
+    const ronPai = new MahjongPai("p7"); // Random tile that doesn't complete anything
+    const params = {
+      paiBakaze: new MahjongPai("z1"),
+      paiJikaze: new MahjongPai("z1"),
+      paiDora: [],
+      paiDoraUra: [],
+      options: {
+        isTsumo: false,
+        isRichi: false,
+        isOya: false,
+      },
+    };
+
+    expect(user.canRon(params, ronPai)).toBe(false);
+  });
+
+  await t.step("should detect agari when hand is winning with tsumo", () => {
+    const user = new MahjongUser("test-user");
+    user.setHandPais([
+      new MahjongPai("p1"),
+      new MahjongPai("p1"), 
+      new MahjongPai("p1"),
+      new MahjongPai("s2"),
+      new MahjongPai("s2"),
+      new MahjongPai("s2"),
+      new MahjongPai("m3"),
+      new MahjongPai("m3"),
+      new MahjongPai("m3"),
+      new MahjongPai("z1"),
+      new MahjongPai("z1"),
+      new MahjongPai("z1"),
+      new MahjongPai("z3"),
+    ]);
+    user.setPaiTsumo(new MahjongPai("z3")); // Completes the z1 quad
+
+    const params = {
+      paiBakaze: new MahjongPai("z1"),
+      paiJikaze: new MahjongPai("z1"),
+      paiDora: [],
+      paiDoraUra: [],
+      options: {
+        isTsumo: true,
+        isRichi: false,
+        isOya: false,
+      },
+    };
+
+    expect(user.canAgari(params)).toBe(true);
+  });
+
+  await t.step("should not detect agari when hand is not winning", () => {
+    const user = new MahjongUser("test-user");
+    user.setHandPais([
+      new MahjongPai("p1"),
+      new MahjongPai("p2"),
+      new MahjongPai("p3"),
+      new MahjongPai("s1"),
+      new MahjongPai("s2"),
+      new MahjongPai("s3"),
+      new MahjongPai("m1"),
+      new MahjongPai("m2"),
+      new MahjongPai("m3"),
+      new MahjongPai("z1"),
+      new MahjongPai("z2"),
+      new MahjongPai("z3"),
+      new MahjongPai("p8"),
+    ]);
+    user.setPaiTsumo(new MahjongPai("p7")); // Random tile that doesn't complete anything
+
+    const params = {
+      paiBakaze: new MahjongPai("z1"),
+      paiJikaze: new MahjongPai("z1"),
+      paiDora: [],
+      paiDoraUra: [],
+      options: {
+        isTsumo: true,
+        isRichi: false,
+        isOya: false,
+      },
+    };
+
+    expect(user.canAgari(params)).toBe(false);
+  });
+
+  await t.step("should return false when no tsumo pai", () => {
+    const user = new MahjongUser("test-user");
+    user.setHandPais([
+      new MahjongPai("p1"),
+      new MahjongPai("p1"),
+      new MahjongPai("p1"),
+      new MahjongPai("s2"),
+      new MahjongPai("s2"),
+      new MahjongPai("s2"),
+      new MahjongPai("m3"),
+      new MahjongPai("m3"),
+      new MahjongPai("m3"),
+      new MahjongPai("z1"),
+      new MahjongPai("z1"),
+      new MahjongPai("z1"),
+    ]);
+
+    const params = {
+      paiBakaze: new MahjongPai("z1"),
+      paiJikaze: new MahjongPai("z1"), 
+      paiDora: [],
+      paiDoraUra: [],
+      options: {
+        isTsumo: true,
+        isRichi: false,
+        isOya: false,
+      },
+    };
+    expect(user.canAgari(params)).toBe(false);
   });
 });

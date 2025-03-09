@@ -1,7 +1,7 @@
 import { MahjongPai, MahjongPaiSet } from "./mahjong_pai.ts";
 import { User } from "./user.ts";
 
-import { PaiSetType, Player, Tokuten } from "@k-jun/mahjong";
+import { PaiSetType, Player, Shanten, Tokuten } from "@k-jun/mahjong";
 
 type params = {
   paiBakaze: MahjongPai;
@@ -112,7 +112,7 @@ export class MahjongUser extends User {
 
   canPon(pai: MahjongPai, fromWho: Player): MahjongPaiSet[] {
     const result = [];
-    
+
     const paiHits = this.paiHand.filter((e) => e.fmt == pai.fmt);
     // the red pai comes first, as the red pai has the smallest id.
     paiHits.sort((a, b) => a.id - b.id);
@@ -204,6 +204,31 @@ export class MahjongUser extends User {
           type: PaiSetType.KAKAN,
         }),
       );
+    }
+    return result;
+  }
+
+  canRichi(): MahjongPai[] {
+    if (!this.paiTsumo) {
+      return [];
+    }
+    if (this.paiCall.length > 0) {
+      return [];
+    }
+
+    const result = [];
+    const paiAll = [...this.paiHand, ...(this.paiTsumo ? [this.paiTsumo] : [])];
+    for (const [idx, pai] of paiAll.entries()) {
+      const paiRest = [...paiAll];
+      paiRest.splice(idx, 1);
+      const x = new Shanten({
+        paiRest: paiRest,
+        paiSets: [],
+      }).count();
+      if (x != 0) {
+        continue;
+      }
+      result.push(pai);
     }
     return result;
   }
