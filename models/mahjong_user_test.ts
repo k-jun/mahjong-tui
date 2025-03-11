@@ -330,4 +330,33 @@ Deno.test("MahjongUser", async (t) => {
     const results = user.canKakan();
     expect(results.length).toBe(0);
   });
+
+  await t.step("should throw error when dahai without tsumo pai", () => {
+    const user = new MahjongUser({ id: "test-user", paiJikaze: new MahjongPai("z1"), isOya: false });
+    expect(() => user.dahai({ pai: new MahjongPai("p1") })).toThrow("when dahai called, paiTsumo is undefined");
+  });
+
+  await t.step("should discard tsumo pai when matching", () => {
+    const user = new MahjongUser({ id: "test-user", paiJikaze: new MahjongPai("z1"), isOya: false });
+    const tsumoPai = new MahjongPai("p1");
+    user.setPaiTsumo(tsumoPai);
+
+    const result = user.dahai({ pai: tsumoPai });
+
+    expect(result).toEqual(tsumoPai);
+    expect(user.paiTsumo).toBeUndefined();
+  });
+
+  await t.step("should discard hand pai when not matching tsumo pai", () => {
+    const user = new MahjongUser({ id: "test-user", paiJikaze: new MahjongPai("z1"), isOya: false });
+    const handPai = new MahjongPai("p1");
+    const tsumoPai = new MahjongPai("p2");
+    user.setHandPais([handPai]);
+    user.setPaiTsumo(tsumoPai);
+
+    const result = user.dahai({ pai: handPai });
+    expect(result).toEqual(handPai);
+    expect(user.paiTsumo).toBeUndefined();
+    expect(user.paiHand).toEqual([tsumoPai]);
+  });
 });

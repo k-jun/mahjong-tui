@@ -1,27 +1,7 @@
 import { MahjongPai, MahjongPaiSet } from "./mahjong_pai.ts";
 import { User } from "./user.ts";
 
-import { PaiSetType, Player, Shanten, Tokuten } from "@k-jun/mahjong";
-
-type params = {
-  paiBakaze: MahjongPai;
-  paiJikaze: MahjongPai;
-  paiDora: MahjongPai[];
-  paiDoraUra: MahjongPai[];
-  options: {
-    isTsumo: boolean;
-    isOya: boolean;
-    isRichi?: boolean;
-    isDabururichi?: boolean;
-    isIppatsu?: boolean;
-    isHaitei?: boolean;
-    isHoutei?: boolean;
-    isChankan?: boolean;
-    isRinshankaiho?: boolean;
-    isChiho?: boolean;
-    isTenho?: boolean;
-  };
-};
+import { PaiSetType, Player, Shanten } from "@k-jun/mahjong";
 
 export class MahjongUser extends User {
   paiHand: MahjongPai[];
@@ -29,8 +9,10 @@ export class MahjongUser extends User {
   paiKawa: MahjongPai[];
   paiJikaze: MahjongPai;
 
-  isRichi: boolean;
   isOya: boolean;
+  isRichi: boolean = false;
+  isDabururichi: boolean = false;
+  isIppatsu: boolean = false;
 
   paiTsumo?: MahjongPai;
   constructor(
@@ -44,7 +26,6 @@ export class MahjongUser extends User {
     this.paiHand = [];
     this.paiCall = [];
     this.paiKawa = [];
-    this.isRichi = false;
     this.paiJikaze = paiJikaze;
     this.isOya = isOya;
   }
@@ -242,6 +223,22 @@ export class MahjongUser extends User {
       result.push(pai);
     }
     return result;
+  }
+
+  dahai({ pai }: { pai: MahjongPai }): MahjongPai {
+    if (this.paiTsumo === undefined) {
+      throw new Error("when dahai called, paiTsumo is undefined");
+    }
+    if (this.paiTsumo.id === pai.id) {
+      this.paiTsumo = undefined;
+      return pai;
+    }
+
+    const handIdx = this.paiHand.findIndex((e) => e.id === pai.id);
+    this.paiHand.splice(handIdx, 1);
+    this.paiHand.push(this.paiTsumo);
+    this.paiTsumo = undefined;
+    return pai;
   }
 
   // canRon(params: params, paiCall: MahjongPai) {

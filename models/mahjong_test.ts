@@ -1,7 +1,7 @@
 import { Mahjong } from "./mahjong.ts";
 import { expect } from "jsr:@std/expect";
 
-Deno.test("mahjong", () => {
+Deno.test("mahjong start", () => {
   let called = false;
   const mockOutput = (_: Mahjong) => {
     called = true;
@@ -31,3 +31,20 @@ Deno.test("mahjong", () => {
     expect(shuffledIds).toContain(id);
   }
 });
+
+// Deno.test("mahjong agari", () => {
+//   let called = false;
+//   const mockOutput = (_: Mahjong) => {
+//     called = true;
+//   };
+//   const userIds = ["user1", "user2", "user3", "user4"];
+//   const game = new Mahjong(userIds, mockOutput);
+//   game.start();
+
+//   // Test agari for first player
+//   const user = game.users[0];
+//   user.isRichi = true; // Set richi state to test option
+//   game.agari({ user });
+
+//   console.log(user.paiHand.sort((a, b) => a.id - b.id))
+// });

@@ -20,6 +20,26 @@ export type MahjongAction = {
   enable: boolean;
 };
 
+type Params = {
+  paiBakaze: MahjongPai;
+  paiJikaze: MahjongPai;
+  paiDora: MahjongPai[];
+  paiDoraUra: MahjongPai[];
+  options: {
+    isTsumo: boolean;
+    isOya: boolean;
+    isRichi: boolean;
+    isDabururichi: boolean;
+    isIppatsu: boolean;
+    isHaitei: boolean;
+    isHoutei: boolean;
+    isChankan: boolean;
+    isRinshankaiho: boolean;
+    isChiho: boolean;
+    isTenho: boolean;
+  };
+};
+
 export class Mahjong {
   yama: MahjongPai[];
   paiWanpai: MahjongPai[];
@@ -27,8 +47,7 @@ export class Mahjong {
   paiDora: MahjongPai[];
   paiDoraUra: MahjongPai[];
   users: MahjongUser[];
-  turnCount: number;
-  turnUser: number;
+  turnUserIdx: number;
   actions: MahjongAction[];
 
   kazes = [
@@ -53,8 +72,6 @@ export class Mahjong {
     this.paiDoraUra = [];
     this.paiBakaze = this.kazes[0];
     this.output = output;
-    this.turnCount = 0;
-    this.turnUser = 0;
 
     const users: MahjongUser[] = [];
     userIds.forEach((id, idx) => {
@@ -63,6 +80,7 @@ export class Mahjong {
     });
     this.users = users;
     this.actions = [];
+    this.turnUserIdx = 0;
   }
 
   shuffle<T>(pais: T[]) {
@@ -70,6 +88,18 @@ export class Mahjong {
       const j = Math.floor(Math.random() * (i + 1));
       [pais[i], pais[j]] = [pais[j], pais[i]];
     }
+  }
+
+  turnNext({ user }: { user: MahjongUser }) {
+    const currentIdx = this.users.findIndex((u) => u.id === user.id);
+    this.turnUserIdx = (currentIdx + 1) % 4;
+
+    this.input(MahjongCommand.TSUMO, { userId: this.turnUser().id });
+    return;
+  }
+
+  turnUser() {
+    return this.users[this.turnUserIdx];
   }
 
   start() {
@@ -89,10 +119,12 @@ export class Mahjong {
     this.yama.push(...paiAll);
 
     this.output(this);
-    this.input(MahjongCommand.TSUMO, { userId: this.users[this.turnUser].id });
+    this.input(MahjongCommand.TSUMO, {
+      userId: this.users[this.turnUserIdx].id,
+    });
   }
 
-  whichPlayer(myIdx: number, yourIdx: number): Player {
+  getPlayer(myIdx: number, yourIdx: number): Player {
     return this.players[(yourIdx - myIdx + 4) % 4];
   }
 
@@ -101,42 +133,37 @@ export class Mahjong {
     this.output(this);
   }
 
-  agari({ user }: { user: MahjongUser }) {
-    // params.options.isTsumo = false;
-    // params.options.isRichi = this.isRichi;
+  dahai({ user, pai }: { user: MahjongUser; pai: MahjongPai }) {
+    user.dahai({ pai });
+    this.output(this);
 
-    // type params = {
-    //   paiBakaze: MahjongPai;
-    //   paiJikaze: MahjongPai;
-    //   paiDora: MahjongPai[];
-    //   paiDoraUra: MahjongPai[];
-    //   options: {
-    //     isTsumo: boolean;
-    //     isOya: boolean;
-    //     isHaitei?: boolean;
-    //     isHoutei?: boolean;
-    //     isChankan?: boolean;
-    //     isRinshankaiho?: boolean;
-    //     isChiho?: boolean;
-    //     isTenho?: boolean;
-    //   };
-    // };
-    //     isRichi?: boolean;
-    //     isDabururichi?: boolean;
-    //     isIppatsu?: boolean;
-    const params = {
-      paiBakaze: this.paiBakaze,
-      paiJikaze: user.paiJikaze,
-      paiDora: this.paiDora,
-      paiDoraUra: this.paiDoraUra,
-      options: {
-        isTsumo: false,
-        isRichi: user.isRichi,
-        isOya: user.isOya,
-      },
-    };
-    // user.canAgari(params);
+    // this.turnNext({ user });
+    // this.output(this);
   }
+
+  // tsumoAgari({ user }: { user: MahjongUser }) {
+  //   const params: Params = {
+  //     paiBakaze: this.paiBakaze,
+  //     paiJikaze: user.paiJikaze,
+  //     paiDora: this.paiDora,
+  //     paiDoraUra: this.paiDoraUra,
+  //     options: {
+  //       isTsumo: true,
+  //       isOya: user.isOya,
+  //       isRichi: user.isRichi,
+  //       isDabururichi: user.isDabururichi,
+  //       isIppatsu: user.isIppatsu,
+  //       isHaitei: false,
+  //       isHoutei: false,
+  //       isChankan: false,
+  //       isRinshankaiho: false,
+  //       isChiho: false,
+  //       isTenho: false,
+  //     },
+  //   };
+  //   console.log(params)
+  //   // user.canAgari(params);
+  // }
 
   // dahai({ userId, pai }: { userId: string; pai: MahjongPai }) {
   //   const userIdx = this.users.findIndex((e) => e.id == userId);
@@ -145,59 +172,25 @@ export class Mahjong {
 
   input(
     action: MahjongCommand,
-    { userId, pai, paiSet }: {
+    { userId, pai }: {
       userId: string;
       pai?: MahjongPai;
-      paiSet?: MahjongPaiSet;
     },
   ) {
-    const userIdx = this.users.findIndex((e) => e.id == userId);
-    const user = this.users[userIdx];
-
-    // const params = {
-    //   paiBakaze: new MahjongPai("z1"),
-    //   paiJikaze: new MahjongPai("z1"),
-    //   paiDora: [],
-    //   paiDoraUra: [],
-    //   options: {
-    //     isTsumo: false,
-    //     isRichi: false,
-    //     isOya: false,
-    //   },
-    // };
+    const user = this.users.find((e) => e.id == userId);
+    if (user === undefined) {
+      return;
+    }
 
     switch (action) {
       case MahjongCommand.TSUMO:
-        user?.setPaiTsumo(this.yama.splice(0, 1)[0]);
-        // const actionAnkan = user?.canAnkan();
-        // this.actions.push(actionAnkan);
+        this.tsumo({ user });
         break;
       case MahjongCommand.DAHAI:
-        for (let i = 1; i < 4; i++) {
-          // const otherUser = this.users[userIdx + 1];
-          // if (otherUser.canRon(params, pai!)) {
-          //   this.actions.push({
-          //     command: MahjongCommand.RON,
-          //     player: this.players[i],
-          //     enable: false,
-          //   });
-          // }
+        if (pai === undefined) {
+          return;
         }
-        for (let i = 1; i < 4; i++) {
-          const otherUser = this.users[userIdx + i % 4];
-          if (
-            otherUser.canMinkan(
-              pai!,
-              this.whichPlayer(userIdx, userIdx + i % 4),
-            )
-          ) {
-            this.actions.push({
-              command: MahjongCommand.RON,
-              player: this.players[i],
-              enable: false,
-            });
-          }
-        }
+        this.dahai({ user, pai });
         break;
       case MahjongCommand.RICHI:
       case MahjongCommand.AGARI:
@@ -206,7 +199,5 @@ export class Mahjong {
       case MahjongCommand.KAN:
       case MahjongCommand.RON:
     }
-
-    this.output(this);
   }
 }
