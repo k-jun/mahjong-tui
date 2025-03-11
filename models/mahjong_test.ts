@@ -17,8 +17,8 @@ Deno.test("mahjong", () => {
   expect(game.yama.length).toBe(69); // 136 total - (13*4 hands) - 14 wanpai = 70 - 1 tsumo = 69
 
   // Check wanpai (dead wall)
-  expect(game.wanPais.length).toBe(14);
-  expect(game.wanPais[5].isOpen).toBe(true); // Dora indicator should be open
+  expect(game.paiWanpai.length).toBe(14);
+  expect(game.paiWanpai[5].isOpen).toBe(true); // Dora indicator should be open
 
   // Check each player's hand
   for (const user of game.users) {

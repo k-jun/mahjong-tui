@@ -27,15 +27,26 @@ export class MahjongUser extends User {
   paiHand: MahjongPai[];
   paiCall: MahjongPaiSet[];
   paiKawa: MahjongPai[];
+  paiJikaze: MahjongPai;
+
   isRichi: boolean;
+  isOya: boolean;
 
   paiTsumo?: MahjongPai;
-  constructor(id: string = "") {
+  constructor(
+    { id, paiJikaze, isOya }: {
+      id: string;
+      paiJikaze: MahjongPai;
+      isOya: boolean;
+    },
+  ) {
     super(id);
     this.paiHand = [];
     this.paiCall = [];
     this.paiKawa = [];
     this.isRichi = false;
+    this.paiJikaze = paiJikaze;
+    this.isOya = isOya;
   }
 
   setHandPais(pais: MahjongPai[]) {
@@ -233,32 +244,29 @@ export class MahjongUser extends User {
     return result;
   }
 
-  canRon(params: params, paiCall: MahjongPai) {
-    params.options.isTsumo = false;
-    params.options.isRichi = this.isRichi;
+  // canRon(params: params, paiCall: MahjongPai) {
+  //   const x = new Tokuten({
+  //     ...params,
+  //     paiRest: this.paiHand,
+  //     paiLast: paiCall,
+  //     paiSets: this.paiCall,
+  //   }).count();
+  //   return x.han != 0;
+  // }
 
-    const x = new Tokuten({
-      ...params,
-      paiRest: this.paiHand,
-      paiLast: paiCall,
-      paiSets: this.paiCall,
-    }).count();
-    return x.han != 0;
-  }
-
-  canAgari(params: params) {
-    if (!this.paiTsumo) {
-      return false;
-    }
-    params.options.isTsumo = true;
-    params.options.isRichi = this.isRichi;
-
-    const x = new Tokuten({
-      ...params,
-      paiRest: this.paiHand,
-      paiLast: this.paiTsumo!,
-      paiSets: this.paiCall,
-    }).count();
-    return x.han != 0;
-  }
+  // canAgari(params: params) {
+  //   if (!this.paiTsumo) {
+  //     return false;
+  //   }
+  //   params.options.isTsumo = true;
+  //   params.options.isRichi = this.isRichi;
+  //
+  //   const x = new Tokuten({
+  //     ...params,
+  //     paiRest: this.paiHand,
+  //     paiLast: this.paiTsumo!,
+  //     paiSets: this.paiCall,
+  //   }).count();
+  //   return x.han != 0;
+  // }
 }
