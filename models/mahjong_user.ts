@@ -225,45 +225,23 @@ export class MahjongUser extends User {
     return result;
   }
 
-  dahai({ pai }: { pai: MahjongPai }): MahjongPai {
+  dahai({ pai }: { pai: MahjongPai }) {
     if (this.paiTsumo === undefined) {
       throw new Error("when dahai called, paiTsumo is undefined");
     }
+    if (this.isRichi && this.paiTsumo.id !== pai.id) {
+      throw new Error("when dahai called, paiTsumo and paiDahai are different");
+    }
+
     if (this.paiTsumo.id === pai.id) {
+      this.paiKawa.push(pai);
       this.paiTsumo = undefined;
-      return pai;
+      return;
     }
 
     const handIdx = this.paiHand.findIndex((e) => e.id === pai.id);
-    this.paiHand.splice(handIdx, 1);
+    this.paiKawa.push(this.paiHand.splice(handIdx, 1)[0]);
     this.paiHand.push(this.paiTsumo);
     this.paiTsumo = undefined;
-    return pai;
   }
-
-  // canRon(params: params, paiCall: MahjongPai) {
-  //   const x = new Tokuten({
-  //     ...params,
-  //     paiRest: this.paiHand,
-  //     paiLast: paiCall,
-  //     paiSets: this.paiCall,
-  //   }).count();
-  //   return x.han != 0;
-  // }
-
-  // canAgari(params: params) {
-  //   if (!this.paiTsumo) {
-  //     return false;
-  //   }
-  //   params.options.isTsumo = true;
-  //   params.options.isRichi = this.isRichi;
-  //
-  //   const x = new Tokuten({
-  //     ...params,
-  //     paiRest: this.paiHand,
-  //     paiLast: this.paiTsumo!,
-  //     paiSets: this.paiCall,
-  //   }).count();
-  //   return x.han != 0;
-  // }
 }

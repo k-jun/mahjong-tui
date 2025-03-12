@@ -150,9 +150,14 @@ export class Mahjong {
   }
 
   dahai({ user, pai }: { user: MahjongUser; pai: MahjongPai }) {
+    if (user.id !== this.turnUser().id) {
+      throw new Error("when dahai called, not your turn");
+    }
+    if (user.paiTsumo === undefined) {
+      throw new Error("when dahai called, paiTsumo is undefined");
+    }
     user.dahai({ pai });
     this.output(this);
-
     if (this.paiRemain() === 0) {
       return;
     }
@@ -162,10 +167,10 @@ export class Mahjong {
 
   ron({ user, pai }: { user: MahjongUser; pai: MahjongPai }) {
     if (user.id === this.turnUser().id) {
-      return;
+      throw new Error("when ron called, it's your turn");
     }
     if (user.paiTsumo !== undefined) {
-      return;
+      throw new Error("when ron called, paiTsumo is not undefined");
     }
 
     const params: Params = {
@@ -191,20 +196,17 @@ export class Mahjong {
       },
     };
 
-    const x = new Tokuten({
-      ...params,
-    }).count();
+    const x = new Tokuten({ ...params }).count();
     console.log(x);
   }
 
   tsumoAgari({ user }: { user: MahjongUser }) {
     if (user.id !== this.turnUser().id) {
-      return;
+      throw new Error("when tsumoAgari called, not your turn");
     }
     if (user.paiTsumo === undefined) {
-      return;
+      throw new Error("when tsumoAgari called, paiTsumo is undefined");
     }
-
     const allMenzen = this.users.every((u) => u.paiCall.length === 0);
     const params: Params = {
       paiRest: user.paiHand,
@@ -228,10 +230,23 @@ export class Mahjong {
         isTenho: this.paiRemain() === 69,
       },
     };
-    const x = new Tokuten({
-      ...params,
-    }).count();
+    const x = new Tokuten({ ...params }).count();
     console.log(x);
+  }
+
+  richi({ user, pai }: { user: MahjongUser; pai: MahjongPai }) {
+    if (user.id !== this.turnUser().id) {
+      throw new Error("when richi called, not your turn");
+    }
+    if (user.isRichi) {
+      throw new Error("when richi called, already richi");
+    }
+    if (user.paiTsumo === undefined) {
+      throw new Error("when richi called, paiTsumo is undefined");
+    }
+
+    user.isRichi = true;
+    user.dahai({ pai });
   }
 
   input(
@@ -243,7 +258,7 @@ export class Mahjong {
   ) {
     const user = this.users.find((e) => e.id == userId);
     if (user === undefined) {
-      return;
+      throw new Error("user not found");
     }
 
     switch (action) {
@@ -266,7 +281,11 @@ export class Mahjong {
         this.ron({ user, pai });
         break;
       case MahjongCommand.RICHI:
-      case MahjongCommand.CHI:
+        if (pai === undefined) {
+          return;
+        }
+        this.richi({ user, pai });
+        break;
       case MahjongCommand.PON:
       case MahjongCommand.KAN:
     }
