@@ -1,6 +1,7 @@
 import { Mahjong, MahjongCommand } from "./mahjong.ts";
 import { MahjongPai } from "./mahjong_pai.ts";
 import { expect } from "jsr:@std/expect";
+import { fixtures } from "../utils/utils.ts";
 
 Deno.test("mahjong start", () => {
   let called = false;
@@ -108,10 +109,18 @@ Deno.test("mahjong tusmoAgari", () => {
 
   // Set up winning hand
   firstUser.paiHand = [
-    new MahjongPai("p1"), new MahjongPai("p1"), new MahjongPai("p1"),
-    new MahjongPai("p1"), new MahjongPai("p2"), new MahjongPai("p3"), 
-    new MahjongPai("p3"), new MahjongPai("p3"), new MahjongPai("p3"),
-    new MahjongPai("p4"), new MahjongPai("p4"), new MahjongPai("p4"),
+    new MahjongPai("p1"),
+    new MahjongPai("p1"),
+    new MahjongPai("p1"),
+    new MahjongPai("p1"),
+    new MahjongPai("p2"),
+    new MahjongPai("p3"),
+    new MahjongPai("p3"),
+    new MahjongPai("p3"),
+    new MahjongPai("p3"),
+    new MahjongPai("p4"),
+    new MahjongPai("p4"),
+    new MahjongPai("p4"),
     new MahjongPai("z1"),
   ];
   // firstUser.setPaiTsumo(new MahjongPai("p1")); // Winning tile
@@ -132,14 +141,22 @@ Deno.test("mahjong ron", () => {
   game.start();
 
   // Get first and second users
-  const secondUser = game.users[1]; 
+  const secondUser = game.users[1];
 
   // Set up winning hand for second user
   secondUser.paiHand = [
-    new MahjongPai("p1"), new MahjongPai("p1"), new MahjongPai("p1"),
-    new MahjongPai("p2"), new MahjongPai("p2"), new MahjongPai("p2"),
-    new MahjongPai("p3"), new MahjongPai("p3"), new MahjongPai("p3"),
-    new MahjongPai("p4"), new MahjongPai("p4"), new MahjongPai("p4"),
+    new MahjongPai("p1"),
+    new MahjongPai("p1"),
+    new MahjongPai("p1"),
+    new MahjongPai("p2"),
+    new MahjongPai("p2"),
+    new MahjongPai("p2"),
+    new MahjongPai("p3"),
+    new MahjongPai("p3"),
+    new MahjongPai("p3"),
+    new MahjongPai("p4"),
+    new MahjongPai("p4"),
+    new MahjongPai("p4"),
     new MahjongPai("z1"),
   ];
 
@@ -151,4 +168,10 @@ Deno.test("mahjong ron", () => {
   // Verify state after ron
   expect(secondUser.paiTsumo).toBeUndefined(); // No tsumo tile for ron
   expect(secondUser.paiHand.length).toBe(13); // Hand size should be 12 before winning tile
-})
+});
+
+Deno.test("mahjong with fixtures", async () => {
+  await fixtures(({name, params}) => {
+    console.log("name", name);
+  }, 1);
+});
