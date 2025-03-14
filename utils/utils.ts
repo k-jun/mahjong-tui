@@ -2,19 +2,21 @@
 import { JSDOM } from "npm:jsdom@26.0.0";
 import { Pai, PaiSet, PaiSetType } from "@k-jun/mahjong";
 import { yakus as constantYakus } from "./constants.ts";
+import { YamaGenerator } from "./seed.ts";
 
 type inputParams = {
   init?: {
+    yama: Pai[];
     kyoku: number;
     honba: number;
     kyotk: number;
     dora: number;
     ten: number[];
     oya: number;
-    hai0: number[];
-    hai1: number[];
-    hai2: number[];
-    hai3: number[];
+    hai0: Pai[];
+    hai1: Pai[];
+    hai2: Pai[];
+    hai3: Pai[];
   };
   tsumo?: {
     who: number;
@@ -67,6 +69,7 @@ type state = {
   enable: boolean;
   oya: number;
   kyoku: number;
+  seed?: YamaGenerator;
 };
 
 export const fixtures = async (
@@ -96,6 +99,11 @@ export const fixtures = async (
       };
 
       for (const e of dom.window.document.children[0].children) {
+        if (e.tagName == "SHUFFLE") {
+          const raw_seed = e.attributes.getNamedItem("seed")?.value ?? "";
+          const seed = raw_seed.split(",")[1];
+          state.seed = new YamaGenerator(seed);
+        }
         if (e.tagName == "GO") {
           state.enable = isYonmaAriAriAka(e);
         }
@@ -105,7 +113,7 @@ export const fixtures = async (
 
         switch (e.tagName) {
           case "INIT":
-            state = { ...state, ..._init(e, input) };
+            state = { ...state, ..._init(e, state, input) };
             break;
           case "N":
             _naki(e, input);
@@ -166,6 +174,7 @@ const isYonmaAriAriAka = (e: Element): boolean => {
 
 const _init = (
   e: Element,
+  s: state,
   input: ({ name, params }: { name: string; params: inputParams }) => void,
 ): { oya: number; kyoku: number } => {
   const seeds = e.attributes.getNamedItem("seed")!.value.split(",");
@@ -173,16 +182,21 @@ const _init = (
     name: "INIT",
     params: {
       init: {
+        yama: (s.seed!.generate() ?? []).map((e) => new Pai(e)),
         kyoku: Number(seeds[0]),
         honba: Number(seeds[1]),
         kyotk: Number(seeds[2]),
         dora: Number(seeds[5]),
         oya: Number(e.attributes.getNamedItem("oya")!.value),
         ten: e.attributes.getNamedItem("ten")!.value.split(",").map(Number),
-        hai0: e.attributes.getNamedItem("hai0")!.value.split(",").map(Number),
-        hai1: e.attributes.getNamedItem("hai1")!.value.split(",").map(Number),
-        hai2: e.attributes.getNamedItem("hai2")!.value.split(",").map(Number),
-        hai3: e.attributes.getNamedItem("hai3")!.value.split(",").map(Number),
+        hai0: e.attributes.getNamedItem("hai0")!.value.split(",").map(Number)
+          .map((e) => new Pai(e)),
+        hai1: e.attributes.getNamedItem("hai1")!.value.split(",").map(Number)
+          .map((e) => new Pai(e)),
+        hai2: e.attributes.getNamedItem("hai2")!.value.split(",").map(Number)
+          .map((e) => new Pai(e)),
+        hai3: e.attributes.getNamedItem("hai3")!.value.split(",").map(Number)
+          .map((e) => new Pai(e)),
       },
     },
   });
@@ -197,7 +211,7 @@ const _tsumo = (
   e: Element,
   input: ({ name, params }: { name: string; params: inputParams }) => void,
 ) => {
-  const who = ["D", "E", "F", "G"].findIndex((x) => x == e.tagName[0]);
+  const who = ["T", "U", "V", "W"].findIndex((x) => x == e.tagName[0]);
   input({
     name: "TSUMO",
     params: {
@@ -210,7 +224,7 @@ const _dahai = (
   e: Element,
   input: ({ name, params }: { name: string; params: inputParams }) => void,
 ) => {
-  const who = ["T", "U", "V", "W"].findIndex((x) => x == e.tagName[0]);
+  const who = ["D", "E", "F", "G"].findIndex((x) => x == e.tagName[0]);
   input({
     name: "DAHAI",
     params: {

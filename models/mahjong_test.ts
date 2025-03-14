@@ -171,7 +171,61 @@ Deno.test("mahjong ron", () => {
 });
 
 Deno.test("mahjong with fixtures", async () => {
-  await fixtures(({name, params}) => {
-    console.log("name", name);
+  const userIds = ["0", "1", "2", "3"];
+  const mockOutput = (_: Mahjong) => {};
+  const game = new Mahjong(userIds, mockOutput);
+  await fixtures(({ name, params }) => {
+    switch (name) {
+      case "INIT": {
+        game.start();
+        if (params.init === undefined) {
+          throw new Error("params.init is undefined");
+        }
+        const { hai0, hai1, hai2, hai3, yama } = params.init;
+        game.users[0].paiHand = hai0.map((e) => new MahjongPai(e.id));
+        game.users[1].paiHand = hai1.map((e) => new MahjongPai(e.id));
+        game.users[2].paiHand = hai2.map((e) => new MahjongPai(e.id));
+        game.users[3].paiHand = hai3.map((e) => new MahjongPai(e.id));
+        console.log(yama);
+        console.log(game.users[0].paiHand);
+        for (const p of game.users[0].paiHand) {
+          console.log(yama.findIndex((e) => e.id === p.id));
+        }
+        for (const p of game.users[1].paiHand) {
+          console.log(yama.findIndex((e) => e.id === p.id));
+        }
+        for (const p of game.users[2].paiHand) {
+          console.log(yama.findIndex((e) => e.id === p.id));
+        }
+        for (const p of game.users[3].paiHand) {
+          console.log(yama.findIndex((e) => e.id === p.id));
+        }
+        break;
+      }
+        // case "TSUMO": {
+        //   if (params.tsumo === undefined) {
+        //     throw new Error("params.tsumo is undefined");
+        //   }
+        //   const { who, hai } = params.tsumo;
+        //   console.log(who, hai);
+        //   game.input(MahjongCommand.TSUMO, {
+        //     userId: game.users[who].id,
+        //   });
+        //   game.users[who].paiTsumo = new MahjongPai(hai.id);
+        //   break;
+        // }
+        // case "DAHAI": {
+        //   if (params.dahai === undefined) {
+        //     throw new Error("params.dahai is undefined");
+        //   }
+        //   const { who, hai } = params.dahai;
+        //   game.input(MahjongCommand.DAHAI, {
+        //     userId: game.users[who].id,
+        //     pai: new MahjongPai(hai.id),
+        //   });
+        //   break;
+        // }
+    }
   }, 1);
+  // console.log(game.users);
 });
