@@ -1,5 +1,5 @@
 import { Mahjong, MahjongCommand } from "./mahjong.ts";
-import { MahjongPai } from "./mahjong_pai.ts";
+import { MahjongPai, MahjongPaiSet } from "./mahjong_pai.ts";
 import { expect } from "jsr:@std/expect";
 import { fixtures } from "../utils/utils.ts";
 import { Pai } from "@k-jun/mahjong";
@@ -11,7 +11,7 @@ Deno.test("mahjong start", async () => {
   let globalYama: Pai[] = [];
   const globalGame: Mahjong = new Mahjong(userIds, mockOutput);
   await fixtures(({ name, params }) => {
-    // console.log(name)
+    console.log(name)
     switch (name) {
       case "INIT": {
         const { hai0, hai1, hai2, hai3, yama } = params.init!;
@@ -47,7 +47,8 @@ Deno.test("mahjong start", async () => {
         break;
       }
       case "AGARI": {
-        const { who, fromWho, paiLast, yakus, score } = params.agari!;
+        const { who, fromWho, paiLast, yakus, score, paiDora, paiDoraUra } =
+          params.agari!;
 
         globalGame.input(MahjongCommand.AGARI, {
           user: globalGame.users[who],
@@ -63,8 +64,23 @@ Deno.test("mahjong start", async () => {
           e,
         ) => ({
           ...e,
-        }));
-        expect(actYakus).toEqual(yakus);
+        })).sort((a, b) => a.str.localeCompare(b.str));
+        console.log(yakus);
+        console.log(score);
+        console.log(globalGame.paiWanpai);
+        expect(globalGame.paiDora).toEqual(
+          paiDora.map((e) => new MahjongPai(e.id)),
+        );
+        if (paiDoraUra.length > 0) {
+          expect(globalGame.paiDoraUra).toEqual(
+            paiDoraUra.map((e) => new MahjongPai(e.id)),
+          );
+        }
+        expect(actYakus).toEqual(
+          yakus.filter((e) => e.val > 0).sort((a, b) =>
+            a.str.localeCompare(b.str)
+          ),
+        );
         expect(globalGame.users.map((e) => e.score)).toEqual(score);
         break;
       }
@@ -103,6 +119,20 @@ Deno.test("mahjong start", async () => {
       }
       case "NAKI": {
         console.log("NAKI");
+        const { who, set } = params.naki!;
+        globalGame.input(MahjongCommand.NAKI, {
+          user: globalGame.users[who],
+          params: {
+            naki: {
+              set: new MahjongPaiSet({
+                paiRest: set.paiRest.map((e) => new MahjongPai(e.id)),
+                paiCall: set.paiCall.map((e) => new MahjongPai(e.id)),
+                type: set.type,
+                fromWho: set.fromWho,
+              }),
+            },
+          },
+        });
         break;
       }
       case "RYUKYOKU": {
@@ -117,5 +147,5 @@ Deno.test("mahjong start", async () => {
         break;
       }
     }
-  }, 3);
+  }, 6);
 });

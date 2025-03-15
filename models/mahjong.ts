@@ -34,7 +34,10 @@ export class Mahjong {
   turnUserIdx: number = 0;
   actions: MahjongAction[] = [];
   result?: TokutenOutput;
-  kyotaku: number = 0;
+
+  kyotk: number = 0;
+  honba: number = 0;
+  kyoku: number = 0;
 
   kazes = [
     new MahjongPai("z1"), // 108 東
@@ -68,20 +71,26 @@ export class Mahjong {
     return this.paiYama.length + (this.paiWanpai.length / 3) - 4;
   }
 
-  turnNext({ user }: { user: MahjongUser }) {
-    const currentIdx = this.users.findIndex((u) => u.id === user.id);
-    this.turnUserIdx = (currentIdx + 1) % 4;
+  nextTurn() {
+    this.turnUserIdx = (this.turnUserIdx + 1) % 4;
     return;
   }
 
-  kyokuNext() {
-    for (const user of this.users) {
-      user.paiJikaze = new MahjongPai(user.paiJikaze.next().next().next().id);
+  nextGame({ isAgari, isOya }: { isAgari: boolean; isOya: boolean }) {
+    if (isAgari && isOya) {
+      this.honba += 1;
     }
-    const oyaIdx = this.users.findIndex((e) =>
-      e.paiJikaze.id === this.kazes[0].id
-    );
-    this.turnUserIdx = oyaIdx;
+    if (isAgari && !isOya) {
+      this.kyoku += 1;
+      this.honba = 0;
+    }
+    if (!isAgari && isOya) {
+      this.honba += 1;
+    }
+    if (!isAgari && !isOya) {
+      this.kyoku += 1;
+      this.honba += 1;
+    }
   }
 
   turnUser() {
@@ -93,34 +102,29 @@ export class Mahjong {
     this.paiWanpai = [];
     this.paiDora = [];
     this.paiDoraUra = [];
+    this.turnUserIdx = this.kyoku % 4;
+    this.users.forEach((e) => e.reset());
 
-    const sidx = this.users.findIndex((e) =>
-      e.paiJikaze.id === new MahjongPai("z1").id
-    );
-
-    for (let j = sidx; j < sidx + 4; j++) {
-      this.users[j % 4].paiHand = [];
-      this.users[j % 4].isRichi = false;
+    for (let i = 0; i < 4; i++) {
+      this.users[(i + this.kyoku) % 4].paiJikaze = this.kazes[i];
     }
 
     for (let i = 0; i < 3; i++) {
-      for (let j = sidx; j < sidx + 4; j++) {
-        this.users[j % 4].setHandPais(this.paiYama.splice(-4).reverse());
+      for (let j = 0; j < 4; j++) {
+        this.users[(j + this.kyoku) % 4].setHandPais(
+          this.paiYama.splice(-4).reverse(),
+        );
       }
     }
-    for (let j = sidx; j < sidx + 4; j++) {
-      this.users[j % 4].setHandPais(this.paiYama.splice(-1));
+    for (let i = 0; i < 4; i++) {
+      this.users[(i + this.kyoku) % 4].setHandPais(this.paiYama.splice(-1));
     }
     this.paiWanpai.push(...this.paiYama.splice(0, 14));
 
-    const [omote, ura] = this.paiWanpai.splice(5, 2);
-    this.paiDora.push(omote);
+    const [ura, omote] = this.paiWanpai.splice(4, 2);
     this.paiDoraUra.push(ura);
+    this.paiDora.push(omote);
     this.output(this);
-  }
-
-  callFrom(myIdx: number, yourIdx: number): Player {
-    return this.players[(yourIdx - myIdx + 4) % 4];
   }
 
   tsumo({ user }: { user: MahjongUser }) {
@@ -132,13 +136,10 @@ export class Mahjong {
     if (user.id !== this.turnUser().id) {
       throw new Error("when dahai called, not your turn");
     }
-    if (user.paiTsumo === undefined) {
-      throw new Error("when dahai called, paiTsumo is undefined");
-    }
+
     user.dahai({ pai });
-    this.output(this);
-    this.turnNext({ user });
-    this.output(this);
+    user.isIppatsu = false;
+    this.nextTurn();
   }
 
   agari(
@@ -156,8 +157,10 @@ export class Mahjong {
       paiSets: user.paiCall,
       paiBakaze: this.paiBakaze,
       paiJikaze: user.paiJikaze,
-      paiDora: this.paiDora,
-      paiDoraUra: this.paiDoraUra,
+      paiDora: this.paiDora.map((e) => new MahjongPai(e.next().id)),
+      paiDoraUra: user.isRichi
+        ? this.paiDoraUra.map((e) => new MahjongPai(e.next().id))
+        : [],
       options: {
         isTsumo: isTsumo,
         isOya: user.paiJikaze.id === this.kazes[0].id,
@@ -175,12 +178,24 @@ export class Mahjong {
     this.result = new Tokuten({ ...params }).count();
 
     if (isTsumo) {
-      // TODO
+      user.score += this.result.pointSum + this.kyotk + (this.honba * 300);
+      for (let i = 0; i < this.users.length; i++) {
+        if (this.users[i].id === user.id) {
+          continue;
+        }
+        if ((this.kyoku % 4) === i) {
+          this.users[i].score -= this.result.pointPrt + (this.honba * 100);
+        } else {
+          this.users[i].score -= this.result.pointCdn + (this.honba * 100);
+        }
+      }
     } else {
-      user.score += this.result.pointSum;
-      fromUser.score -= this.result.pointSum;
-      this.kyokuNext();
+      user.score += this.result.pointSum + this.kyotk + (this.honba * 300);
+      fromUser.score -= this.result.pointSum + (this.honba * 300);
     }
+    this.kyotk = 0;
+    const isOya = user.id === this.users[this.kyoku % 4].id;
+    this.nextGame({ isAgari: true, isOya });
   }
 
   richi({ user }: { user: MahjongUser }) {
@@ -188,8 +203,9 @@ export class Mahjong {
       throw new Error("when richi called, already richi");
     }
     user.isRichi = true;
+    user.isIppatsu = true;
     user.score -= 1000;
-    this.kyotaku += 1000;
+    this.kyotk += 1000;
   }
 
   owari() {
@@ -212,16 +228,15 @@ export class Mahjong {
         user.score -= pntDcs;
       }
     }
+    console.log(this.users.map((e) => e.score));
+    const isOya = isTenpai[this.kyoku % 4];
+    this.nextGame({ isAgari: false, isOya });
+  }
 
-    const oyaIdx = this.users.findIndex((e) =>
-      e.paiJikaze.id === this.kazes[0].id
-    );
-    const isCombo = isTenpai[oyaIdx];
-    if (isCombo) {
-      // TODO
-    } else {
-      this.kyokuNext();
-    }
+  naki({ user, set }: { user: MahjongUser; set: MahjongPaiSet }) {
+    user.paiCall.push(set);
+    this.turnUserIdx = this.users.findIndex((e) => e.id === user.id);
+    this.users.forEach((e) => e.isIppatsu = false);
   }
 
   input(
@@ -236,7 +251,9 @@ export class Mahjong {
         dahai?: {
           paiDahai: MahjongPai;
         };
-        // tsumo?: {};
+        naki?: {
+          set: MahjongPaiSet;
+        };
       };
     },
   ) {
@@ -263,7 +280,8 @@ export class Mahjong {
         break;
       }
       case MahjongCommand.NAKI: {
-        this.naki();
+        const { set } = params.naki!;
+        this.naki({ user, set });
         break;
       }
     }

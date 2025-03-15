@@ -40,6 +40,16 @@ export class MahjongUser extends User {
     this.paiTsumo = pai;
   }
 
+  reset() {
+    this.paiHand = [];
+    this.paiCall = [];
+    this.paiKawa = [];
+    this.paiTsumo = undefined;
+    this.isRichi = false;
+    this.isDabururichi = false;
+    this.isIppatsu = false;
+  }
+
   canChi(paiCall: MahjongPai): MahjongPaiSet[] {
     if (paiCall.isJihai()) {
       return [];
@@ -225,14 +235,10 @@ export class MahjongUser extends User {
   }
 
   dahai({ pai }: { pai: MahjongPai }) {
-    if (this.paiTsumo === undefined) {
-      throw new Error("when dahai called, paiTsumo is undefined");
-    }
-    if (this.isRichi && this.paiTsumo.id !== pai.id) {
+    if (this.isRichi && this.paiTsumo?.id !== pai.id) {
       throw new Error("when dahai called, paiTsumo and paiDahai are different");
     }
-
-    if (this.paiTsumo.id === pai.id) {
+    if (this.paiTsumo?.id === pai.id) {
       this.paiKawa.push(pai);
       this.paiTsumo = undefined;
       return;
@@ -240,7 +246,9 @@ export class MahjongUser extends User {
 
     const handIdx = this.paiHand.findIndex((e) => e.id === pai.id);
     this.paiKawa.push(this.paiHand.splice(handIdx, 1)[0]);
-    this.paiHand.push(this.paiTsumo);
+    if (this.paiTsumo !== undefined) {
+      this.paiHand.push(this.paiTsumo);
+    }
     this.paiTsumo = undefined;
   }
 }
