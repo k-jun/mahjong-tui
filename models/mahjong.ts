@@ -1,17 +1,21 @@
 import { MahjongPai, MahjongPaiSet } from "./mahjong_pai.ts";
 import { MahjongUser } from "./mahjong_user.ts";
-import { AllPais } from "./constants.ts";
-import { Player, Tokuten } from "@k-jun/mahjong";
+import {
+  Player,
+  Shanten,
+  ShantenInput,
+  Tokuten,
+  TokutenInput,
+  TokutenOutput,
+} from "@k-jun/mahjong";
 
 export enum MahjongCommand {
   TSUMO = "tsumo",
   DAHAI = "dahai",
   RICHI = "richi",
   AGARI = "agari",
-  CHI = "chi",
-  PON = "pon",
-  KAN = "kan",
-  RON = "ron",
+  OWARI = "owari",
+  NAKI = "naki",
 }
 
 export type MahjongAction = {
@@ -20,38 +24,17 @@ export type MahjongAction = {
   enable: boolean;
 };
 
-type Params = {
-  paiRest: MahjongPai[];
-  paiLast: MahjongPai;
-  paiSets: MahjongPaiSet[];
-  paiBakaze: MahjongPai;
-  paiJikaze: MahjongPai;
-  paiDora: MahjongPai[];
-  paiDoraUra: MahjongPai[];
-  options: {
-    isTsumo: boolean;
-    isOya: boolean;
-    isRichi: boolean;
-    isDabururichi: boolean;
-    isIppatsu: boolean;
-    isHaitei: boolean;
-    isHoutei: boolean;
-    isChankan: boolean;
-    isRinshankaiho: boolean;
-    isChiho: boolean;
-    isTenho: boolean;
-  };
-};
-
 export class Mahjong {
-  yama: MahjongPai[];
-  paiWanpai: MahjongPai[];
-  paiBakaze: MahjongPai;
-  paiDora: MahjongPai[];
-  paiDoraUra: MahjongPai[];
-  users: MahjongUser[];
-  turnUserIdx: number;
-  actions: MahjongAction[];
+  paiYama: MahjongPai[] = [];
+  paiWanpai: MahjongPai[] = [];
+  paiBakaze: MahjongPai = new MahjongPai("z1");
+  paiDora: MahjongPai[] = [];
+  paiDoraUra: MahjongPai[] = [];
+  users: MahjongUser[] = [];
+  turnUserIdx: number = 0;
+  actions: MahjongAction[] = [];
+  result?: TokutenOutput;
+  kyotaku: number = 0;
 
   kazes = [
     new MahjongPai("z1"), // 108 東
@@ -68,75 +51,71 @@ export class Mahjong {
 
   output: (mjg: Mahjong) => void;
 
-  constructor(userIds: string[], output: (mjg: Mahjong) => void) {
-    this.yama = [];
-    this.paiWanpai = [];
-    this.paiDora = [];
-    this.paiDoraUra = [];
-    this.paiBakaze = this.kazes[0];
-    this.output = output;
-
+  constructor(
+    userIds: string[],
+    output: (mjg: Mahjong) => void,
+  ) {
     const users: MahjongUser[] = [];
     userIds.forEach((id, idx) => {
       const paiJikaze = this.kazes[idx];
-      users.push(new MahjongUser({ id, paiJikaze, isOya: idx == 0 }));
+      users.push(new MahjongUser({ id, paiJikaze }));
     });
     this.users = users;
-    this.actions = [];
-    this.turnUserIdx = 0;
-  }
-
-  shuffle<T>(pais: T[]) {
-    for (let i = pais.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [pais[i], pais[j]] = [pais[j], pais[i]];
-    }
+    this.output = output;
   }
 
   paiRemain() {
-    return this.yama.length + (this.paiWanpai.length / 3) - 4;
+    return this.paiYama.length + (this.paiWanpai.length / 3) - 4;
   }
 
   turnNext({ user }: { user: MahjongUser }) {
     const currentIdx = this.users.findIndex((u) => u.id === user.id);
     this.turnUserIdx = (currentIdx + 1) % 4;
-
-    this.input(MahjongCommand.TSUMO, { userId: this.turnUser().id });
     return;
+  }
+
+  kyokuNext() {
+    for (const user of this.users) {
+      user.paiJikaze = new MahjongPai(user.paiJikaze.next().next().next().id);
+    }
+    const oyaIdx = this.users.findIndex((e) =>
+      e.paiJikaze.id === this.kazes[0].id
+    );
+    this.turnUserIdx = oyaIdx;
   }
 
   turnUser() {
     return this.users[this.turnUserIdx];
   }
 
-  start() {
-    const paiAll = [...AllPais];
-    this.shuffle(paiAll);
+  reset(paiYama: MahjongPai[]) {
+    this.paiYama = paiYama;
+    this.paiWanpai = [];
+    this.paiDora = [];
+    this.paiDoraUra = [];
+
+    const sidx = this.users.findIndex((e) =>
+      e.paiJikaze.id === new MahjongPai("z1").id
+    );
+
+    for (let j = sidx; j < sidx + 4; j++) {
+      this.users[j % 4].paiHand = [];
+      this.users[j % 4].isRichi = false;
+    }
 
     for (let i = 0; i < 3; i++) {
-      for (let j = 0; j < 4; j++) {
-        this.users[j].setHandPais(paiAll.splice(0, 4));
+      for (let j = sidx; j < sidx + 4; j++) {
+        this.users[j % 4].setHandPais(this.paiYama.splice(-4).reverse());
       }
     }
-    for (let j = 0; j < 4; j++) {
-      this.users[j].setHandPais(paiAll.splice(0, 1));
+    for (let j = sidx; j < sidx + 4; j++) {
+      this.users[j % 4].setHandPais(this.paiYama.splice(-1));
     }
-    this.paiWanpai.push(...paiAll.splice(-14));
+    this.paiWanpai.push(...this.paiYama.splice(0, 14));
 
     const [omote, ura] = this.paiWanpai.splice(5, 2);
     this.paiDora.push(omote);
     this.paiDoraUra.push(ura);
-
-    this.yama.push(...paiAll);
-
-    this.output(this);
-    this.input(MahjongCommand.TSUMO, {
-      userId: this.users[this.turnUserIdx].id,
-    });
-  }
-
-  end() {
-    console.log("Game End!");
     this.output(this);
   }
 
@@ -145,7 +124,7 @@ export class Mahjong {
   }
 
   tsumo({ user }: { user: MahjongUser }) {
-    user.setPaiTsumo(this.yama.splice(0, 1)[0]);
+    user.setPaiTsumo(this.paiYama.splice(-1)[0]);
     this.output(this);
   }
 
@@ -158,22 +137,20 @@ export class Mahjong {
     }
     user.dahai({ pai });
     this.output(this);
-    if (this.paiRemain() === 0) {
-      return;
-    }
     this.turnNext({ user });
     this.output(this);
   }
 
-  ron({ user, pai }: { user: MahjongUser; pai: MahjongPai }) {
-    if (user.id === this.turnUser().id) {
-      throw new Error("when ron called, it's your turn");
-    }
-    if (user.paiTsumo !== undefined) {
-      throw new Error("when ron called, paiTsumo is not undefined");
-    }
-
-    const params: Params = {
+  agari(
+    { user, fromUser, pai }: {
+      user: MahjongUser;
+      fromUser: MahjongUser;
+      pai: MahjongPai;
+    },
+  ) {
+    const allMenzen = this.users.every((u) => u.paiCall.length === 0);
+    const isTsumo = user.id === fromUser.id;
+    const params: TokutenInput = {
       paiRest: user.paiHand,
       paiLast: pai,
       paiSets: user.paiCall,
@@ -182,43 +159,8 @@ export class Mahjong {
       paiDora: this.paiDora,
       paiDoraUra: this.paiDoraUra,
       options: {
-        isTsumo: false,
-        isOya: user.isOya,
-        isRichi: user.isRichi,
-        isDabururichi: user.isDabururichi,
-        isIppatsu: user.isIppatsu,
-        isHaitei: false,
-        isHoutei: this.paiRemain() === 0,
-        isChankan: false,
-        isRinshankaiho: false,
-        isChiho: false,
-        isTenho: false,
-      },
-    };
-
-    const x = new Tokuten({ ...params }).count();
-    console.log(x);
-  }
-
-  tsumoAgari({ user }: { user: MahjongUser }) {
-    if (user.id !== this.turnUser().id) {
-      throw new Error("when tsumoAgari called, not your turn");
-    }
-    if (user.paiTsumo === undefined) {
-      throw new Error("when tsumoAgari called, paiTsumo is undefined");
-    }
-    const allMenzen = this.users.every((u) => u.paiCall.length === 0);
-    const params: Params = {
-      paiRest: user.paiHand,
-      paiLast: user.paiTsumo,
-      paiSets: user.paiCall,
-      paiBakaze: this.paiBakaze,
-      paiJikaze: user.paiJikaze,
-      paiDora: this.paiDora,
-      paiDoraUra: this.paiDoraUra,
-      options: {
-        isTsumo: true,
-        isOya: user.isOya,
+        isTsumo: isTsumo,
+        isOya: user.paiJikaze.id === this.kazes[0].id,
         isRichi: user.isRichi,
         isDabururichi: user.isDabururichi,
         isIppatsu: user.isIppatsu,
@@ -230,64 +172,100 @@ export class Mahjong {
         isTenho: this.paiRemain() === 69,
       },
     };
-    const x = new Tokuten({ ...params }).count();
-    console.log(x);
+    this.result = new Tokuten({ ...params }).count();
+
+    if (isTsumo) {
+      // TODO
+    } else {
+      user.score += this.result.pointSum;
+      fromUser.score -= this.result.pointSum;
+      this.kyokuNext();
+    }
   }
 
-  richi({ user, pai }: { user: MahjongUser; pai: MahjongPai }) {
-    if (user.id !== this.turnUser().id) {
-      throw new Error("when richi called, not your turn");
-    }
+  richi({ user }: { user: MahjongUser }) {
     if (user.isRichi) {
       throw new Error("when richi called, already richi");
     }
-    if (user.paiTsumo === undefined) {
-      throw new Error("when richi called, paiTsumo is undefined");
+    user.isRichi = true;
+    user.score -= 1000;
+    this.kyotaku += 1000;
+  }
+
+  owari() {
+    const isTenpai = [];
+    for (const user of this.users) {
+      const params: ShantenInput = {
+        paiRest: user.paiHand,
+        paiSets: user.paiCall,
+      };
+      isTenpai.push(new Shanten(params).count() === 0);
     }
 
-    user.isRichi = true;
-    user.dahai({ pai });
+    const cnt = isTenpai.filter((e) => e).length;
+    const pntInc = cnt === 4 ? 0 : 3000 / cnt;
+    const pntDcs = (pntInc * cnt) / (4 - cnt);
+    for (const [idx, user] of this.users.entries()) {
+      if (isTenpai[idx]) {
+        user.score += pntInc;
+      } else {
+        user.score -= pntDcs;
+      }
+    }
+
+    const oyaIdx = this.users.findIndex((e) =>
+      e.paiJikaze.id === this.kazes[0].id
+    );
+    const isCombo = isTenpai[oyaIdx];
+    if (isCombo) {
+      // TODO
+    } else {
+      this.kyokuNext();
+    }
   }
 
   input(
     action: MahjongCommand,
-    { userId, pai }: {
-      userId: string;
-      pai?: MahjongPai;
+    { user, params }: {
+      user: MahjongUser;
+      params: {
+        agari?: {
+          fromUser: MahjongUser;
+          paiAgari: MahjongPai;
+        };
+        dahai?: {
+          paiDahai: MahjongPai;
+        };
+        // tsumo?: {};
+      };
     },
   ) {
-    const user = this.users.find((e) => e.id == userId);
-    if (user === undefined) {
-      throw new Error("user not found");
-    }
-
     switch (action) {
       case MahjongCommand.TSUMO:
         this.tsumo({ user });
         break;
-      case MahjongCommand.DAHAI:
-        if (pai === undefined) {
-          return;
-        }
-        this.dahai({ user, pai });
+      case MahjongCommand.DAHAI: {
+        const { paiDahai } = params.dahai!;
+        this.dahai({ user, pai: paiDahai });
         break;
-      case MahjongCommand.AGARI:
-        this.tsumoAgari({ user });
+      }
+      case MahjongCommand.AGARI: {
+        const { paiAgari, fromUser } = params.agari!;
+        this.agari({ user, fromUser, pai: paiAgari });
         break;
-      case MahjongCommand.RON:
-        if (pai === undefined) {
-          return;
-        }
-        this.ron({ user, pai });
+      }
+      case MahjongCommand.RICHI: {
+        this.richi({ user });
         break;
-      case MahjongCommand.RICHI:
-        if (pai === undefined) {
-          return;
-        }
-        this.richi({ user, pai });
+      }
+      case MahjongCommand.OWARI: {
+        this.owari();
         break;
-      case MahjongCommand.PON:
-      case MahjongCommand.KAN:
+      }
+      case MahjongCommand.NAKI: {
+        this.naki();
+        break;
+      }
     }
   }
 }

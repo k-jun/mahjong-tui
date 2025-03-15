@@ -8,18 +8,17 @@ export class MahjongUser extends User {
   paiCall: MahjongPaiSet[];
   paiKawa: MahjongPai[];
   paiJikaze: MahjongPai;
+  score: number = 0;
 
-  isOya: boolean;
   isRichi: boolean = false;
   isDabururichi: boolean = false;
   isIppatsu: boolean = false;
 
   paiTsumo?: MahjongPai;
   constructor(
-    { id, paiJikaze, isOya }: {
+    { id, paiJikaze }: {
       id: string;
       paiJikaze: MahjongPai;
-      isOya: boolean;
     },
   ) {
     super(id);
@@ -27,7 +26,7 @@ export class MahjongUser extends User {
     this.paiCall = [];
     this.paiKawa = [];
     this.paiJikaze = paiJikaze;
-    this.isOya = isOya;
+    this.score = 25000;
   }
 
   setHandPais(pais: MahjongPai[]) {

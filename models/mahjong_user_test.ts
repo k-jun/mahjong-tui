@@ -6,7 +6,10 @@ import { PaiSetType, Player } from "@k-jun/mahjong";
 
 Deno.test("MahjongUser", async (t) => {
   await t.step("should initialize with empty arrays", () => {
-    const user = new MahjongUser({ id: "test-user", paiJikaze: new MahjongPai("z1"), isOya: false });
+    const user = new MahjongUser({
+      id: "test-user",
+      paiJikaze: new MahjongPai("z1"),
+    });
     expect(user.id).toBe("test-user");
     expect(user.paiHand).toEqual([]);
     expect(user.paiCall).toEqual([]);
@@ -15,7 +18,10 @@ Deno.test("MahjongUser", async (t) => {
   });
 
   await t.step("should set hand pais correctly", () => {
-    const user = new MahjongUser({ id: "test-user", paiJikaze: new MahjongPai("z1"), isOya: false });
+    const user = new MahjongUser({
+      id: "test-user",
+      paiJikaze: new MahjongPai("z1"),
+    });
     const pais = [new MahjongPai(0), new MahjongPai(1)];
 
     user.setHandPais(pais);
@@ -23,7 +29,10 @@ Deno.test("MahjongUser", async (t) => {
   });
 
   await t.step("should set tsumo pai correctly", () => {
-    const user = new MahjongUser({ id: "test-user", paiJikaze: new MahjongPai("z1"), isOya: false });
+    const user = new MahjongUser({
+      id: "test-user",
+      paiJikaze: new MahjongPai("z1"),
+    });
     const tsumoPai = new MahjongPai(0);
 
     user.setPaiTsumo(tsumoPai);
@@ -31,7 +40,10 @@ Deno.test("MahjongUser", async (t) => {
   });
 
   await t.step("should throw error when setting tsumo pai twice", () => {
-    const user = new MahjongUser({ id: "test-user", paiJikaze: new MahjongPai("z1"), isOya: false });
+    const user = new MahjongUser({
+      id: "test-user",
+      paiJikaze: new MahjongPai("z1"),
+    });
     const tsumoPai = new MahjongPai(0);
 
     user.setPaiTsumo(tsumoPai);
@@ -39,13 +51,19 @@ Deno.test("MahjongUser", async (t) => {
   });
 
   await t.step("should return empty array for jihai pai in canChi", () => {
-    const user = new MahjongUser({ id: "test-user", paiJikaze: new MahjongPai("z1"), isOya: false });
+    const user = new MahjongUser({
+      id: "test-user",
+      paiJikaze: new MahjongPai("z1"),
+    });
     const jihaiPai = new MahjongPai("z1"); // East wind
     expect(user.canChi(jihaiPai)).toEqual([]);
   });
 
   await t.step("should return valid chi combinations", () => {
-    const user = new MahjongUser({ id: "test-user", paiJikaze: new MahjongPai("z1"), isOya: false });
+    const user = new MahjongUser({
+      id: "test-user",
+      paiJikaze: new MahjongPai("z1"),
+    });
     // Set up hand with 3-4 of manzu
     user.setHandPais([
       new MahjongPai("m3"),
@@ -68,7 +86,10 @@ Deno.test("MahjongUser", async (t) => {
   });
 
   await t.step("should handle red five in chi combinations", () => {
-    const user = new MahjongUser({ id: "test-user", paiJikaze: new MahjongPai("z1"), isOya: false });
+    const user = new MahjongUser({
+      id: "test-user",
+      paiJikaze: new MahjongPai("z1"),
+    });
     // Set up hand with regular 4 and red 5 of pinzu
     user.setHandPais([
       new MahjongPai("p4"),
@@ -88,7 +109,10 @@ Deno.test("MahjongUser", async (t) => {
   });
 
   await t.step("should handle chi combinations with p1", () => {
-    const user = new MahjongUser({ id: "test-user", paiJikaze: new MahjongPai("z1"), isOya: false });
+    const user = new MahjongUser({
+      id: "test-user",
+      paiJikaze: new MahjongPai("z1"),
+    });
     // Set up hand with 2-3 of pinzu
     user.setHandPais([
       new MahjongPai("p2"),
@@ -105,7 +129,10 @@ Deno.test("MahjongUser", async (t) => {
   });
 
   await t.step("should handle basic pon combinations", () => {
-    const user = new MahjongUser({ id: "test-user", paiJikaze: new MahjongPai("z1"), isOya: false });
+    const user = new MahjongUser({
+      id: "test-user",
+      paiJikaze: new MahjongPai("z1"),
+    });
     user.setHandPais([
       new MahjongPai("p3"),
       new MahjongPai("p3"),
@@ -122,7 +149,10 @@ Deno.test("MahjongUser", async (t) => {
   });
 
   await t.step("should handle pon with red five", () => {
-    const user = new MahjongUser({ id: "test-user", paiJikaze: new MahjongPai("z1"), isOya: false });
+    const user = new MahjongUser({
+      id: "test-user",
+      paiJikaze: new MahjongPai("z1"),
+    });
     user.setHandPais([
       new MahjongPai(52), // Red 5 pin
       new MahjongPai(53), // Normal 5 pin
@@ -143,7 +173,10 @@ Deno.test("MahjongUser", async (t) => {
   });
 
   await t.step("should return empty array when pon is not possible", () => {
-    const user = new MahjongUser({ id: "test-user", paiJikaze: new MahjongPai("z1"), isOya: false });
+    const user = new MahjongUser({
+      id: "test-user",
+      paiJikaze: new MahjongPai("z1"),
+    });
     user.setHandPais([
       new MahjongPai("p3"),
       new MahjongPai("p4"),
@@ -157,7 +190,10 @@ Deno.test("MahjongUser", async (t) => {
   });
 
   await t.step("should handle basic minkan", () => {
-    const user = new MahjongUser({ id: "test-user", paiJikaze: new MahjongPai("z1"), isOya: false });
+    const user = new MahjongUser({
+      id: "test-user",
+      paiJikaze: new MahjongPai("z1"),
+    });
     user.setHandPais([
       new MahjongPai("p3"),
       new MahjongPai("p3"),
@@ -175,7 +211,10 @@ Deno.test("MahjongUser", async (t) => {
   });
 
   await t.step("should handle minkan with red five", () => {
-    const user = new MahjongUser({ id: "test-user", paiJikaze: new MahjongPai("z1"), isOya: false });
+    const user = new MahjongUser({
+      id: "test-user",
+      paiJikaze: new MahjongPai("z1"),
+    });
     user.setHandPais([
       new MahjongPai(52), // Red 5 pin
       new MahjongPai(53), // Normal 5 pin
@@ -193,7 +232,10 @@ Deno.test("MahjongUser", async (t) => {
   });
 
   await t.step("should return empty array when minkan is not possible", () => {
-    const user = new MahjongUser({ id: "test-user", paiJikaze: new MahjongPai("z1"), isOya: false });
+    const user = new MahjongUser({
+      id: "test-user",
+      paiJikaze: new MahjongPai("z1"),
+    });
     user.setHandPais([
       new MahjongPai("p3"),
       new MahjongPai("p3"),
@@ -207,7 +249,10 @@ Deno.test("MahjongUser", async (t) => {
   });
 
   await t.step("should handle basic ankan", () => {
-    const user = new MahjongUser({ id: "test-user", paiJikaze: new MahjongPai("z1"), isOya: false });
+    const user = new MahjongUser({
+      id: "test-user",
+      paiJikaze: new MahjongPai("z1"),
+    });
     user.setHandPais([
       new MahjongPai("p3"),
       new MahjongPai("p3"),
@@ -228,7 +273,10 @@ Deno.test("MahjongUser", async (t) => {
   });
 
   await t.step("should handle ankan with tsumo pai", () => {
-    const user = new MahjongUser({ id: "test-user", paiJikaze: new MahjongPai("z1"), isOya: false });
+    const user = new MahjongUser({
+      id: "test-user",
+      paiJikaze: new MahjongPai("z1"),
+    });
     user.setHandPais([
       new MahjongPai("p3"),
       new MahjongPai("p3"),
@@ -250,7 +298,10 @@ Deno.test("MahjongUser", async (t) => {
   });
 
   await t.step("should handle ankan with red five", () => {
-    const user = new MahjongUser({ id: "test-user", paiJikaze: new MahjongPai("z1"), isOya: false });
+    const user = new MahjongUser({
+      id: "test-user",
+      paiJikaze: new MahjongPai("z1"),
+    });
     user.setHandPais([
       new MahjongPai(52), // Red 5 pin
       new MahjongPai(53), // Normal 5 pin
@@ -267,7 +318,10 @@ Deno.test("MahjongUser", async (t) => {
   });
 
   await t.step("should return empty array when ankan is not possible", () => {
-    const user = new MahjongUser({ id: "test-user", paiJikaze: new MahjongPai("z1"), isOya: false });
+    const user = new MahjongUser({
+      id: "test-user",
+      paiJikaze: new MahjongPai("z1"),
+    });
     user.setHandPais([
       new MahjongPai("p3"),
       new MahjongPai("p3"),
@@ -281,7 +335,10 @@ Deno.test("MahjongUser", async (t) => {
   });
 
   await t.step("should handle kakan with tsumo pai", () => {
-    const user = new MahjongUser({ id: "test-user", paiJikaze: new MahjongPai("z1"), isOya: false });
+    const user = new MahjongUser({
+      id: "test-user",
+      paiJikaze: new MahjongPai("z1"),
+    });
     user.paiCall.push(
       new MahjongPaiSet({
         paiCall: [new MahjongPai(0)],
@@ -301,7 +358,10 @@ Deno.test("MahjongUser", async (t) => {
   });
 
   await t.step("should return empty array when kakan is not possible", () => {
-    const user = new MahjongUser({ id: "test-user", paiJikaze: new MahjongPai("z1"), isOya: false });
+    const user = new MahjongUser({
+      id: "test-user",
+      paiJikaze: new MahjongPai("z1"),
+    });
     user.paiCall.push(
       new MahjongPaiSet({
         paiCall: [new MahjongPai("p3")],
@@ -317,7 +377,10 @@ Deno.test("MahjongUser", async (t) => {
   });
 
   await t.step("should return empty array when no tsumo pai", () => {
-    const user = new MahjongUser({ id: "test-user", paiJikaze: new MahjongPai("z1"), isOya: false });
+    const user = new MahjongUser({
+      id: "test-user",
+      paiJikaze: new MahjongPai("z1"),
+    });
     user.paiCall.push(
       new MahjongPaiSet({
         paiCall: [new MahjongPai("p3")],
@@ -332,12 +395,20 @@ Deno.test("MahjongUser", async (t) => {
   });
 
   await t.step("should throw error when dahai without tsumo pai", () => {
-    const user = new MahjongUser({ id: "test-user", paiJikaze: new MahjongPai("z1"), isOya: false });
-    expect(() => user.dahai({ pai: new MahjongPai("p1") })).toThrow("when dahai called, paiTsumo is undefined");
+    const user = new MahjongUser({
+      id: "test-user",
+      paiJikaze: new MahjongPai("z1"),
+    });
+    expect(() => user.dahai({ pai: new MahjongPai("p1") })).toThrow(
+      "when dahai called, paiTsumo is undefined",
+    );
   });
 
   await t.step("should discard tsumo pai when matching", () => {
-    const user = new MahjongUser({ id: "test-user", paiJikaze: new MahjongPai("z1"), isOya: false });
+    const user = new MahjongUser({
+      id: "test-user",
+      paiJikaze: new MahjongPai("z1"),
+    });
     const tsumoPai = new MahjongPai("p1");
     user.setPaiTsumo(tsumoPai);
 
@@ -348,7 +419,10 @@ Deno.test("MahjongUser", async (t) => {
   });
 
   await t.step("should discard hand pai when not matching tsumo pai", () => {
-    const user = new MahjongUser({ id: "test-user", paiJikaze: new MahjongPai("z1"), isOya: false });
+    const user = new MahjongUser({
+      id: "test-user",
+      paiJikaze: new MahjongPai("z1"),
+    });
     const handPai = new MahjongPai("p1");
     const tsumoPai = new MahjongPai("p2");
     user.setHandPais([handPai]);

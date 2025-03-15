@@ -33,10 +33,15 @@ type inputParams = {
   dora?: {
     hai: Pai;
   };
-  reach?: {
+  richi?: {
     who: number;
     step: number;
-    ten?: number[];
+    ten: number[];
+  };
+  ryukyoku?: {
+    ba: string;
+    score: number[];
+    type: string;
   };
   agari?: {
     options: {
@@ -52,8 +57,11 @@ type inputParams = {
       isChiho?: boolean;
       isTenho?: boolean;
     };
+    who: number;
+    fromWho: number;
     fu: number;
     ten: number;
+    score: number[];
     yakus: { str: string; val: number; yakuman: boolean }[];
     paiBakaze: Pai;
     paiJikaze: Pai;
@@ -127,6 +135,10 @@ export const fixtures = async (
           case "AGARI":
             cnt += 1;
             _agari(e, state, input);
+            break;
+          case "RYUUKYOKU":
+            cnt += 1;
+            _ryukyoku(e, input);
             break;
           default:
             if (
@@ -267,11 +279,14 @@ const _richi = (
 ) => {
   const who = Number(e.attributes.getNamedItem("who")!.value);
   const step = Number(e.attributes.getNamedItem("step")!.value);
-  const ten = e.attributes.getNamedItem("ten")?.value.split(",").map(Number);
+  const ten =
+    e.attributes.getNamedItem("ten")?.value.split(",").map((e) =>
+      Number(e) * 100
+    ) ?? [];
   input({
     name: "RICHI",
     params: {
-      reach: { who, step, ten },
+      richi: { who, step, ten },
     },
   });
 };
@@ -295,14 +310,19 @@ const _agari = (
   const paiBakaze = kazes[Math.floor(s.kyoku / 4)];
   const paiJikaze = kazes[(Number(attrs.get("who")) - (s.kyoku % 4) + 4) % 4];
 
+  // const paiDora =
+  //   attrs.get("doraHai")?.split(",").map((e) => new Pai(Number(e)).next()) ??
+  //     [];
   const paiDora =
-    attrs.get("doraHai")?.split(",").map((e) => new Pai(Number(e)).next()) ??
-      [];
+    attrs.get("doraHai")?.split(",").map((e) => new Pai(Number(e))) ?? [];
 
   const paiDoraUra: Pai[] = [];
   if (attrs.get("doraHaiUra")) {
+    // attrs.get("doraHaiUra")?.split(",").forEach((e) => {
+    //   paiDoraUra.push(new Pai(Number(e)).next());
+    // });
     attrs.get("doraHaiUra")?.split(",").forEach((e) => {
-      paiDoraUra.push(new Pai(Number(e)).next());
+      paiDoraUra.push(new Pai(Number(e)));
     });
   }
   const yakus: { str: string; val: number; yakuman: boolean }[] = [];
@@ -345,6 +365,15 @@ const _agari = (
 
   const fu = Number(attrs.get("ten")?.split(",")[0]);
   const ten = Number(attrs.get("ten")?.split(",")[1]);
+  const who = Number(attrs.get("who"));
+  const sc = attrs.get("sc")?.split(",").map(Number) ?? [];
+  const score = [];
+  for (let i = 0; i < sc.length; i += 2) {
+    const bfr = sc[i] * 100;
+    const nxt = bfr + sc[i + 1] * 100;
+    score.push(nxt);
+  }
+  const fromWho = Number(attrs.get("fromWho"));
   const paiSets: PaiSet[] = [];
   if (attrs.get("m")) {
     attrs.get("m")?.split(",").forEach((mi) => {
@@ -370,6 +399,9 @@ const _agari = (
         yakus,
         fu,
         ten,
+        who,
+        score,
+        fromWho,
         options: {
           isTsumo,
           isRichi,
@@ -504,4 +536,30 @@ const _parseM = (m: number): PaiSet => {
       return new PaiSet({ type: PaiSetType.MINKAN, paiRest, paiCall, fromWho });
     }
   }
+};
+
+const _ryukyoku = (
+  e: Element,
+  input: ({ name, params }: { name: string; params: inputParams }) => void,
+) => {
+  // const sc = e.attrs.get("sc")?.split(",").map(Number) ?? [];
+  const ba = e.attributes.getNamedItem("ba")!.value;
+  const sc = e.attributes.getNamedItem("sc")!.value.split(",").map(Number);
+  const type = e.attributes.getNamedItem("type")?.value ?? "";
+  const score = [];
+  for (let i = 0; i < sc.length; i += 2) {
+    const bfr = sc[i] * 100;
+    const nxt = bfr + sc[i + 1] * 100;
+    score.push(nxt);
+  }
+  input({
+    name: "RYUKYOKU",
+    params: {
+      ryukyoku: {
+        ba,
+        score,
+        type,
+      },
+    },
+  });
 };

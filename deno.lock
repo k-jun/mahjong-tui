@@ -1,7 +1,7 @@
 {
   "version": "4",
   "specifiers": {
-    "jsr:@k-jun/mahjong@~0.4.3": "0.4.3",
+    "jsr:@k-jun/mahjong@~0.4.5": "0.4.5",
     "jsr:@std/assert@^1.0.10": "1.0.10",
     "jsr:@std/expect@*": "1.0.11",
     "jsr:@std/internal@^1.0.5": "1.0.5",
@@ -12,8 +12,8 @@
     "npm:socket.io-client@*": "4.8.1"
   },
   "jsr": {
-    "@k-jun/mahjong@0.4.3": {
-      "integrity": "d911d9f300be29b067056722fa678f96c1bd17e43fa06fc9ec119f97d6041aa5",
+    "@k-jun/mahjong@0.4.5": {
+      "integrity": "3dd3a43eadeb0c2f9ff4a335500f0a66c6c2323b7a548cdb762a7cb0c41049d1",
       "dependencies": [
         "npm:@types/jsdom",
         "npm:jsdom"
@@ -25,10 +25,22 @@
         "jsr:@std/internal"
       ]
     },
+    "@std/assert@1.0.11": {
+      "integrity": "2461ef3c368fe88bc60e186e7744a93112f16fd110022e113a0849e94d1c83c1",
+      "dependencies": [
+        "jsr:@std/internal"
+      ]
+    },
     "@std/expect@1.0.11": {
       "integrity": "5aa5d5cf891e9a3249e45ea770de15189e5a2faee2122ee5746b10d1c310a19b",
       "dependencies": [
         "jsr:@std/assert",
+        "jsr:@std/internal"
+      ]
+    },
+    "@std/expect@1.0.13": {
+      "integrity": "d8e236c7089cd9fcf5e6032f27dadc3db6349d0aee48c15bc71d717bca5baa42",
+      "dependencies": [
         "jsr:@std/internal"
       ]
     },
@@ -423,7 +435,7 @@
   },
   "workspace": {
     "dependencies": [
-      "jsr:@k-jun/mahjong@~0.4.3"
+      "jsr:@k-jun/mahjong@~0.4.5"
     ]
   }
 }
