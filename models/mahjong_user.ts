@@ -13,6 +13,7 @@ export class MahjongUser extends User {
   isRichi: boolean = false;
   isDabururichi: boolean = false;
   isIppatsu: boolean = false;
+  afterAnkan: boolean = false;
 
   paiTsumo?: MahjongPai;
   constructor(

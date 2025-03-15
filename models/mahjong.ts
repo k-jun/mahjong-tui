@@ -1,6 +1,7 @@
 import { MahjongPai, MahjongPaiSet } from "./mahjong_pai.ts";
 import { MahjongUser } from "./mahjong_user.ts";
 import {
+  PaiSetType,
   Player,
   Shanten,
   ShantenInput,
@@ -26,6 +27,7 @@ export type MahjongAction = {
 
 export class Mahjong {
   paiYama: MahjongPai[] = [];
+  paiRinshan: MahjongPai[] = [];
   paiWanpai: MahjongPai[] = [];
   paiBakaze: MahjongPai = new MahjongPai("z1");
   paiDora: MahjongPai[] = [];
@@ -102,8 +104,11 @@ export class Mahjong {
     this.paiWanpai = [];
     this.paiDora = [];
     this.paiDoraUra = [];
+    this.paiRinshan = [];
     this.turnUserIdx = this.kyoku % 4;
     this.users.forEach((e) => e.reset());
+
+    this.paiBakaze = this.kazes[Math.floor(this.kyoku / 4)];
 
     for (let i = 0; i < 4; i++) {
       this.users[(i + this.kyoku) % 4].paiJikaze = this.kazes[i];
@@ -121,14 +126,29 @@ export class Mahjong {
     }
     this.paiWanpai.push(...this.paiYama.splice(0, 14));
 
-    const [ura, omote] = this.paiWanpai.splice(4, 2);
+    const rinshan = this.paiWanpai.splice(0, 4);
+    this.paiRinshan.push(rinshan[1], rinshan[0], rinshan[3], rinshan[2]);
+    const [ura, omote] = this.paiWanpai.splice(0, 2);
     this.paiDoraUra.push(ura);
     this.paiDora.push(omote);
     this.output(this);
   }
 
+  kan(): MahjongPai {
+    const [ura, omote] = this.paiWanpai.splice(0, 2);
+    this.paiDoraUra.push(ura);
+    this.paiDora.push(omote);
+    return this.paiRinshan[0];
+  }
+
   tsumo({ user }: { user: MahjongUser }) {
-    user.setPaiTsumo(this.paiYama.splice(-1)[0]);
+    if (user.afterAnkan) {
+      user.setPaiTsumo(this.kan());
+      user.afterAnkan = false;
+    } else {
+      user.setPaiTsumo(this.paiYama.splice(-1)[0]);
+    }
+
     this.output(this);
   }
 
@@ -151,6 +171,7 @@ export class Mahjong {
   ) {
     const allMenzen = this.users.every((u) => u.paiCall.length === 0);
     const isTsumo = user.id === fromUser.id;
+
     const params: TokutenInput = {
       paiRest: user.paiHand,
       paiLast: pai,
@@ -176,7 +197,6 @@ export class Mahjong {
       },
     };
     this.result = new Tokuten({ ...params }).count();
-
     if (isTsumo) {
       user.score += this.result.pointSum + this.kyotk + (this.honba * 300);
       for (let i = 0; i < this.users.length; i++) {
@@ -228,12 +248,32 @@ export class Mahjong {
         user.score -= pntDcs;
       }
     }
-    console.log(this.users.map((e) => e.score));
     const isOya = isTenpai[this.kyoku % 4];
     this.nextGame({ isAgari: false, isOya });
   }
 
   naki({ user, set }: { user: MahjongUser; set: MahjongPaiSet }) {
+    if (set.type === PaiSetType.ANKAN) {
+      user.paiHand.push(user.paiTsumo!);
+      user.paiTsumo = undefined;
+      user.afterAnkan = true;
+    }
+    if (set.type === PaiSetType.KAKAN) {
+      user.paiHand.push(user.paiTsumo!);
+      user.paiTsumo = undefined;
+      user.afterAnkan = true;
+      user.paiCall = user.paiCall.filter((e) => {
+        const isMinko = e.type === PaiSetType.MINKO;
+        const isSame = e.pais[0].fmt === set.pais[0].fmt;
+        if (isMinko && isSame) {
+          return false;
+        }
+        return true;
+      });
+    }
+    user.paiHand = user.paiHand.filter((e) =>
+      !set.pais.map((e) => e.id).includes(e.id)
+    );
     user.paiCall.push(set);
     this.turnUserIdx = this.users.findIndex((e) => e.id === user.id);
     this.users.forEach((e) => e.isIppatsu = false);

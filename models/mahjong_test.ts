@@ -9,9 +9,9 @@ Deno.test("mahjong start", async () => {
   const mockOutput = (_: Mahjong) => {};
 
   let globalYama: Pai[] = [];
-  const globalGame: Mahjong = new Mahjong(userIds, mockOutput);
+  let globalGame: Mahjong = new Mahjong(userIds, mockOutput);
   await fixtures(({ name, params }) => {
-    console.log(name)
+    // console.log(name);
     switch (name) {
       case "INIT": {
         const { hai0, hai1, hai2, hai3, yama } = params.init!;
@@ -22,15 +22,6 @@ Deno.test("mahjong start", async () => {
         expect(globalGame.users.map((e) => e.paiHand.length)).toEqual(
           new Array(4).fill(13),
         );
-
-        // console.log("hai0")
-        // for (const p of hai0) {
-        //   console.log(globalYama.findIndex((e) => e.id === p.id));
-        // }
-        // console.log("users[0]")
-        // for (const p of globalGame.users[0].paiHand) {
-        //   console.log(globalYama.findIndex((e) => e.id === p.id));
-        // }
 
         expect(globalGame.users[0].paiHand).toEqual(
           hai0.map((e) => new MahjongPai(e.id)),
@@ -47,8 +38,16 @@ Deno.test("mahjong start", async () => {
         break;
       }
       case "AGARI": {
-        const { who, fromWho, paiLast, yakus, score, paiDora, paiDoraUra } =
-          params.agari!;
+        const {
+          who,
+          fromWho,
+          paiLast,
+          yakus,
+          score,
+          paiDora,
+          paiDoraUra,
+          owari,
+        } = params.agari!;
 
         globalGame.input(MahjongCommand.AGARI, {
           user: globalGame.users[who],
@@ -65,9 +64,7 @@ Deno.test("mahjong start", async () => {
         ) => ({
           ...e,
         })).sort((a, b) => a.str.localeCompare(b.str));
-        console.log(yakus);
-        console.log(score);
-        console.log(globalGame.paiWanpai);
+
         expect(globalGame.paiDora).toEqual(
           paiDora.map((e) => new MahjongPai(e.id)),
         );
@@ -82,6 +79,9 @@ Deno.test("mahjong start", async () => {
           ),
         );
         expect(globalGame.users.map((e) => e.score)).toEqual(score);
+        if (owari !== undefined) {
+          globalGame = new Mahjong(userIds, mockOutput);
+        }
         break;
       }
       case "TSUMO": {
@@ -106,7 +106,6 @@ Deno.test("mahjong start", async () => {
         break;
       }
       case "RICHI": {
-        console.log("RICHI");
         const { who, step, ten } = params.richi!;
         if (step == 2) {
           globalGame.input(MahjongCommand.RICHI, {
@@ -118,7 +117,6 @@ Deno.test("mahjong start", async () => {
         break;
       }
       case "NAKI": {
-        console.log("NAKI");
         const { who, set } = params.naki!;
         globalGame.input(MahjongCommand.NAKI, {
           user: globalGame.users[who],
@@ -136,16 +134,19 @@ Deno.test("mahjong start", async () => {
         break;
       }
       case "RYUKYOKU": {
-        console.log("OWARI");
-        const { score } = params.ryukyoku!;
+        const { score, owari } = params.ryukyoku!;
+        console.log("before", globalGame.users.map((e) => e.score));
         globalGame.input(MahjongCommand.OWARI, {
           user: globalGame.turnUser(),
           params: {},
         });
-
+        console.log("after", globalGame.users.map((e) => e.score));
         expect(globalGame.users.map((e) => e.score)).toEqual(score);
+        if (owari !== undefined) {
+          globalGame = new Mahjong(userIds, mockOutput);
+        }
         break;
       }
     }
-  }, 6);
+  }, 50);
 });
