@@ -17,6 +17,7 @@ export class MahjongUser extends User {
   isNagashimanganCalled: boolean = false;
   afterAnKan: boolean = false;
   afterMinKanKakan: boolean = false;
+  aboutToKakan: boolean = false;
 
   paiTsumo?: MahjongPai;
   constructor(
@@ -55,6 +56,7 @@ export class MahjongUser extends User {
     this.afterAnKan = false;
     this.afterMinKanKakan = false;
     this.isNagashimanganCalled = false;
+    this.aboutToKakan = false;
   }
 
   isTenpai(): boolean {

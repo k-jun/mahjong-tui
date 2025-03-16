@@ -1,6 +1,7 @@
 import { MahjongPai, MahjongPaiSet } from "./mahjong_pai.ts";
 import { MahjongUser } from "./mahjong_user.ts";
 import {
+  PaiSet,
   PaiSetType,
   Player,
   Tokuten,
@@ -187,6 +188,10 @@ export class Mahjong {
       this.kandora();
       user.afterMinKanKakan = false;
     }
+    if (user.aboutToKakan) {
+      this.users.forEach((e) => e.isIppatsu = false);
+      user.aboutToKakan = false
+    }
     if (user.id !== this.turnUser().id) {
       throw new Error("when dahai called, not your turn");
     }
@@ -362,7 +367,11 @@ export class Mahjong {
     user.paiCall.push(set);
     this.turnUserIdx = userIdx;
 
-    this.users.forEach((e) => e.isIppatsu = false);
+    if (set.type === PaiSetType.KAKAN && user.aboutToKakan === false) {
+      user.aboutToKakan = true;
+    } else {
+      this.users.forEach((e) => e.isIppatsu = false);
+    }
   }
 
   input(
@@ -397,8 +406,10 @@ export class Mahjong {
         break;
       }
       case MahjongCommand.AGARI: {
+        // console.log("before", this.users.map((e) => e.score));
         const { paiAgari, fromUser, isChankan } = params.agari!;
         this.agari({ user, fromUser, pai: paiAgari, isChankan });
+        // console.log("after", this.users.map((e) => e.score));
         break;
       }
       case MahjongCommand.RICHI: {
