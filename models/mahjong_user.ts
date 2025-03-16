@@ -1,7 +1,7 @@
 import { MahjongPai, MahjongPaiSet } from "./mahjong_pai.ts";
 import { User } from "./user.ts";
-
-import { PaiSetType, Player, Shanten } from "@k-jun/mahjong";
+import { AllKind } from "./constants.ts";
+import { PaiSetType, Player, Shanten, ShantenInput } from "@k-jun/mahjong";
 
 export class MahjongUser extends User {
   paiHand: MahjongPai[];
@@ -13,7 +13,10 @@ export class MahjongUser extends User {
   isRichi: boolean = false;
   isDabururichi: boolean = false;
   isIppatsu: boolean = false;
-  afterAnkan: boolean = false;
+  isRinshankaiho: boolean = false;
+  isNagashimanganCalled: boolean = false;
+  afterAnKan: boolean = false;
+  afterMinKanKakan: boolean = false;
 
   paiTsumo?: MahjongPai;
   constructor(
@@ -49,6 +52,33 @@ export class MahjongUser extends User {
     this.isRichi = false;
     this.isDabururichi = false;
     this.isIppatsu = false;
+    this.afterAnKan = false;
+    this.afterMinKanKakan = false;
+    this.isNagashimanganCalled = false;
+  }
+
+  isTenpai(): boolean {
+    const count: Map<string, number> = new Map();
+    for (const pai of this.paiHand) {
+      count.set(pai.fmt, (count.get(pai.fmt) ?? 0) + 1);
+    }
+
+    for (const lastPai of AllKind) {
+      const params: ShantenInput = {
+        paiRest: [...this.paiHand, lastPai],
+        paiSets: this.paiCall,
+      };
+      if (new Shanten(params).count() === -1 && count.get(lastPai.fmt) !== 4) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  isNagashimangan(): boolean {
+    return this.paiKawa.every((p) => p.isYaochuHai()) &&
+      this.isNagashimanganCalled === false;
   }
 
   canChi(paiCall: MahjongPai): MahjongPaiSet[] {

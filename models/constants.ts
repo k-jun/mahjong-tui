@@ -1,5 +1,42 @@
 import { MahjongPai } from "./mahjong_pai.ts";
 
+export const AllKind: MahjongPai[] = [
+  new MahjongPai(0), // m1
+  new MahjongPai(4), // m2
+  new MahjongPai(8), // m3
+  new MahjongPai(12), // m4
+  new MahjongPai(16), // m5 red
+  new MahjongPai(20), // m6
+  new MahjongPai(24), // m7
+  new MahjongPai(28), // m8
+  new MahjongPai(32), // m9
+  new MahjongPai(36), // p1
+  new MahjongPai(40), // p2
+  new MahjongPai(44), // p3
+  new MahjongPai(48), // p4
+  new MahjongPai(52), // p5 red
+  new MahjongPai(56), // p6
+  new MahjongPai(60), // p7
+  new MahjongPai(64), // p8
+  new MahjongPai(68), // p9
+  new MahjongPai(72), // s1
+  new MahjongPai(76), // s2
+  new MahjongPai(80), // s3
+  new MahjongPai(84), // s4
+  new MahjongPai(88), // s5 red
+  new MahjongPai(92), // s6
+  new MahjongPai(96), // s7
+  new MahjongPai(100), // s8
+  new MahjongPai(104), // s9
+  new MahjongPai(108), // z1 east
+  new MahjongPai(112), // z2 south
+  new MahjongPai(116), // z3 west
+  new MahjongPai(120), // z4 north
+  new MahjongPai(124), // z5 white
+  new MahjongPai(128), // z6 green
+  new MahjongPai(132) // z7 red
+]
+
 export const AllPais: MahjongPai[] = [
     new MahjongPai(0), // m1
     new MahjongPai(1), // m1

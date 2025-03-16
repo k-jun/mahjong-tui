@@ -47,14 +47,15 @@ Deno.test("mahjong start", async () => {
           paiDora,
           paiDoraUra,
           owari,
+          ba,
         } = params.agari!;
-
         globalGame.input(MahjongCommand.AGARI, {
           user: globalGame.users[who],
           params: {
             agari: {
               paiAgari: new MahjongPai(paiLast.id),
               fromUser: globalGame.users[fromWho],
+              isChankan: yakus.map((e) => e.str).includes("槍槓"),
             },
           },
         });
@@ -78,6 +79,7 @@ Deno.test("mahjong start", async () => {
             a.str.localeCompare(b.str)
           ),
         );
+
         expect(globalGame.users.map((e) => e.score)).toEqual(score);
         if (owari !== undefined) {
           globalGame = new Mahjong(userIds, mockOutput);
@@ -134,13 +136,20 @@ Deno.test("mahjong start", async () => {
         break;
       }
       case "RYUKYOKU": {
-        const { score, owari } = params.ryukyoku!;
-        console.log("before", globalGame.users.map((e) => e.score));
+        const { score, owari, type, ba } = params.ryukyoku!;
+        let isNagashi = false;
+        if (
+          type === "kaze4" || type === "yao9" || type === "reach4" ||
+          type === "ron3" || type === "kan4"
+        ) {
+          isNagashi = true;
+        }
         globalGame.input(MahjongCommand.OWARI, {
           user: globalGame.turnUser(),
-          params: {},
+          params: {
+            owari: { nagashi: isNagashi },
+          },
         });
-        console.log("after", globalGame.users.map((e) => e.score));
         expect(globalGame.users.map((e) => e.score)).toEqual(score);
         if (owari !== undefined) {
           globalGame = new Mahjong(userIds, mockOutput);
@@ -148,5 +157,5 @@ Deno.test("mahjong start", async () => {
         break;
       }
     }
-  }, 50);
+  });
 });

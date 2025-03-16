@@ -102,6 +102,7 @@ export const fixtures = async (
       if (text == "") {
         continue;
       }
+      console.log("f.name", f.name);
       const dom = new JSDOM(text, { contentType: "text/xml" });
       let state: state = {
         enable: false,
@@ -371,8 +372,9 @@ const _agari = (
   const who = Number(attrs.get("who"));
   const sc = attrs.get("sc")?.split(",").map(Number) ?? [];
   const ba = attrs.get("ba") ?? "";
-  const owari =
-    e.attributes.getNamedItem("owari")?.value.split(",").map(Number);
+  const owari = e.attributes.getNamedItem("owari")?.value.split(",").map(
+    Number,
+  );
   const score = [];
   for (let i = 0; i < sc.length; i += 2) {
     const bfr = sc[i] * 100;
@@ -554,8 +556,9 @@ const _ryukyoku = (
   const ba = e.attributes.getNamedItem("ba")!.value;
   const sc = e.attributes.getNamedItem("sc")!.value.split(",").map(Number);
   const type = e.attributes.getNamedItem("type")?.value ?? "";
-  const owari =
-    e.attributes.getNamedItem("owari")?.value.split(",").map(Number);
+  const owari = e.attributes.getNamedItem("owari")?.value.split(",").map(
+    Number,
+  );
   const score = [];
   for (let i = 0; i < sc.length; i += 2) {
     const bfr = sc[i] * 100;
