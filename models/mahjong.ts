@@ -1,6 +1,9 @@
-import { MahjongPai, MahjongPaiSet } from "./mahjong_pai.ts";
+// import { Pai, PaiSet } from "./mahjong_pai.ts";
 import { MahjongUser } from "./mahjong_user.ts";
 import {
+  Pai,
+  PaiKaze,
+  PaiSet,
   PaiSetType,
   Player,
   Tokuten,
@@ -24,12 +27,12 @@ export type MahjongAction = {
 };
 
 export class Mahjong {
-  paiYama: MahjongPai[] = [];
-  paiRinshan: MahjongPai[] = [];
-  paiWanpai: MahjongPai[] = [];
-  paiBakaze: MahjongPai = new MahjongPai("z1");
-  paiDora: MahjongPai[] = [];
-  paiDoraUra: MahjongPai[] = [];
+  paiYama: Pai[] = [];
+  paiRinshan: Pai[] = [];
+  paiWanpai: Pai[] = [];
+  paiBakaze: Pai = new Pai("z1");
+  paiDora: Pai[] = [];
+  paiDoraUra: Pai[] = [];
   users: MahjongUser[] = [];
   turnUserIdx: number = 0;
   actions: MahjongAction[] = [];
@@ -43,19 +46,6 @@ export class Mahjong {
   isNext: boolean = false;
   honbaRemove: boolean = true;
 
-  kazes = [
-    new MahjongPai("z1"), // 108 東
-    new MahjongPai("z2"), // 112 南
-    new MahjongPai("z3"), // 116 西
-    new MahjongPai("z4"), // 120 北
-  ];
-  players = [
-    Player.JICHA,
-    Player.SHIMOCHA,
-    Player.TOIMEN,
-    Player.KAMICHA,
-  ];
-
   output: (mjg: Mahjong) => void;
 
   constructor(
@@ -64,7 +54,7 @@ export class Mahjong {
   ) {
     const users: MahjongUser[] = [];
     userIds.forEach((id, idx) => {
-      const paiJikaze = this.kazes[idx];
+      const paiJikaze = PaiKaze[idx];
       users.push(new MahjongUser({ id, paiJikaze }));
     });
     this.users = users;
@@ -108,7 +98,7 @@ export class Mahjong {
     return this.users[this.turnUserIdx];
   }
 
-  reset(paiYama: MahjongPai[]) {
+  reset(paiYama: Pai[]) {
     if (this.isNext) {
       this.updateKyokuHonba();
       this.isNext = false;
@@ -124,10 +114,10 @@ export class Mahjong {
     this.turnUserIdx = this.kyoku % 4;
     this.users.forEach((e) => e.reset());
 
-    this.paiBakaze = this.kazes[Math.floor(this.kyoku / 4)];
+    this.paiBakaze = PaiKaze[Math.floor(this.kyoku / 4)];
 
     for (let i = 0; i < 4; i++) {
-      this.users[(i + this.kyoku) % 4].paiJikaze = this.kazes[i];
+      this.users[(i + this.kyoku) % 4].paiJikaze = PaiKaze[i];
     }
 
     for (let i = 0; i < 3; i++) {
@@ -150,7 +140,7 @@ export class Mahjong {
     this.output(this);
   }
 
-  ankan(): MahjongPai {
+  ankan(): Pai {
     const [ura, omote] = this.paiWanpai.splice(0, 2);
     this.paiDoraUra.push(ura);
     this.paiDora.push(omote);
@@ -163,7 +153,7 @@ export class Mahjong {
     this.paiDora.push(omote);
   }
 
-  rinshanTsumo(): MahjongPai {
+  rinshanTsumo(): Pai {
     return this.paiRinshan.splice(0, 1)[0];
   }
 
@@ -182,7 +172,7 @@ export class Mahjong {
     this.output(this);
   }
 
-  dahai({ user, pai }: { user: MahjongUser; pai: MahjongPai }) {
+  dahai({ user, pai }: { user: MahjongUser; pai: Pai }) {
     if (user.afterMinKanKakan) {
       this.kandora();
       user.afterMinKanKakan = false;
@@ -230,7 +220,7 @@ export class Mahjong {
     { user, fromUser, pai, isChankan }: {
       user: MahjongUser;
       fromUser: MahjongUser;
-      pai: MahjongPai;
+      pai: Pai;
       isChankan: boolean;
     },
   ) {
@@ -243,13 +233,13 @@ export class Mahjong {
       paiSets: user.paiCall,
       paiBakaze: this.paiBakaze,
       paiJikaze: user.paiJikaze,
-      paiDora: this.paiDora.map((e) => new MahjongPai(e.next().id)),
+      paiDora: this.paiDora.map((e) => e.next()),
       paiDoraUra: (user.isRichi || user.isDabururichi)
-        ? this.paiDoraUra.map((e) => new MahjongPai(e.next().id))
+        ? this.paiDoraUra.map((e) => e.next())
         : [],
       options: {
         isTsumo: isTsumo,
-        isOya: user.paiJikaze.id === this.kazes[0].id,
+        isOya: user.paiJikaze.id === PaiKaze[0].id,
         isRichi: user.isRichi,
         isDabururichi: user.isDabururichi,
         isIppatsu: user.isIppatsu,
@@ -368,7 +358,7 @@ export class Mahjong {
     this.nextGame({ isAgari: false, isOya });
   }
 
-  naki({ user, set }: { user: MahjongUser; set: MahjongPaiSet }) {
+  naki({ user, set }: { user: MahjongUser; set: PaiSet }) {
     if (set.type === PaiSetType.ANKAN) {
       if (user.afterMinKanKakan) {
         this.kandora();
@@ -424,14 +414,14 @@ export class Mahjong {
       params: {
         agari?: {
           fromUser: MahjongUser;
-          paiAgari: MahjongPai;
+          paiAgari: Pai;
           isChankan: boolean;
         };
         dahai?: {
-          paiDahai: MahjongPai;
+          paiDahai: Pai;
         };
         naki?: {
-          set: MahjongPaiSet;
+          set: PaiSet;
         };
         owari?: {
           nagashi: boolean;

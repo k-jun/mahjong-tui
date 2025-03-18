@@ -1,7 +1,6 @@
 {
   "version": "4",
   "specifiers": {
-    "jsr:@k-jun/mahjong@~0.4.9": "0.4.9",
     "jsr:@std/assert@^1.0.10": "1.0.11",
     "jsr:@std/assert@^1.0.11": "1.0.11",
     "jsr:@std/expect@*": "1.0.13",
@@ -13,13 +12,6 @@
     "npm:socket.io-client@*": "4.8.1"
   },
   "jsr": {
-    "@k-jun/mahjong@0.4.9": {
-      "integrity": "2bafed7dba78aef2313201cb4c3d75b3df9bee96f84eca3e109b2529546462f0",
-      "dependencies": [
-        "npm:@types/jsdom",
-        "npm:jsdom"
-      ]
-    },
     "@std/assert@1.0.10": {
       "integrity": "59b5cbac5bd55459a19045d95cc7c2ff787b4f8527c0dd195078ff6f9481fbb3",
       "dependencies": [
@@ -434,10 +426,5 @@
     "https://deno.land/x/socket_io@0.2.1/vendor/deno.land/x/redis@v0.27.1/vendor/https/deno.land/std/async/deferred.ts": "7391210927917113e04247ef013d800d54831f550e9a0b439244675c56058c55",
     "https://deno.land/x/socket_io@0.2.1/vendor/deno.land/x/redis@v0.27.1/vendor/https/deno.land/std/async/delay.ts": "c7e2604f7cb5ef00d595de8dd600604902d5be03a183b515b3d6d4bbb48e1700",
     "https://deno.land/x/socket_io@0.2.1/vendor/deno.land/x/redis@v0.27.1/vendor/https/deno.land/std/io/buffer.ts": "8c5f84b7ecf71bc3e12aa299a9fae9e72e495db05281fcdd62006ecd3c5ed3f3"
-  },
-  "workspace": {
-    "dependencies": [
-      "jsr:@k-jun/mahjong@~0.4.9"
-    ]
   }
 }

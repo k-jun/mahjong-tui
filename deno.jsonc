@@ -1,0 +1,6 @@
+{
+  "imports": {
+    // "@k-jun/mahjong": "jsr:@k-jun/mahjong@^0.4.9"
+    "@k-jun/mahjong": "../mahjong/mod.ts"
+  }
+}

@@ -1,13 +1,19 @@
-import { MahjongPai, MahjongPaiSet } from "./mahjong_pai.ts";
 import { User } from "./user.ts";
-import { AllKind } from "./constants.ts";
-import { PaiSetType, Player, Shanten, ShantenInput } from "@k-jun/mahjong";
+import { PaiAllKind } from "@k-jun/mahjong";
+import {
+  Pai,
+  PaiSet,
+  PaiSetType,
+  Player,
+  Shanten,
+  ShantenInput,
+} from "@k-jun/mahjong";
 
 export class MahjongUser extends User {
-  paiHand: MahjongPai[];
-  paiCall: MahjongPaiSet[];
-  paiKawa: MahjongPai[];
-  paiJikaze: MahjongPai;
+  paiHand: Pai[];
+  paiCall: PaiSet[];
+  paiKawa: Pai[];
+  paiJikaze: Pai;
   score: number = 0;
 
   isRichi: boolean = false;
@@ -19,11 +25,11 @@ export class MahjongUser extends User {
   afterMinKanKakan: boolean = false;
   aboutToKakan: boolean = false;
 
-  paiTsumo?: MahjongPai;
+  paiTsumo?: Pai;
   constructor(
     { id, paiJikaze }: {
       id: string;
-      paiJikaze: MahjongPai;
+      paiJikaze: Pai;
     },
   ) {
     super(id);
@@ -34,11 +40,11 @@ export class MahjongUser extends User {
     this.score = 25000;
   }
 
-  setHandPais(pais: MahjongPai[]) {
+  setHandPais(pais: Pai[]) {
     this.paiHand.push(...pais);
   }
 
-  setPaiTsumo(pai: MahjongPai) {
+  setPaiTsumo(pai: Pai) {
     if (this.paiTsumo) {
       throw new Error("Already tsumoed");
     }
@@ -65,7 +71,7 @@ export class MahjongUser extends User {
       count.set(pai.fmt, (count.get(pai.fmt) ?? 0) + 1);
     }
 
-    for (const lastPai of AllKind) {
+    for (const lastPai of PaiAllKind) {
       const params: ShantenInput = {
         paiRest: [...this.paiHand, lastPai],
         paiSets: this.paiCall,
@@ -83,13 +89,13 @@ export class MahjongUser extends User {
       this.isNagashimanganCalled === false;
   }
 
-  canChi(paiCall: MahjongPai): MahjongPaiSet[] {
+  canChi(paiCall: Pai): PaiSet[] {
     if (paiCall.isJihai()) {
       return [];
     }
 
-    const result: MahjongPaiSet[] = [];
-    const counts = new Map<number, MahjongPai[]>();
+    const result: PaiSet[] = [];
+    const counts = new Map<number, Pai[]>();
     const paiAll = [...this.paiHand];
     // the red pai comes first, as the red pai has the smallest id.
     paiAll.sort((a, b) => a.id - b.id);
@@ -109,7 +115,7 @@ export class MahjongUser extends User {
       }
 
       result.push(
-        new MahjongPaiSet({
+        new PaiSet({
           paiRest: [a[idx1], b[idx2]],
           paiCall: [paiCall],
           type: PaiSetType.MINSHUN,
@@ -144,7 +150,7 @@ export class MahjongUser extends User {
     return result;
   }
 
-  canPon(paiCall: MahjongPai, fromWho: Player): MahjongPaiSet[] {
+  canPon(paiCall: Pai, fromWho: Player): PaiSet[] {
     const result = [];
 
     const paiHits = this.paiHand.filter((e) => e.fmt == paiCall.fmt);
@@ -152,7 +158,7 @@ export class MahjongUser extends User {
     paiHits.sort((a, b) => a.id - b.id);
     if (paiHits.length >= 2) {
       result.push(
-        new MahjongPaiSet({
+        new PaiSet({
           paiCall: [paiCall],
           paiRest: paiHits.slice(0, 2),
           type: PaiSetType.MINKO,
@@ -163,7 +169,7 @@ export class MahjongUser extends User {
 
     if (paiHits.length >= 3 && paiHits.some((e) => e.isAka())) {
       result.push(
-        new MahjongPaiSet({
+        new PaiSet({
           paiCall: [paiCall],
           paiRest: paiHits.slice(1, 3),
           type: PaiSetType.MINKO,
@@ -175,13 +181,13 @@ export class MahjongUser extends User {
     return result;
   }
 
-  canMinkan(paiCall: MahjongPai, fromWho: Player): MahjongPaiSet[] {
+  canMinkan(paiCall: Pai, fromWho: Player): PaiSet[] {
     const result = [];
     const paiHits = this.paiHand.filter((e) => e.fmt == paiCall.fmt);
 
     if (paiHits.length >= 3) {
       result.push(
-        new MahjongPaiSet({
+        new PaiSet({
           paiRest: paiHits,
           paiCall: [paiCall],
           type: PaiSetType.MINKAN,
@@ -192,11 +198,11 @@ export class MahjongUser extends User {
     return result;
   }
 
-  canAnkan(): MahjongPaiSet[] {
+  canAnkan(): PaiSet[] {
     const result = [];
 
     const paiAll = [...this.paiHand, ...(this.paiTsumo ? [this.paiTsumo] : [])];
-    const counts: { [key: string]: MahjongPai[] } = {};
+    const counts: { [key: string]: Pai[] } = {};
     for (const pai of paiAll) {
       if (!counts[pai.fmt]) {
         counts[pai.fmt] = [];
@@ -207,7 +213,7 @@ export class MahjongUser extends User {
     for (const [_, value] of Object.entries(counts)) {
       if (value.length >= 4) {
         result.push(
-          new MahjongPaiSet({
+          new PaiSet({
             paiRest: value.slice(0, 4),
             type: PaiSetType.ANKAN,
           }),
@@ -218,7 +224,7 @@ export class MahjongUser extends User {
     return result;
   }
 
-  canKakan(): MahjongPaiSet[] {
+  canKakan(): PaiSet[] {
     if (!this.paiTsumo) {
       return [];
     }
@@ -229,7 +235,7 @@ export class MahjongUser extends User {
     );
     if (paiSet) {
       result.push(
-        new MahjongPaiSet({
+        new PaiSet({
           paiCall: [
             ...paiSet.paiCall,
             ...(this.paiTsumo ? [this.paiTsumo] : []),
@@ -242,7 +248,7 @@ export class MahjongUser extends User {
     return result;
   }
 
-  canRichi(): MahjongPai[] {
+  canRichi(): Pai[] {
     if (!this.paiTsumo) {
       return [];
     }
@@ -267,7 +273,7 @@ export class MahjongUser extends User {
     return result;
   }
 
-  dahai({ pai }: { pai: MahjongPai }) {
+  dahai({ pai }: { pai: Pai }) {
     if (this.isRichi && this.paiTsumo?.id !== pai.id) {
       throw new Error("when dahai called, paiTsumo and paiDahai are different");
     }
