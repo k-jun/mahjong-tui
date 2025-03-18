@@ -1,7 +1,6 @@
 import { MahjongPai, MahjongPaiSet } from "./mahjong_pai.ts";
 import { MahjongUser } from "./mahjong_user.ts";
 import {
-  PaiSet,
   PaiSetType,
   Player,
   Tokuten,
@@ -190,7 +189,7 @@ export class Mahjong {
     }
     if (user.aboutToKakan) {
       this.users.forEach((e) => e.isIppatsu = false);
-      user.aboutToKakan = false
+      user.aboutToKakan = false;
     }
     if (user.id !== this.turnUser().id) {
       throw new Error("when dahai called, not your turn");
@@ -200,6 +199,31 @@ export class Mahjong {
     user.isIppatsu = false;
     user.isRinshankaiho = false;
     this.nextTurn();
+  }
+
+  isPao({ user }: { user: MahjongUser }): Player {
+    const yakus = this.result!.yakus.map((e) => e.str);
+    if (yakus.includes("大三元")) {
+      const pais = user.paiCall.map((e) => e.pais[0].fmt);
+      if (pais.includes("z5") && pais.includes("z6") && pais.includes("z7")) {
+        const set = user.paiCall.findLast((e) => e.pais[0].isSangenHai());
+        return set!.fromWho;
+      }
+    }
+
+    if (yakus.includes("大四喜")) {
+      const pais = user.paiCall.map((e) => e.pais[0].fmt);
+      if (
+        pais.includes("z1") && pais.includes("z2") && pais.includes("z3") &&
+        pais.includes("z4")
+      ) {
+        const set = user.paiCall.findLast((e) =>
+          e.pais[0].isJihai() && !e.pais[0].isSangenHai()
+        );
+        return set!.fromWho;
+      }
+    }
+    return Player.JICHA;
   }
 
   agari(
@@ -229,33 +253,49 @@ export class Mahjong {
         isRichi: user.isRichi,
         isDabururichi: user.isDabururichi,
         isIppatsu: user.isIppatsu,
-        isHaitei: isTsumo && this.paiRemain() === 0,
+        isHaitei: isTsumo && this.paiRemain() === 0 && !user.isRinshankaiho,
         isHoutei: !isTsumo && this.paiRemain() === 0,
         isChankan: isChankan,
         isRinshankaiho: user.isRinshankaiho,
-        isChiho: user.paiKawa.length === 0 && allMenzen,
-        isTenho: this.paiRemain() === 69,
+        isChiho: isTsumo && this.paiRemain() !== 69 &&
+          user.paiKawa.length === 0 && allMenzen,
+        isTenho: isTsumo && this.paiRemain() === 69,
       },
     };
     this.result = new Tokuten({ ...params }).count();
 
     const honba = this.honbaRemove ? 0 : this.honba;
+    const playerPao = this.isPao({ user });
+
+    user.score += this.result.pointSum + this.kyotk + (honba * 300);
     if (isTsumo) {
-      user.score += this.result.pointSum + this.kyotk + (honba * 300);
-      for (let i = 0; i < this.users.length; i++) {
-        if (this.users[i].id === user.id) {
-          continue;
-        }
-        if ((this.kyoku % 4) === i) {
-          this.users[i].score -= this.result.pointPrt + (honba * 100);
-        } else {
-          this.users[i].score -= this.result.pointCdn + (honba * 100);
+      if (playerPao !== Player.JICHA) {
+        const userIdx = this.users.findIndex((e) => e.id === user.id);
+        this.users[(userIdx + playerPao) % 4].score -= this.result.pointSum +
+          (honba * 300);
+      } else {
+        for (let i = 0; i < this.users.length; i++) {
+          if (this.users[i].id === user.id) {
+            continue;
+          }
+          if ((this.kyoku % 4) === i) {
+            this.users[i].score -= this.result.pointPrt + (honba * 100);
+          } else {
+            this.users[i].score -= this.result.pointCdn + (honba * 100);
+          }
         }
       }
     } else {
-      user.score += this.result.pointSum + this.kyotk + (honba * 300);
-      fromUser.score -= this.result.pointSum + (honba * 300);
+      if (playerPao !== Player.JICHA) {
+        const userIdx = this.users.findIndex((e) => e.id === user.id);
+        this.users[(userIdx + playerPao) % 4].score -=
+          (this.result.pointSum / 2) + (honba * 300);
+        fromUser.score -= this.result.pointSum / 2;
+      } else {
+        fromUser.score -= this.result.pointSum + (honba * 300);
+      }
     }
+
     this.kyotk = 0;
     const isOya = user.id === this.users[this.kyoku % 4].id;
     this.nextGame({ isAgari: true, isOya });
@@ -360,7 +400,10 @@ export class Mahjong {
     }
 
     const userIdx = this.users.findIndex((e) => e.id === user.id);
-    this.users[(userIdx + set.fromWho) % 4].isNagashimanganCalled = true;
+    if (set.fromWho !== Player.JICHA) {
+      this.users[(userIdx + set.fromWho) % 4].isNagashimanganCalled = true;
+    }
+
     user.paiHand = user.paiHand.filter((e) =>
       !set.pais.map((e) => e.id).includes(e.id)
     );
@@ -406,10 +449,8 @@ export class Mahjong {
         break;
       }
       case MahjongCommand.AGARI: {
-        // console.log("before", this.users.map((e) => e.score));
         const { paiAgari, fromUser, isChankan } = params.agari!;
         this.agari({ user, fromUser, pai: paiAgari, isChankan });
-        // console.log("after", this.users.map((e) => e.score));
         break;
       }
       case MahjongCommand.RICHI: {

@@ -1,5 +1,5 @@
 {
   "imports": {
-    "@k-jun/mahjong": "jsr:@k-jun/mahjong@^0.4.8"
+    "@k-jun/mahjong": "jsr:@k-jun/mahjong@^0.4.9"
   }
 }

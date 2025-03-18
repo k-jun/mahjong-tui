@@ -1,7 +1,7 @@
 {
   "version": "4",
   "specifiers": {
-    "jsr:@k-jun/mahjong@~0.4.8": "0.4.8",
+    "jsr:@k-jun/mahjong@~0.4.9": "0.4.9",
     "jsr:@std/assert@^1.0.10": "1.0.11",
     "jsr:@std/assert@^1.0.11": "1.0.11",
     "jsr:@std/expect@*": "1.0.13",
@@ -13,8 +13,8 @@
     "npm:socket.io-client@*": "4.8.1"
   },
   "jsr": {
-    "@k-jun/mahjong@0.4.8": {
-      "integrity": "c00d2e0cd51798a4b86492097dbf9438f859229046f9387741987d8c5e8eec1f",
+    "@k-jun/mahjong@0.4.9": {
+      "integrity": "2bafed7dba78aef2313201cb4c3d75b3df9bee96f84eca3e109b2529546462f0",
       "dependencies": [
         "npm:@types/jsdom",
         "npm:jsdom"
@@ -437,7 +437,7 @@
   },
   "workspace": {
     "dependencies": [
-      "jsr:@k-jun/mahjong@~0.4.8"
+      "jsr:@k-jun/mahjong@~0.4.9"
     ]
   }
 }
