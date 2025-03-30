@@ -81,6 +81,9 @@ type state = {
   oya: number;
   kyoku: number;
   seed?: YamaGenerator;
+  isAfterAnKan?: boolean;
+  isAfterMinKan?: boolean;
+  isAfterKaKan?: boolean;
 };
 
 export const fixtures = async (
@@ -128,7 +131,7 @@ export const fixtures = async (
             state = { ...state, ..._init(e, state, input) };
             break;
           case "N":
-            _naki(e, input);
+            _naki(e, state, input);
             break;
           case "DORA":
             _dora(e, input);
@@ -149,13 +152,13 @@ export const fixtures = async (
               /^[TUVW](\d{1,3})$/.test(e.tagName) &&
               Number(e.tagName.slice(1)) <= 135
             ) {
-              _tsumo(e, input);
+              _tsumo(e, state, input);
             }
             if (
               /^[DEFG](\d{1,3})$/.test(e.tagName) &&
               Number(e.tagName.slice(1)) <= 135
             ) {
-              _dahai(e, input);
+              _dahai(e, state, input);
             }
             break;
         }
@@ -225,19 +228,33 @@ const _init = (
 
 const _tsumo = (
   e: Element,
+  s: state,
   input: ({ name, params }: { name: string; params: inputParams }) => void,
 ) => {
   const who = ["T", "U", "V", "W"].findIndex((x) => x == e.tagName[0]);
-  input({
-    name: "TSUMO",
-    params: {
-      tsumo: { who, hai: new Pai(Number(e.tagName.slice(1))) },
-    },
-  });
+  if (s.isAfterAnKan || s.isAfterMinKan || s.isAfterKaKan) {
+    input({
+      name: "RNSHN",
+      params: {
+        tsumo: { who, hai: new Pai(Number(e.tagName.slice(1))) },
+      },
+    });
+    s.isAfterAnKan = false;
+    s.isAfterMinKan = false;
+    s.isAfterKaKan = false;
+  } else {
+    input({
+      name: "TSUMO",
+      params: {
+        tsumo: { who, hai: new Pai(Number(e.tagName.slice(1))) },
+      },
+    });
+  }
 };
 
 const _dahai = (
   e: Element,
+  s: state,
   input: ({ name, params }: { name: string; params: inputParams }) => void,
 ) => {
   const who = ["D", "E", "F", "G"].findIndex((x) => x == e.tagName[0]);
@@ -251,15 +268,26 @@ const _dahai = (
 
 const _naki = (
   e: Element,
+  s: state,
   input: ({ name, params }: { name: string; params: inputParams }) => void,
 ) => {
   const who = e.attributes.getNamedItem("who")!.value;
+  const set = _parseM(Number(e.attributes.getNamedItem("m")!.value));
+  if (set.type == PaiSetType.KAKAN) {
+    s.isAfterKaKan = true;
+  }
+  if (set.type == PaiSetType.ANKAN) {
+    s.isAfterAnKan = true;
+  }
+  if (set.type == PaiSetType.MINKAN) {
+    s.isAfterMinKan = true;
+  }
   input({
     name: "NAKI",
     params: {
       naki: {
         who: Number(who),
-        set: _parseM(Number(e.attributes.getNamedItem("m")!.value)),
+        set,
       },
     },
   });

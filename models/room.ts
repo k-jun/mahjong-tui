@@ -3,25 +3,25 @@ import { User } from "./user.ts";
 const defaultRoomSize = 4;
 
 export class Room {
-    users: User[];
+  users: User[];
 
-    constructor() {
-        this.users = [];
-    }
+  constructor() {
+    this.users = [];
+  }
 
-    isOpen(): boolean {
-        return this.users.length < defaultRoomSize;
-    }
+  isOpen(): boolean {
+    return this.users.length < defaultRoomSize;
+  }
 
-    join(id: string) {
-        this.users.push(new User(id));
-    }
+  join(id: string) {
+    this.users.push(new User(id));
+  }
 
-    leave(id: string) {
-        this.users = this.users.filter((user) => user.id !== id);
-    }
+  leave(id: string) {
+    this.users = this.users.filter((user) => user.id !== id);
+  }
 
-    size() {
-        return this.users.length;
-    }
+  size() {
+    return this.users.length;
+  }
 }

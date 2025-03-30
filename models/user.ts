@@ -1,6 +1,6 @@
 export class User {
-    id: string;
-    constructor(id: string = "") {
-        this.id = id;
-    }
+  id: string;
+  constructor(id: string = "") {
+    this.id = id;
+  }
 }

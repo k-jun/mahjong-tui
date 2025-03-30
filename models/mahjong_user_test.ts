@@ -7,11 +7,12 @@ Deno.test("MahjongUser", async (t) => {
   await t.step("should initialize with empty arrays", () => {
     const user = new MahjongUser({
       id: "test-user",
+      point: 25000,
       paiJikaze: new Pai("z1"),
     });
     expect(user.id).toBe("test-user");
-    expect(user.paiHand).toEqual([]);
-    expect(user.paiCall).toEqual([]);
+    expect(user.paiRest).toEqual([]);
+    expect(user.paiSets).toEqual([]);
     expect(user.paiKawa).toEqual([]);
     expect(user.paiTsumo).toBeUndefined();
   });
@@ -19,61 +20,70 @@ Deno.test("MahjongUser", async (t) => {
   await t.step("should set hand pais correctly", () => {
     const user = new MahjongUser({
       id: "test-user",
+      point: 25000,
       paiJikaze: new Pai("z1"),
     });
-    const pais = [new Pai(0), new Pai(1)];
+    const pais = [new Pai(0)];
 
-    user.setHandPais(pais);
-    expect(user.paiHand).toEqual(pais);
+    user.setPaiPais({ pais });
+    expect(user.paiRest).toEqual(pais);
   });
 
   await t.step("should set tsumo pai correctly", () => {
     const user = new MahjongUser({
       id: "test-user",
+      point: 25000,
       paiJikaze: new Pai("z1"),
     });
     const tsumoPai = new Pai(0);
 
-    user.setPaiTsumo(tsumoPai);
+    user.setPaiTsumo({ pai: tsumoPai });
     expect(user.paiTsumo).toEqual(tsumoPai);
   });
 
   await t.step("should throw error when setting tsumo pai twice", () => {
     const user = new MahjongUser({
       id: "test-user",
+      point: 25000,
       paiJikaze: new Pai("z1"),
     });
     const tsumoPai = new Pai(0);
 
-    user.setPaiTsumo(tsumoPai);
-    expect(() => user.setPaiTsumo(tsumoPai)).toThrow("Already tsumoed");
+    user.setPaiTsumo({ pai: tsumoPai });
+    expect(() => user.setPaiTsumo({ pai: tsumoPai })).toThrow(
+      "invalid this.paiTsumo when setPaiTsumo called",
+    );
   });
 
   await t.step("should return empty array for jihai pai in canChi", () => {
     const user = new MahjongUser({
       id: "test-user",
+      point: 25000,
       paiJikaze: new Pai("z1"),
     });
     const jihaiPai = new Pai("z1"); // East wind
-    expect(user.canChi(jihaiPai)).toEqual([]);
+    expect(user.canChi({ pai: jihaiPai })).toEqual([]);
   });
 
   await t.step("should return valid chi combinations", () => {
     const user = new MahjongUser({
       id: "test-user",
+      point: 25000,
       paiJikaze: new Pai("z1"),
     });
     // Set up hand with 3-4 of manzu
-    user.setHandPais([
-      new Pai("m3"),
-      new Pai("m4"),
-      new Pai("m6"),
-      new Pai("m7"),
-    ]);
+    user.setPaiPais({
+      pais: [
+        new Pai("m3"),
+        new Pai("m4"),
+        new Pai("m6"),
+        new Pai("m7"),
+      ]
+    });
 
     // Try to chi a 5 manzu
     const chiPai = new Pai("m5");
-    const results = user.canChi(chiPai);
+    const results = user.canChi({ pai: chiPai });
 
     expect(results.length).toBe(3);
     expect(results[0].paiRest.map((p) => p.fmt)).toEqual(["m3", "m4"]);
@@ -87,18 +97,21 @@ Deno.test("MahjongUser", async (t) => {
   await t.step("should handle red five in chi combinations", () => {
     const user = new MahjongUser({
       id: "test-user",
+      point: 25000,
       paiJikaze: new Pai("z1"),
     });
     // Set up hand with regular 4 and red 5 of pinzu
-    user.setHandPais([
-      new Pai("p4"),
-      new Pai(53), // normal 5 pin
-      new Pai(52), // Red 5 pin
-    ]);
+    user.setPaiPais({
+      pais: [
+        new Pai("p4"),
+        new Pai(53), // normal 5 pin
+        new Pai(52), // Red 5 pin
+      ]
+    });
 
     // Try to chi a 6 pinzu
     const chiPai = new Pai("p6");
-    const results = user.canChi(chiPai);
+    const results = user.canChi({ pai: chiPai });
 
     expect(results.length).toBe(2);
     expect(results[0].paiRest.map((p) => p.id)).toEqual([48, 52]);
@@ -110,17 +123,20 @@ Deno.test("MahjongUser", async (t) => {
   await t.step("should handle chi combinations with p1", () => {
     const user = new MahjongUser({
       id: "test-user",
+      point: 25000,
       paiJikaze: new Pai("z1"),
     });
     // Set up hand with 2-3 of pinzu
-    user.setHandPais([
-      new Pai("p2"),
-      new Pai("p3"),
-    ]);
+    user.setPaiPais({
+      pais: [
+        new Pai("p2"),
+        new Pai("p3"),
+      ]
+    });
 
     // Try to chi a p1
     const chiPai = new Pai("p1");
-    const results = user.canChi(chiPai);
+    const results = user.canChi({ pai: chiPai });
 
     expect(results.length).toBe(1);
     expect(results[0].paiRest.map((p) => p.fmt)).toEqual(["p2", "p3"]);
@@ -130,16 +146,19 @@ Deno.test("MahjongUser", async (t) => {
   await t.step("should handle basic pon combinations", () => {
     const user = new MahjongUser({
       id: "test-user",
+      point: 25000,
       paiJikaze: new Pai("z1"),
     });
-    user.setHandPais([
-      new Pai("p3"),
-      new Pai("p3"),
-      new Pai("p4"),
-    ]);
+    user.setPaiPais({
+      pais: [
+        new Pai("p3"),
+        new Pai("p3"),
+        new Pai("p4"),
+      ]
+    });
 
     const ponPai = new Pai("p3");
-    const results = user.canPon(ponPai, Player.TOIMEN);
+    const results = user.canPon({ pai: ponPai, fromWho: Player.TOIMEN });
 
     expect(results.length).toBe(1);
     expect(results[0].paiRest.map((p) => p.fmt)).toEqual(["p3", "p3"]);
@@ -150,16 +169,19 @@ Deno.test("MahjongUser", async (t) => {
   await t.step("should handle pon with red five", () => {
     const user = new MahjongUser({
       id: "test-user",
+      point: 25000,
       paiJikaze: new Pai("z1"),
     });
-    user.setHandPais([
-      new Pai(52), // Red 5 pin
-      new Pai(53), // Normal 5 pin
-      new Pai(54), // Normal 5 pin
-    ]);
+    user.setPaiPais({
+      pais: [
+        new Pai(52), // Red 5 pin
+        new Pai(53), // Normal 5 pin
+        new Pai(54), // Normal 5 pin
+      ]
+    });
 
     const ponPai = new Pai("p5");
-    const results = user.canPon(ponPai, Player.SHIMOCHA);
+    const results = user.canPon({ pai: ponPai, fromWho: Player.SHIMOCHA });
 
     expect(results.length).toBe(2);
     // First combination using red 5
@@ -174,16 +196,19 @@ Deno.test("MahjongUser", async (t) => {
   await t.step("should return empty array when pon is not possible", () => {
     const user = new MahjongUser({
       id: "test-user",
+      point: 25000,
       paiJikaze: new Pai("z1"),
     });
-    user.setHandPais([
-      new Pai("p3"),
-      new Pai("p4"),
-      new Pai("p5"),
-    ]);
+    user.setPaiPais({
+      pais: [
+        new Pai("p3"),
+        new Pai("p4"),
+        new Pai("p5"),
+      ]
+    });
 
     const ponPai = new Pai("p3");
-    const results = user.canPon(ponPai, Player.KAMICHA);
+    const results = user.canPon({ pai: ponPai, fromWho: Player.KAMICHA });
 
     expect(results.length).toBe(0);
   });
@@ -191,16 +216,19 @@ Deno.test("MahjongUser", async (t) => {
   await t.step("should handle basic minkan", () => {
     const user = new MahjongUser({
       id: "test-user",
+      point: 25000,
       paiJikaze: new Pai("z1"),
     });
-    user.setHandPais([
-      new Pai("p3"),
-      new Pai("p3"),
-      new Pai("p3"),
-    ]);
+    user.setPaiPais({
+      pais: [
+        new Pai("p3"),
+        new Pai("p3"),
+        new Pai("p3"),
+      ]
+    });
 
     const kanPai = new Pai("p3");
-    const results = user.canMinkan(kanPai, Player.TOIMEN);
+    const results = user.canMinkan({ pai: kanPai, fromWho: Player.TOIMEN });
 
     expect(results.length).toBe(1);
     expect(results[0].paiRest.map((p) => p.fmt)).toEqual(["p3", "p3", "p3"]);
@@ -212,16 +240,19 @@ Deno.test("MahjongUser", async (t) => {
   await t.step("should handle minkan with red five", () => {
     const user = new MahjongUser({
       id: "test-user",
+      point: 25000,
       paiJikaze: new Pai("z1"),
     });
-    user.setHandPais([
-      new Pai(52), // Red 5 pin
-      new Pai(53), // Normal 5 pin
-      new Pai(54), // Normal 5 pin
-    ]);
+    user.setPaiPais({
+      pais: [
+        new Pai(52), // Red 5 pin
+        new Pai(53), // Normal 5 pin
+        new Pai(54), // Normal 5 pin
+      ]
+    });
 
     const kanPai = new Pai("p5");
-    const results = user.canMinkan(kanPai, Player.SHIMOCHA);
+    const results = user.canMinkan({ pai: kanPai, fromWho: Player.SHIMOCHA });
 
     expect(results.length).toBe(1);
     expect(results[0].paiRest.map((p) => p.id)).toEqual([52, 53, 54]);
@@ -233,16 +264,19 @@ Deno.test("MahjongUser", async (t) => {
   await t.step("should return empty array when minkan is not possible", () => {
     const user = new MahjongUser({
       id: "test-user",
+      point: 25000,
       paiJikaze: new Pai("z1"),
     });
-    user.setHandPais([
-      new Pai("p3"),
-      new Pai("p3"),
-      new Pai("p4"),
-    ]);
+    user.setPaiPais({
+      pais: [
+        new Pai("p3"),
+        new Pai("p3"),
+        new Pai("p4"),
+      ]
+    });
 
     const kanPai = new Pai("p3");
-    const results = user.canMinkan(kanPai, Player.KAMICHA);
+    const results = user.canMinkan({ pai: kanPai, fromWho: Player.KAMICHA });
 
     expect(results.length).toBe(0);
   });
@@ -250,14 +284,17 @@ Deno.test("MahjongUser", async (t) => {
   await t.step("should handle basic ankan", () => {
     const user = new MahjongUser({
       id: "test-user",
+      point: 25000,
       paiJikaze: new Pai("z1"),
     });
-    user.setHandPais([
-      new Pai("p3"),
-      new Pai("p3"),
-      new Pai("p3"),
-      new Pai("p3"),
-    ]);
+    user.setPaiPais({
+      pais: [
+        new Pai("p3"),
+        new Pai("p3"),
+        new Pai("p3"),
+        new Pai("p3"),
+      ]
+    });
 
     const results = user.canAnkan();
 
@@ -274,14 +311,17 @@ Deno.test("MahjongUser", async (t) => {
   await t.step("should handle ankan with tsumo pai", () => {
     const user = new MahjongUser({
       id: "test-user",
+      point: 25000,
       paiJikaze: new Pai("z1"),
     });
-    user.setHandPais([
-      new Pai("p3"),
-      new Pai("p3"),
-      new Pai("p3"),
-    ]);
-    user.setPaiTsumo(new Pai("p3"));
+    user.setPaiPais({
+      pais: [
+        new Pai("p3"),
+        new Pai("p3"),
+        new Pai("p3"),
+      ]
+    });
+    user.setPaiTsumo({ pai: new Pai("p3") });
 
     const results = user.canAnkan();
 
@@ -299,14 +339,17 @@ Deno.test("MahjongUser", async (t) => {
   await t.step("should handle ankan with red five", () => {
     const user = new MahjongUser({
       id: "test-user",
+      point: 25000,
       paiJikaze: new Pai("z1"),
     });
-    user.setHandPais([
-      new Pai(52), // Red 5 pin
-      new Pai(53), // Normal 5 pin
-      new Pai(54), // Normal 5 pin
-      new Pai(55), // Normal 5 pin
-    ]);
+    user.setPaiPais({
+      pais: [
+        new Pai(52), // Red 5 pin
+        new Pai(53), // Normal 5 pin
+        new Pai(54), // Normal 5 pin
+        new Pai(55), // Normal 5 pin
+      ]
+    });
 
     const results = user.canAnkan();
 
@@ -319,14 +362,17 @@ Deno.test("MahjongUser", async (t) => {
   await t.step("should return empty array when ankan is not possible", () => {
     const user = new MahjongUser({
       id: "test-user",
+      point: 25000,
       paiJikaze: new Pai("z1"),
     });
-    user.setHandPais([
-      new Pai("p3"),
-      new Pai("p3"),
-      new Pai("p3"),
-    ]);
-    user.setPaiTsumo(new Pai("p4"));
+    user.setPaiPais({
+      pais: [
+        new Pai("p3"),
+        new Pai("p3"),
+        new Pai("p3"),
+      ]
+    });
+    user.setPaiTsumo({ pai: new Pai("p4") });
 
     const results = user.canAnkan();
 
@@ -336,9 +382,10 @@ Deno.test("MahjongUser", async (t) => {
   await t.step("should handle kakan with tsumo pai", () => {
     const user = new MahjongUser({
       id: "test-user",
+      point: 25000,
       paiJikaze: new Pai("z1"),
     });
-    user.paiCall.push(
+    user.paiSets.push(
       new PaiSet({
         paiCall: [new Pai(0)],
         paiRest: [new Pai(1), new Pai(2)],
@@ -346,7 +393,7 @@ Deno.test("MahjongUser", async (t) => {
         fromWho: Player.TOIMEN,
       }),
     );
-    user.setPaiTsumo(new Pai(3));
+    user.setPaiTsumo({ pai: new Pai(3) });
 
     const results = user.canKakan();
 
@@ -359,9 +406,10 @@ Deno.test("MahjongUser", async (t) => {
   await t.step("should return empty array when kakan is not possible", () => {
     const user = new MahjongUser({
       id: "test-user",
+      point: 25000,
       paiJikaze: new Pai("z1"),
     });
-    user.paiCall.push(
+    user.paiSets.push(
       new PaiSet({
         paiCall: [new Pai("p3")],
         paiRest: [new Pai("p3"), new Pai("p3")],
@@ -369,7 +417,7 @@ Deno.test("MahjongUser", async (t) => {
         fromWho: Player.TOIMEN,
       }),
     );
-    user.setPaiTsumo(new Pai("p4")); // Different pai
+    user.setPaiTsumo({ pai: new Pai("p4") }); // Different pai
 
     const results = user.canKakan();
     expect(results.length).toBe(0);
@@ -378,9 +426,10 @@ Deno.test("MahjongUser", async (t) => {
   await t.step("should return empty array when no tsumo pai", () => {
     const user = new MahjongUser({
       id: "test-user",
+      point: 25000,
       paiJikaze: new Pai("z1"),
     });
-    user.paiCall.push(
+    user.paiSets.push(
       new PaiSet({
         paiCall: [new Pai("p3")],
         paiRest: [new Pai("p3"), new Pai("p3")],
@@ -396,40 +445,40 @@ Deno.test("MahjongUser", async (t) => {
   await t.step("should throw error when dahai without tsumo pai", () => {
     const user = new MahjongUser({
       id: "test-user",
+      point: 25000,
       paiJikaze: new Pai("z1"),
     });
     expect(() => user.dahai({ pai: new Pai("p1") })).toThrow(
-      "when dahai called, paiTsumo is undefined",
+      "invalid pai when dahai called",
     );
   });
 
   await t.step("should discard tsumo pai when matching", () => {
     const user = new MahjongUser({
       id: "test-user",
+      point: 25000,
       paiJikaze: new Pai("z1"),
     });
     const tsumoPai = new Pai("p1");
-    user.setPaiTsumo(tsumoPai);
+    user.setPaiTsumo({ pai: tsumoPai });
 
-    const result = user.dahai({ pai: tsumoPai });
-
-    expect(result).toEqual(tsumoPai);
+    user.dahai({ pai: tsumoPai });
     expect(user.paiTsumo).toBeUndefined();
   });
 
   await t.step("should discard hand pai when not matching tsumo pai", () => {
     const user = new MahjongUser({
       id: "test-user",
+      point: 25000,
       paiJikaze: new Pai("z1"),
     });
     const handPai = new Pai("p1");
     const tsumoPai = new Pai("p2");
-    user.setHandPais([handPai]);
-    user.setPaiTsumo(tsumoPai);
+    user.setPaiPais({ pais: [handPai] });
+    user.setPaiTsumo({ pai: tsumoPai });
 
-    const result = user.dahai({ pai: handPai });
-    expect(result).toEqual(handPai);
+    user.dahai({ pai: handPai });
     expect(user.paiTsumo).toBeUndefined();
-    expect(user.paiHand).toEqual([tsumoPai]);
+    expect(user.paiRest).toEqual([tsumoPai]);
   });
 });

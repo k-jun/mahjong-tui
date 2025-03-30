@@ -9,26 +9,28 @@ Deno.test("mahjong start", async () => {
 
   let globalGame: Mahjong = new Mahjong(userIds, mockOutput);
   await fixtures(({ name, params }) => {
-    // console.log(name);
     switch (name) {
       case "INIT": {
         const { hai0, hai1, hai2, hai3, yama } = params.init!;
 
-        globalGame.reset(yama.map((e) => new Pai(e.id)));
-        expect(globalGame.users.map((e) => e.paiHand.length)).toEqual(
+        globalGame.gameReset();
+        globalGame.gameStart(yama.map((e) => new Pai(e.id)));
+        console.log("this.kyoku", globalGame.kyoku);
+
+        expect(globalGame.users.map((e) => e.paiRest.length)).toEqual(
           new Array(4).fill(13),
         );
 
-        expect(globalGame.users[0].paiHand).toEqual(
+        expect(globalGame.users[0].paiRest).toEqual(
           hai0.map((e) => new Pai(e.id)),
         );
-        expect(globalGame.users[1].paiHand).toEqual(
+        expect(globalGame.users[1].paiRest).toEqual(
           hai1.map((e) => new Pai(e.id)),
         );
-        expect(globalGame.users[2].paiHand).toEqual(
+        expect(globalGame.users[2].paiRest).toEqual(
           hai2.map((e) => new Pai(e.id)),
         );
-        expect(globalGame.users[3].paiHand).toEqual(
+        expect(globalGame.users[3].paiRest).toEqual(
           hai3.map((e) => new Pai(e.id)),
         );
         break;
@@ -75,7 +77,7 @@ Deno.test("mahjong start", async () => {
           ),
         );
 
-        expect(globalGame.users.map((e) => e.score)).toEqual(score);
+        expect(globalGame.users.map((e) => e.point)).toEqual(score);
         if (owari !== undefined) {
           globalGame = new Mahjong(userIds, mockOutput);
         }
@@ -90,6 +92,18 @@ Deno.test("mahjong start", async () => {
 
         expect(globalGame.turnUser().paiTsumo).toEqual(new Pai(hai.id));
         expect(globalGame.turnUserIdx).toEqual(who);
+        break;
+      }
+      case "RNSHN": {
+        const { who, hai } = params.tsumo!;
+        globalGame.input(MahjongCommand.RNSHN, {
+          user: globalGame.turnUser(),
+          params: {},
+        });
+
+        expect(globalGame.turnUser().paiTsumo).toEqual(new Pai(hai.id));
+        expect(globalGame.turnUserIdx).toEqual(who);
+        expect(globalGame.turnUser().isRinshankaiho).toEqual(true);
         break;
       }
       case "DAHAI": {
@@ -109,7 +123,7 @@ Deno.test("mahjong start", async () => {
             user: globalGame.users[who],
             params: {},
           });
-          expect(globalGame.users.map((e) => e.score)).toEqual(ten);
+          expect(globalGame.users.map((e) => e.point)).toEqual(ten);
         }
         break;
       }
@@ -145,12 +159,23 @@ Deno.test("mahjong start", async () => {
             owari: { nagashi: isNagashi },
           },
         });
-        expect(globalGame.users.map((e) => e.score)).toEqual(score);
+        expect(globalGame.users.map((e) => e.point)).toEqual(score);
         if (owari !== undefined) {
           globalGame = new Mahjong(userIds, mockOutput);
         }
         break;
       }
+      case "DORA": {
+        const { hai } = params.dora!;
+        globalGame.input(MahjongCommand.DORA, {
+          user: globalGame.turnUser(),
+          params: {},
+        });
+        expect(globalGame.paiDora[globalGame.paiDora.length - 1].id).toEqual(
+          hai.id,
+        );
+        break;
+      }
     }
-  });
+  }, 10);
 });

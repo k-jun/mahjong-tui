@@ -10,73 +10,100 @@ import {
 } from "@k-jun/mahjong";
 
 export class MahjongUser extends User {
-  paiHand: Pai[];
-  paiCall: PaiSet[];
+  paiRest: Pai[];
+  paiSets: PaiSet[];
   paiKawa: Pai[];
+  paiTsumo?: Pai;
   paiJikaze: Pai;
-  score: number = 0;
+  point: number = 0;
 
   isRichi: boolean = false;
   isDabururichi: boolean = false;
   isIppatsu: boolean = false;
   isRinshankaiho: boolean = false;
-  isNagashimanganCalled: boolean = false;
+  isCalled: boolean = false;
+
   afterAnKan: boolean = false;
   afterMinKanKakan: boolean = false;
   aboutToKakan: boolean = false;
 
-  paiTsumo?: Pai;
   constructor(
-    { id, paiJikaze }: {
-      id: string;
-      paiJikaze: Pai;
-    },
+    { id, point, paiJikaze }: { id: string; point: number; paiJikaze: Pai },
   ) {
     super(id);
-    this.paiHand = [];
-    this.paiCall = [];
+    this.paiRest = [];
+    this.paiSets = [];
     this.paiKawa = [];
     this.paiJikaze = paiJikaze;
-    this.score = 25000;
+    this.point = point;
   }
 
-  setHandPais(pais: Pai[]) {
-    this.paiHand.push(...pais);
+  setPaiPais({ pais }: { pais: Pai[] }): void {
+    this.paiRest.push(...pais);
+    if (this.paiRest.length > 14) {
+      throw new Error("invalid this.paiPais when setPaiPais called");
+    }
   }
 
-  setPaiTsumo(pai: Pai) {
+  setPaiTsumo({ pai }: { pai: Pai }): void {
     if (this.paiTsumo) {
-      throw new Error("Already tsumoed");
+      throw new Error("invalid this.paiTsumo when setPaiTsumo called");
     }
     this.paiTsumo = pai;
   }
 
-  reset() {
-    this.paiHand = [];
-    this.paiCall = [];
+  dahai({ pai }: { pai: Pai }): void {
+    const fromTsumo = this.paiTsumo?.id === pai.id;
+    const fromTehai = this.paiRest.some((e) => e.id === pai.id);
+
+    if (!fromTsumo && !fromTehai) {
+      throw new Error("invalid pai when dahai called");
+    }
+    if (this.isRichi && !fromTsumo) {
+      throw new Error("invalid this.paiTsumo when dahai called");
+    }
+
+    if (fromTsumo) {
+      this.paiKawa.push(pai);
+      this.paiTsumo = undefined;
+      return;
+    }
+
+    const idx = this.paiRest.findIndex((e) => e.id === pai.id);
+    this.paiKawa.push(...this.paiRest.splice(idx, 1));
+    if (this.paiTsumo !== undefined) {
+      this.paiRest.push(this.paiTsumo);
+    }
+    this.paiTsumo = undefined;
+  }
+
+  reset(): void {
+    this.paiRest = [];
+    this.paiSets = [];
     this.paiKawa = [];
     this.paiTsumo = undefined;
     this.isRichi = false;
     this.isDabururichi = false;
     this.isIppatsu = false;
+    this.isCalled = false;
     this.afterAnKan = false;
     this.afterMinKanKakan = false;
-    this.isNagashimanganCalled = false;
     this.aboutToKakan = false;
   }
 
   isTenpai(): boolean {
     const count: Map<string, number> = new Map();
-    for (const pai of this.paiHand) {
+    for (const pai of this.paiRest) {
       count.set(pai.fmt, (count.get(pai.fmt) ?? 0) + 1);
     }
 
     for (const lastPai of PaiAllKind) {
       const params: ShantenInput = {
-        paiRest: [...this.paiHand, lastPai],
-        paiSets: this.paiCall,
+        paiRest: [...this.paiRest, lastPai],
+        paiSets: this.paiSets,
       };
-      if (new Shanten(params).count() === -1 && count.get(lastPai.fmt) !== 4) {
+      const shanten = new Shanten(params).count();
+      if (shanten === -1 && count.get(lastPai.fmt) !== 4) {
         return true;
       }
     }
@@ -86,22 +113,22 @@ export class MahjongUser extends User {
 
   isNagashimangan(): boolean {
     return this.paiKawa.every((p) => p.isYaochuHai()) &&
-      this.isNagashimanganCalled === false;
+      this.isCalled === false;
   }
 
-  canChi(paiCall: Pai): PaiSet[] {
-    if (paiCall.isJihai()) {
+  canChi({ pai }: { pai: Pai }): PaiSet[] {
+    if (pai.isJihai()) {
       return [];
     }
 
     const result: PaiSet[] = [];
     const counts = new Map<number, Pai[]>();
-    const paiAll = [...this.paiHand];
+    const paiAll = [...this.paiRest];
     // the red pai comes first, as the red pai has the smallest id.
     paiAll.sort((a, b) => a.id - b.id);
 
     for (const pai of paiAll) {
-      if (pai.typ != paiCall.typ || pai.isJihai()) {
+      if (pai.typ != pai.typ || pai.isJihai()) {
         continue;
       }
       counts.set(pai.num, [...(counts.get(pai.num) || []), pai]);
@@ -117,7 +144,7 @@ export class MahjongUser extends User {
       result.push(
         new PaiSet({
           paiRest: [a[idx1], b[idx2]],
-          paiCall: [paiCall],
+          paiCall: [pai],
           type: PaiSetType.MINSHUN,
         }),
       );
@@ -125,9 +152,9 @@ export class MahjongUser extends User {
 
     for (
       const [key1, key2] of [
-        [paiCall.num - 2, paiCall.num - 1],
-        [paiCall.num - 1, paiCall.num + 1],
-        [paiCall.num + 1, paiCall.num + 2],
+        [pai.num - 2, pai.num - 1],
+        [pai.num - 1, pai.num + 1],
+        [pai.num + 1, pai.num + 2],
       ]
     ) {
       if (counts.has(key1) && counts.has(key2)) {
@@ -150,16 +177,16 @@ export class MahjongUser extends User {
     return result;
   }
 
-  canPon(paiCall: Pai, fromWho: Player): PaiSet[] {
+  canPon({ pai, fromWho }: { pai: Pai; fromWho: Player }): PaiSet[] {
     const result = [];
 
-    const paiHits = this.paiHand.filter((e) => e.fmt == paiCall.fmt);
+    const paiHits = this.paiRest.filter((e) => e.fmt == pai.fmt);
     // the red pai comes first, as the red pai has the smallest id.
     paiHits.sort((a, b) => a.id - b.id);
     if (paiHits.length >= 2) {
       result.push(
         new PaiSet({
-          paiCall: [paiCall],
+          paiCall: [pai],
           paiRest: paiHits.slice(0, 2),
           type: PaiSetType.MINKO,
           fromWho,
@@ -170,7 +197,7 @@ export class MahjongUser extends User {
     if (paiHits.length >= 3 && paiHits.some((e) => e.isAka())) {
       result.push(
         new PaiSet({
-          paiCall: [paiCall],
+          paiCall: [pai],
           paiRest: paiHits.slice(1, 3),
           type: PaiSetType.MINKO,
           fromWho,
@@ -181,15 +208,15 @@ export class MahjongUser extends User {
     return result;
   }
 
-  canMinkan(paiCall: Pai, fromWho: Player): PaiSet[] {
+  canMinkan({ pai, fromWho }: { pai: Pai; fromWho: Player }): PaiSet[] {
     const result = [];
-    const paiHits = this.paiHand.filter((e) => e.fmt == paiCall.fmt);
+    const paiHits = this.paiRest.filter((e) => e.fmt == pai.fmt);
 
     if (paiHits.length >= 3) {
       result.push(
         new PaiSet({
           paiRest: paiHits,
-          paiCall: [paiCall],
+          paiCall: [pai],
           type: PaiSetType.MINKAN,
           fromWho,
         }),
@@ -201,7 +228,7 @@ export class MahjongUser extends User {
   canAnkan(): PaiSet[] {
     const result = [];
 
-    const paiAll = [...this.paiHand, ...(this.paiTsumo ? [this.paiTsumo] : [])];
+    const paiAll = [...this.paiRest, ...(this.paiTsumo ? [this.paiTsumo] : [])];
     const counts: { [key: string]: Pai[] } = {};
     for (const pai of paiAll) {
       if (!counts[pai.fmt]) {
@@ -230,7 +257,7 @@ export class MahjongUser extends User {
     }
 
     const result = [];
-    const paiSet = this.paiCall.find((e) =>
+    const paiSet = this.paiSets.find((e) =>
       e.type == PaiSetType.MINKO && e.pais[0].fmt == this.paiTsumo?.fmt
     );
     if (paiSet) {
@@ -252,12 +279,12 @@ export class MahjongUser extends User {
     if (!this.paiTsumo) {
       return [];
     }
-    if (this.paiCall.length > 0) {
+    if (this.paiSets.length > 0) {
       return [];
     }
 
     const result = [];
-    const paiAll = [...this.paiHand, ...(this.paiTsumo ? [this.paiTsumo] : [])];
+    const paiAll = [...this.paiRest, ...(this.paiTsumo ? [this.paiTsumo] : [])];
     for (const [idx, pai] of paiAll.entries()) {
       const paiRest = [...paiAll];
       paiRest.splice(idx, 1);
@@ -271,23 +298,5 @@ export class MahjongUser extends User {
       result.push(pai);
     }
     return result;
-  }
-
-  dahai({ pai }: { pai: Pai }) {
-    if (this.isRichi && this.paiTsumo?.id !== pai.id) {
-      throw new Error("when dahai called, paiTsumo and paiDahai are different");
-    }
-    if (this.paiTsumo?.id === pai.id) {
-      this.paiKawa.push(pai);
-      this.paiTsumo = undefined;
-      return;
-    }
-
-    const handIdx = this.paiHand.findIndex((e) => e.id === pai.id);
-    this.paiKawa.push(this.paiHand.splice(handIdx, 1)[0]);
-    if (this.paiTsumo !== undefined) {
-      this.paiHand.push(this.paiTsumo);
-    }
-    this.paiTsumo = undefined;
   }
 }
