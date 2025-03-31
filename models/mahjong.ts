@@ -58,10 +58,6 @@ export class Mahjong {
     this.output = output;
   }
 
-  get paiRemain(): number {
-    return this.paiYama.length + Math.floor(this.paiWanpai.length / 2) - 4;
-  }
-
   turnUser(): MahjongUser {
     return this.users[this.turnUserIdx];
   }
@@ -107,6 +103,9 @@ export class Mahjong {
   gameEnded(
     { isRenchan, isAgari }: { isRenchan: boolean; isAgari: boolean },
   ): void {
+    if (isAgari) {
+      this.kyotaku = 0;
+    }
     this.isEnded = true;
     this.isAgari = isAgari;
     this.isRenchan = isRenchan || this.isRenchan;
@@ -145,46 +144,15 @@ export class Mahjong {
     }
   }
 
-  dora(): void {
-    const [ura, omote] = this.paiWanpai.splice(0, 2);
-    this.paiDoraUra.push(ura);
-    this.paiDora.push(omote);
-  }
-
-  ankan(): Pai {
-    // this.kandora();
-    return this.paiRinshan.splice(0, 1)[0];
-  }
-
-  rinshanTsumo({ user }: { user: MahjongUser }): void {
-    user.setPaiTsumo({ pai: this.paiRinshan.splice(0, 1)[0] });
-    user.isRinshankaiho = true;
-  }
-
   tsumo({ user }: { user: MahjongUser }): void {
-    // if (user.afterAnKan) {
-    //   user.setPaiTsumo({ pai: this.ankan() });
-    //   user.afterAnKan = false;
-    //   user.isRinshankaiho = true;
-    //   return;
-    // }
-    // if (user.afterMinKanKakan) {
-    //   user.setPaiTsumo({ pai: this.rinshanTsumo() });
-    //   user.isRinshankaiho = true;
-    //   return;
-    // }
     user.setPaiTsumo({ pai: this.paiYama.splice(-1)[0] });
   }
 
   dahai({ user, pai }: { user: MahjongUser; pai: Pai }): void {
-    // if (user.afterMinKanKakan) {
-    //   this.kandora();
-    //   user.afterMinKanKakan = false;
-    // }
-    // if (user.aboutToKakan) {
-    //   this.users.forEach((e) => e.isIppatsu = false);
-    //   user.aboutToKakan = false;
-    // }
+    if (user.aboutToKakan) {
+      this.users.forEach((e) => e.isIppatsu = false);
+      user.aboutToKakan = false;
+    }
     if (user.id !== this.turnUser().id) {
       throw new Error("when dahai called, not your turn");
     }
@@ -196,41 +164,127 @@ export class Mahjong {
     this.turnNext();
   }
 
-  isPao({}: { user: MahjongUser }): Player {
-    // const yakus = this.result!.yakus.map((e) => e.str);
-    // if (yakus.includes("大三元")) {
-    //   const pais = user.paiCall.map((e) => e.pais[0].fmt);
-    //   if (pais.includes("z5") && pais.includes("z6") && pais.includes("z7")) {
-    //     const set = user.paiCall.findLast((e) => e.pais[0].isSangenHai());
-    //     return set!.fromWho;
-    //   }
-    // }
+  dora(): void {
+    const [ura, omote] = this.paiWanpai.splice(0, 2);
+    this.paiDoraUra.push(ura);
+    this.paiDora.push(omote);
+  }
 
-    // if (yakus.includes("大四喜")) {
-    //   const pais = user.paiCall.map((e) => e.pais[0].fmt);
-    //   if (
-    //     pais.includes("z1") && pais.includes("z2") && pais.includes("z3") &&
-    //     pais.includes("z4")
-    //   ) {
-    //     const set = user.paiCall.findLast((e) =>
-    //       e.pais[0].isJihai() && !e.pais[0].isSangenHai()
-    //     );
-    //     return set!.fromWho;
-    //   }
-    // }
-    return Player.JICHA;
+  rinshanTsumo({ user }: { user: MahjongUser }): void {
+    user.setPaiTsumo({ pai: this.paiRinshan.splice(0, 1)[0] });
+    user.isRinshankaiho = true;
+  }
+
+  isPaoDaisangen(
+    { user, yakus }: { user: MahjongUser; yakus: string[] },
+  ): Player {
+    if (!yakus.includes("大三元")) {
+      return Player.JICHA;
+    }
+    const pais = user.paiSets.map((e) => e.pais[0].fmt);
+    if (!(pais.includes("z5") && pais.includes("z6") && pais.includes("z7"))) {
+      return Player.JICHA;
+    }
+    const set = user.paiSets.findLast((e) => e.pais[0].isSangenHai());
+    return set?.fromWho ?? Player.JICHA;
+  }
+
+  isPaoDaisushi(
+    { user, yakus }: { user: MahjongUser; yakus: string[] },
+  ): Player {
+    if (!yakus.includes("大四喜")) {
+      return Player.JICHA;
+    }
+    const pais = user.paiSets.map((e) => e.pais[0].fmt);
+    if (
+      !(pais.includes("z1") && pais.includes("z2") && pais.includes("z3") &&
+        pais.includes("z4"))
+    ) {
+      return Player.JICHA;
+    }
+
+    const set = user.paiSets.findLast((e) => e.pais[0].isKazeHai());
+    return set?.fromWho ?? Player.JICHA;
+  }
+
+  isPao({ user, yakus }: { user: MahjongUser; yakus: string[] }): Player {
+    const daisangen = this.isPaoDaisangen({ user, yakus });
+    const daisushi = this.isPaoDaisushi({ user, yakus });
+    return daisangen === Player.JICHA ? daisushi : daisangen;
+  }
+
+  agariMinusPointTsumo(
+    { user, result, pao }: {
+      user: MahjongUser;
+      result: TokutenOutput;
+      pao: Player;
+    },
+  ): number[] {
+    const honba = this.isHonbaTaken ? 0 : this.honba;
+    if (pao !== Player.JICHA) {
+      const userIdx = this.users.findIndex((e) => e.id === user.id);
+      return this.users.map((_, idx) => {
+        let point = 0;
+        if (idx === (userIdx + pao) % 4) {
+          point += result.pointSum + (honba * 300);
+        }
+        return point;
+      });
+    }
+
+    return this.users.map((e, idx) => {
+      if (e.id === user.id) {
+        return 0;
+      }
+      if ((this.kyoku % 4) === idx) {
+        return result.pointPrt + (honba * 100);
+      }
+      return result.pointCdn + (honba * 100);
+    });
+  }
+
+  agariMinusPointRon(
+    { user, from, result, pao }: {
+      user: MahjongUser;
+      from: MahjongUser;
+      result: TokutenOutput;
+      pao: Player;
+    },
+  ): number[] {
+    const honba = this.isHonbaTaken ? 0 : this.honba;
+    if (pao !== Player.JICHA) {
+      const userIdx = this.users.findIndex((e) => e.id === user.id);
+      const fromUserIdx = this.users.findIndex((e) => e.id === from.id);
+      return this.users.map((_, idx) => {
+        let point = 0;
+        if (idx === fromUserIdx) {
+          point += result.pointSum / 2;
+        }
+        if (idx === (userIdx + pao) % 4) {
+          point += result.pointSum / 2 + (honba * 300);
+        }
+        return point;
+      });
+    }
+
+    return this.users.map((e) => {
+      if (e.id !== from.id) {
+        return 0;
+      }
+      return result.pointSum + (honba * 300);
+    });
   }
 
   agari(
-    { user, fromUser, pai, isChankan }: {
+    { user, from, pai, isChankan }: {
       user: MahjongUser;
-      fromUser: MahjongUser;
+      from: MahjongUser;
       pai: Pai;
       isChankan: boolean;
     },
   ): void {
     const allMenzen = this.users.every((u) => u.paiSets.length === 0);
-    const isTsumo = user.id === fromUser.id;
+    const isTsumo = user.id === from.id;
 
     const params: TokutenInput = {
       paiRest: user.paiRest,
@@ -257,41 +311,25 @@ export class Mahjong {
         isTenho: isTsumo && this.turnRest() === 69,
       },
     };
-    this.result = new Tokuten({ ...params }).count();
+    const result = new Tokuten({ ...params }).count();
+    this.result = result;
 
     const honba = this.isHonbaTaken ? 0 : this.honba;
-    const playerPao = this.isPao({ user });
+    const pao = this.isPao({
+      user,
+      yakus: result.yakus.map((e) => e.str),
+    });
 
-    user.point += this.result.pointSum + this.kyotaku + (honba * 300);
+    user.point += this.result.pointSum + (this.kyotaku * 1000) + (honba * 300);
+    let pointMinus = [];
     if (isTsumo) {
-      if (playerPao !== Player.JICHA) {
-        const userIdx = this.users.findIndex((e) => e.id === user.id);
-        this.users[(userIdx + playerPao) % 4].point -= this.result.pointSum +
-          (honba * 300);
-      } else {
-        for (let i = 0; i < this.users.length; i++) {
-          if (this.users[i].id === user.id) {
-            continue;
-          }
-          if ((this.kyoku % 4) === i) {
-            this.users[i].point -= this.result.pointPrt + (honba * 100);
-          } else {
-            this.users[i].point -= this.result.pointCdn + (honba * 100);
-          }
-        }
-      }
+      pointMinus = this.agariMinusPointTsumo({ user, result, pao });
     } else {
-      if (playerPao !== Player.JICHA) {
-        const userIdx = this.users.findIndex((e) => e.id === user.id);
-        this.users[(userIdx + playerPao) % 4].point -=
-          (this.result.pointSum / 2) + (honba * 300);
-        fromUser.point -= this.result.pointSum / 2;
-      } else {
-        fromUser.point -= this.result.pointSum + (honba * 300);
-      }
+      pointMinus = this.agariMinusPointRon({ user, from, result, pao });
     }
-
-    this.kyotaku = 0;
+    for (const [idx, user] of this.users.entries()) {
+      user.point -= pointMinus[idx];
+    }
     const isOya = user.id === this.users[this.kyoku % 4].id;
     this.gameEnded({ isAgari: true, isRenchan: isOya });
   }
@@ -311,7 +349,7 @@ export class Mahjong {
 
     user.isIppatsu = true;
     user.point -= 1000;
-    this.kyotaku += 1000;
+    this.kyotaku += 1;
   }
 
   owari({ nagashi }: { nagashi: boolean }): void {
@@ -396,8 +434,7 @@ export class Mahjong {
 
     const userIdx = this.users.findIndex((e) => e.id === user.id);
     if (set.fromWho !== Player.JICHA) {
-      // TODO
-      // this.users[(userIdx + set.fromWho) % 4].isNagashimanganCalled = true;
+      this.users[(userIdx + set.fromWho) % 4].isCalled = true;
     }
 
     user.paiRest = user.paiRest.filter((e) =>
@@ -449,7 +486,7 @@ export class Mahjong {
       }
       case MahjongCommand.AGARI: {
         const { paiAgari, fromUser, isChankan } = params.agari!;
-        this.agari({ user, fromUser, pai: paiAgari, isChankan });
+        this.agari({ user, from: fromUser, pai: paiAgari, isChankan });
         break;
       }
       case MahjongCommand.RICHI: {

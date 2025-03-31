@@ -129,6 +129,9 @@ export const fixtures = async (
         switch (e.tagName) {
           case "INIT":
             state = { ...state, ..._init(e, state, input) };
+            state.isAfterAnKan = false;
+            state.isAfterMinKan = false;
+            state.isAfterKaKan = false;
             break;
           case "N":
             _naki(e, state, input);
