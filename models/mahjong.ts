@@ -414,12 +414,13 @@ export class Mahjong {
 
     const isTenpai = this.users.map((e) => e.isTenpai());
     const pointsNagashimangan = this.owariNagashimangan();
+    const points = this.owariNormal({ isTenpai });
+
     if (pointsNagashimangan.some((e) => e !== 0)) {
       this.users.forEach((e, idx) => {
         e.point += pointsNagashimangan[idx];
       });
     } else {
-      const points = this.owariNormal({ isTenpai });
       this.users.forEach((e, idx) => {
         e.point += points[idx];
       });
