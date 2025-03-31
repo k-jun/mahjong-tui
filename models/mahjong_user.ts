@@ -22,10 +22,7 @@ export class MahjongUser extends User {
   isIppatsu: boolean = false;
   isRinshankaiho: boolean = false;
   isCalled: boolean = false;
-
-  afterAnKan: boolean = false;
-  afterMinKanKakan: boolean = false;
-  aboutToKakan: boolean = false;
+  isAfterKakan: boolean = false;
 
   constructor(
     { id, point, paiJikaze }: { id: string; point: number; paiJikaze: Pai },
@@ -77,6 +74,28 @@ export class MahjongUser extends User {
     this.paiTsumo = undefined;
   }
 
+  naki({ set }: { set: PaiSet }): void {
+    switch (set.type) {
+      case PaiSetType.ANKAN: {
+        this.paiRest.push(this.paiTsumo!);
+        this.paiTsumo = undefined;
+        break;
+      }
+      case PaiSetType.KAKAN: {
+        this.paiRest.push(this.paiTsumo!);
+        this.paiTsumo = undefined;
+        this.paiSets = this.paiSets.filter((e) => {
+          return !(e.type === PaiSetType.MINKO &&
+            e.pais[0].fmt === set.pais[0].fmt);
+        });
+        break;
+      }
+    }
+    const filterIds = new Set(set.pais.map((e) => e.id));
+    this.paiRest = this.paiRest.filter((e) => !filterIds.has(e.id));
+    this.paiSets.push(set);
+  }
+
   reset(): void {
     this.paiRest = [];
     this.paiSets = [];
@@ -86,9 +105,7 @@ export class MahjongUser extends User {
     this.isDabururichi = false;
     this.isIppatsu = false;
     this.isCalled = false;
-    this.afterAnKan = false;
-    this.afterMinKanKakan = false;
-    this.aboutToKakan = false;
+    this.isAfterKakan = false;
   }
 
   isTenpai(): boolean {

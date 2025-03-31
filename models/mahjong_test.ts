@@ -15,7 +15,6 @@ Deno.test("mahjong start", async () => {
 
         globalGame.gameReset();
         globalGame.gameStart(yama.map((e) => new Pai(e.id)));
-        console.log("this.kyoku", globalGame.kyoku);
 
         expect(globalGame.users.map((e) => e.paiRest.length)).toEqual(
           new Array(4).fill(13),
@@ -46,16 +45,30 @@ Deno.test("mahjong start", async () => {
           paiDoraUra,
           owari,
         } = params.agari!;
-        globalGame.input(MahjongCommand.AGARI, {
-          user: globalGame.users[who],
-          params: {
-            agari: {
-              paiAgari: new Pai(paiLast.id),
-              fromUser: globalGame.users[fromWho],
-              isChankan: yakus.map((e) => e.str).includes("槍槓"),
+
+        const isChankan = yakus.map((e) => e.str).includes("槍槓");
+
+        if (isChankan) {
+          globalGame.input(MahjongCommand.CHNKN, {
+            user: globalGame.users[who],
+            params: {
+              chnkn: {
+                paiChnkn: new Pai(paiLast.id),
+                fromUser: globalGame.users[fromWho],
+              },
             },
-          },
-        });
+          });
+        } else {
+          globalGame.input(MahjongCommand.AGARI, {
+            user: globalGame.users[who],
+            params: {
+              agari: {
+                paiAgari: new Pai(paiLast.id),
+                fromUser: globalGame.users[fromWho],
+              },
+            },
+          });
+        }
 
         const actYakus = globalGame.result?.yakus.filter((e) => e.val > 0).map((
           e,
@@ -177,5 +190,5 @@ Deno.test("mahjong start", async () => {
         break;
       }
     }
-  }, 10);
+  });
 });

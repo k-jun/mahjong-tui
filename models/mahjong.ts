@@ -70,6 +70,11 @@ export class Mahjong {
     return this.paiYama.length + Math.floor(this.paiWanpai.length / 2) - 4;
   }
 
+  turnMove({ user }: { user: MahjongUser }): void {
+    const userIdx = this.users.findIndex((e) => e.id === user.id);
+    this.turnUserIdx = userIdx;
+  }
+
   gameStart(pais: Pai[]): void {
     this.paiYama = pais;
     for (let i = 0; i < 4; i++) {
@@ -149,9 +154,9 @@ export class Mahjong {
   }
 
   dahai({ user, pai }: { user: MahjongUser; pai: Pai }): void {
-    if (user.aboutToKakan) {
+    if (user.isAfterKakan) {
       this.users.forEach((e) => e.isIppatsu = false);
-      user.aboutToKakan = false;
+      user.isAfterKakan = false;
     }
     if (user.id !== this.turnUser().id) {
       throw new Error("when dahai called, not your turn");
@@ -276,11 +281,11 @@ export class Mahjong {
   }
 
   agari(
-    { user, from, pai, isChankan }: {
+    { user, from, pai, isChankan = false }: {
       user: MahjongUser;
       from: MahjongUser;
       pai: Pai;
-      isChankan: boolean;
+      isChankan?: boolean;
     },
   ): void {
     const allMenzen = this.users.every((u) => u.paiSets.length === 0);
@@ -335,12 +340,13 @@ export class Mahjong {
   }
 
   richi({ user }: { user: MahjongUser }): void {
-    const allMenzen = this.users.every((u) => u.paiSets.length === 0);
-    const isDabururichi = [69, 68, 67, 66].includes(this.turnRest()) &&
-      allMenzen;
     if (user.isRichi) {
       throw new Error("when richi called, already richi");
     }
+
+    const allMenzen = this.users.every((u) => u.paiSets.length === 0);
+    const isDabururichi = [69, 68, 67, 66].includes(this.turnRest()) &&
+      allMenzen;
     if (isDabururichi) {
       user.isDabururichi = true;
     } else {
@@ -352,49 +358,71 @@ export class Mahjong {
     this.kyotaku += 1;
   }
 
+  owariNagashimangan(): number[] {
+    const isNagashimangan = this.users.map((e) => e.isNagashimangan());
+    const points = [0, 0, 0, 0];
+    const isOya = (e: number) => e === (this.kyoku % 4);
+
+    for (let i = 0; i < 4; i++) {
+      if (isNagashimangan[i] === false) {
+        continue;
+      }
+      if (isOya(i)) {
+        points[i] += 12000;
+        for (let j = 1; j < 4; j++) {
+          points[(i + j) % 4] -= 4000;
+        }
+      } else {
+        points[i] += 8000;
+        for (let j = 1; j < 4; j++) {
+          if (isOya((i + j) % 4)) {
+            points[(i + j) % 4] -= 4000;
+          } else {
+            points[(i + j) % 4] -= 2000;
+          }
+        }
+      }
+    }
+    return points;
+  }
+
+  owariNormal({ isTenpai }: { isTenpai: boolean[] }): number[] {
+    const cnt = isTenpai.filter((e) => e).length;
+    const points = [0, 0, 0, 0];
+    const pntInc = (cnt === 4 || cnt === 0) ? 0 : 3000 / cnt;
+    const pntDcs = (pntInc * cnt) / (4 - cnt);
+    isTenpai.forEach((e, idx) => {
+      if (e) {
+        points[idx] += pntInc;
+      } else {
+        points[idx] -= pntDcs;
+      }
+    });
+
+    return points;
+  }
+
   owari({ nagashi }: { nagashi: boolean }): void {
     if (nagashi) {
       this.gameEnded({ isAgari: false, isRenchan: true });
       return;
     }
 
+    if (this.turnRest() !== 0) {
+      throw new Error("when owari called, pai remained");
+    }
+
     const isTenpai = this.users.map((e) => e.isTenpai());
-
-    const isNagashimangan = this.users.map((e) => e.isNagashimangan());
-    if (this.turnRest() === 0 && isNagashimangan.some((e) => e)) {
-      for (let i = 0; i < 4; i++) {
-        if (isNagashimangan[i] === false) {
-          continue;
-        }
-        // isOya
-        if (i === (this.kyoku % 4)) {
-          this.users[i].point += 12000;
-          for (let j = 1; j < 4; j++) {
-            this.users[(i + j) % 4].point -= 4000;
-          }
-        } else {
-          this.users[i].point += 8000;
-          for (let j = 1; j < 4; j++) {
-            if (((i + j) % 4) === (this.kyoku % 4)) {
-              this.users[(i + j) % 4].point -= 4000;
-            } else {
-              this.users[(i + j) % 4].point -= 2000;
-            }
-          }
-        }
-      }
+    const pointsNagashimangan = this.owariNagashimangan();
+    if (pointsNagashimangan.some((e) => e !== 0)) {
+      this.users.forEach((e, idx) => {
+        e.point += pointsNagashimangan[idx];
+      });
     } else {
-      const cnt = isTenpai.filter((e) => e).length;
-
-      const pntInc = cnt === 4 || cnt === 0 ? 0 : 3000 / cnt;
-      const pntDcs = (pntInc * cnt) / (4 - cnt);
-      for (const [idx, user] of this.users.entries()) {
-        if (isTenpai[idx]) {
-          user.point += pntInc;
-        } else {
-          user.point -= pntDcs;
-        }
-      }
+      const points = this.owariNormal({ isTenpai });
+      this.users.forEach((e, idx) => {
+        e.point += points[idx];
+      });
     }
 
     const isOyaTempai = isTenpai[this.kyoku % 4];
@@ -402,52 +430,19 @@ export class Mahjong {
   }
 
   naki({ user, set }: { user: MahjongUser; set: PaiSet }): void {
-    if (set.type === PaiSetType.ANKAN) {
-      if (user.afterMinKanKakan) {
-        // this.kandora();
-        user.afterMinKanKakan = false;
-      }
-      user.paiRest.push(user.paiTsumo!);
-      user.paiTsumo = undefined;
-      user.afterAnKan = true;
-    }
-    if (set.type === PaiSetType.MINKAN) {
-      user.afterMinKanKakan = true;
-    }
-    if (set.type === PaiSetType.KAKAN) {
-      if (user.afterMinKanKakan) {
-        // this.kandora();
-        user.afterMinKanKakan = false;
-      }
-      user.paiRest.push(user.paiTsumo!);
-      user.paiTsumo = undefined;
-      user.afterMinKanKakan = true;
-      user.paiSets = user.paiSets.filter((e) => {
-        const isMinko = e.type === PaiSetType.MINKO;
-        const isSame = e.pais[0].fmt === set.pais[0].fmt;
-        if (isMinko && isSame) {
-          return false;
-        }
-        return true;
-      });
-    }
+    user.naki({ set });
+    this.turnMove({ user });
 
     const userIdx = this.users.findIndex((e) => e.id === user.id);
     if (set.fromWho !== Player.JICHA) {
       this.users[(userIdx + set.fromWho) % 4].isCalled = true;
     }
 
-    user.paiRest = user.paiRest.filter((e) =>
-      !set.pais.map((e) => e.id).includes(e.id)
-    );
-    user.paiSets.push(set);
-    this.turnUserIdx = userIdx;
-
-    if (set.type === PaiSetType.KAKAN && user.aboutToKakan === false) {
-      user.aboutToKakan = true;
-    } else {
-      this.users.forEach((e) => e.isIppatsu = false);
+    if (set.type === PaiSetType.KAKAN) {
+      user.isAfterKakan = true;
+      return;
     }
+    this.users.forEach((e) => e.isIppatsu = false);
   }
 
   input(
@@ -458,7 +453,10 @@ export class Mahjong {
         agari?: {
           fromUser: MahjongUser;
           paiAgari: Pai;
-          isChankan: boolean;
+        };
+        chnkn?: {
+          fromUser: MahjongUser;
+          paiChnkn: Pai;
         };
         dahai?: {
           paiDahai: Pai;
@@ -473,20 +471,18 @@ export class Mahjong {
     },
   ): void {
     switch (action) {
-      case MahjongCommand.TSUMO:
+      case MahjongCommand.TSUMO: {
         this.tsumo({ user });
         break;
-      case MahjongCommand.RNSHN:
-        this.rinshanTsumo({ user });
-        break;
+      }
       case MahjongCommand.DAHAI: {
         const { paiDahai } = params.dahai!;
         this.dahai({ user, pai: paiDahai });
         break;
       }
       case MahjongCommand.AGARI: {
-        const { paiAgari, fromUser, isChankan } = params.agari!;
-        this.agari({ user, from: fromUser, pai: paiAgari, isChankan });
+        const { paiAgari, fromUser } = params.agari!;
+        this.agari({ user, from: fromUser, pai: paiAgari });
         break;
       }
       case MahjongCommand.RICHI: {
@@ -496,6 +492,15 @@ export class Mahjong {
       case MahjongCommand.OWARI: {
         const { nagashi } = params.owari!;
         this.owari({ nagashi });
+        break;
+      }
+      case MahjongCommand.RNSHN: {
+        this.rinshanTsumo({ user });
+        break;
+      }
+      case MahjongCommand.CHNKN: {
+        const { paiChnkn, fromUser } = params.chnkn!;
+        this.agari({ user, from: fromUser, pai: paiChnkn, isChankan: true });
         break;
       }
       case MahjongCommand.NAKI: {
