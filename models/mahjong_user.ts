@@ -140,9 +140,11 @@ export class MahjongUser extends User {
 
     const result: PaiSet[] = [];
     const counts = new Map<number, Pai[]>();
+    const paiAll = [...this.paiRest];
     // the red pai comes first, as the red pai has the smallest id.
+    paiAll.sort((a, b) => a.id - b.id);
 
-    for (const p of this.paiRest) {
+    for (const p of paiAll) {
       if (p.typ != pai.typ) {
         continue;
       }
