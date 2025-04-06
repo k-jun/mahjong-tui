@@ -1,8 +1,8 @@
 {
   "imports": {
     "@117/mutex": "jsr:@117/mutex@^1.0.8",
-    // "@k-jun/mahjong": "jsr:@k-jun/mahjong@^0.4.9"
-    "@k-jun/mahjong": "../mahjong/mod.ts"
+    "@k-jun/mahjong": "jsr:@k-jun/mahjong@^0.4.10"
+    // "@k-jun/mahjong": "../mahjong/mod.ts"
   },
   // "lint.rules.tags": [
   //   "explicit-function-return-type"
