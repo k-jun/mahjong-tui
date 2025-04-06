@@ -1,6 +1,7 @@
 {
   "version": "4",
   "specifiers": {
+    "jsr:@117/mutex@^1.0.8": "1.0.8",
     "jsr:@std/assert@^1.0.10": "1.0.11",
     "jsr:@std/assert@^1.0.11": "1.0.11",
     "jsr:@std/expect@*": "1.0.13",
@@ -8,10 +9,15 @@
     "jsr:@std/testing@*": "1.0.9",
     "npm:@types/jsdom@21.1.7": "21.1.7",
     "npm:@types/node@*": "22.5.4",
+    "npm:await-mutex@*": "1.0.2",
+    "npm:await-semaphore@*": "0.1.3",
     "npm:jsdom@26.0.0": "26.0.0",
     "npm:socket.io-client@*": "4.8.1"
   },
   "jsr": {
+    "@117/mutex@1.0.8": {
+      "integrity": "8f14ef3e124ae427c92f93951fbe36b5cfad3aa74f84d443b2acf3034683255d"
+    },
     "@std/assert@1.0.10": {
       "integrity": "59b5cbac5bd55459a19045d95cc7c2ff787b4f8527c0dd195078ff6f9481fbb3",
       "dependencies": [
@@ -114,11 +120,29 @@
     "asynckit@0.4.0": {
       "integrity": "sha512-Oei9OH4tRh0YqU3GxhX79dM/mwVgvbZJaSNaRk+bshkj0S5cfHcgYakreBjrHwatXKbz+IoIdYLxrKim2MjW0Q=="
     },
+    "await-mutex@1.0.2": {
+      "integrity": "sha512-ZuUEsG60oA2EstXMWT1VnXksdoia+C8hhwl0bvKRKstb9v25pf1CmYj6FwOkmSKjY2gLRSt/yJ5hqGlSzWxucQ==",
+      "dependencies": [
+        "babel-runtime"
+      ]
+    },
+    "await-semaphore@0.1.3": {
+      "integrity": "sha512-d1W2aNSYcz/sxYO4pMGX9vq65qOTu0P800epMud+6cYYX0QcT7zyqcxec3VWzpgvdXo57UWmVbZpLMjX2m1I7Q=="
+    },
+    "babel-runtime@6.3.19": {
+      "integrity": "sha512-tU4y05h5o3iFThxYfmkDwXzCgeit4TXGK0wDBPmq8DqXTFDm9HRBACxxGM9neF7Zh3lVnjfIzqZ3wtcA83uMFg==",
+      "dependencies": [
+        "core-js"
+      ]
+    },
     "combined-stream@1.0.8": {
       "integrity": "sha512-FQN4MRfuJeHf7cBbBMJFXhKSDq+2kAArBlmRBvcvFE5BB1HZKXtSFASDhdlz9zOYwxh8lDdnvmMOe/+5cdoEdg==",
       "dependencies": [
         "delayed-stream"
       ]
+    },
+    "core-js@1.2.7": {
+      "integrity": "sha512-ZiPp9pZlgxpWRu0M+YWbm6+aQ84XEfH1JRXvfOc/fILWI0VKhLC2LX13X1NYq4fULzLMq7Hfh43CSo2/aIaUPA=="
     },
     "cssstyle@4.2.1": {
       "integrity": "sha512-9+vem03dMXG7gDmZ62uqmRiMRNtinIZ9ZyuF6BdxzfOD+FdN5hretzynkn0ReS2DO2GSw76RWHs0UmJPI2zUjw==",
@@ -426,5 +450,10 @@
     "https://deno.land/x/socket_io@0.2.1/vendor/deno.land/x/redis@v0.27.1/vendor/https/deno.land/std/async/deferred.ts": "7391210927917113e04247ef013d800d54831f550e9a0b439244675c56058c55",
     "https://deno.land/x/socket_io@0.2.1/vendor/deno.land/x/redis@v0.27.1/vendor/https/deno.land/std/async/delay.ts": "c7e2604f7cb5ef00d595de8dd600604902d5be03a183b515b3d6d4bbb48e1700",
     "https://deno.land/x/socket_io@0.2.1/vendor/deno.land/x/redis@v0.27.1/vendor/https/deno.land/std/io/buffer.ts": "8c5f84b7ecf71bc3e12aa299a9fae9e72e495db05281fcdd62006ecd3c5ed3f3"
+  },
+  "workspace": {
+    "dependencies": [
+      "jsr:@117/mutex@^1.0.8"
+    ]
   }
 }

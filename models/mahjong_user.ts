@@ -35,7 +35,7 @@ export class MahjongUser extends User {
     this.point = point;
   }
 
-  setPaiPais({ pais }: { pais: Pai[] }): void {
+  setPaiRest({ pais }: { pais: Pai[] }): void {
     this.paiRest.push(...pais);
     if (this.paiRest.length > 14) {
       throw new Error("invalid this.paiPais when setPaiPais called");
@@ -43,7 +43,7 @@ export class MahjongUser extends User {
   }
 
   setPaiTsumo({ pai }: { pai: Pai }): void {
-    if (this.paiTsumo) {
+    if (this.paiTsumo !== undefined) {
       throw new Error("invalid this.paiTsumo when setPaiTsumo called");
     }
     this.paiTsumo = pai;
@@ -140,15 +140,13 @@ export class MahjongUser extends User {
 
     const result: PaiSet[] = [];
     const counts = new Map<number, Pai[]>();
-    const paiAll = [...this.paiRest];
     // the red pai comes first, as the red pai has the smallest id.
-    paiAll.sort((a, b) => a.id - b.id);
 
-    for (const pai of paiAll) {
-      if (pai.typ != pai.typ || pai.isJihai()) {
+    for (const p of this.paiRest) {
+      if (p.typ != pai.typ) {
         continue;
       }
-      counts.set(pai.num, [...(counts.get(pai.num) || []), pai]);
+      counts.set(p.num, [...(counts.get(p.num) || []), p]);
     }
 
     const add = ({ key1, key2, idx1, idx2 }: { [key: string]: number }) => {

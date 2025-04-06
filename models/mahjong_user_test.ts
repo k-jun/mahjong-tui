@@ -25,7 +25,7 @@ Deno.test("MahjongUser", async (t) => {
     });
     const pais = [new Pai(0)];
 
-    user.setPaiPais({ pais });
+    user.setPaiRest({ pais });
     expect(user.paiRest).toEqual(pais);
   });
 
@@ -72,7 +72,7 @@ Deno.test("MahjongUser", async (t) => {
       paiJikaze: new Pai("z1"),
     });
     // Set up hand with 3-4 of manzu
-    user.setPaiPais({
+    user.setPaiRest({
       pais: [
         new Pai("m3"),
         new Pai("m4"),
@@ -101,7 +101,7 @@ Deno.test("MahjongUser", async (t) => {
       paiJikaze: new Pai("z1"),
     });
     // Set up hand with regular 4 and red 5 of pinzu
-    user.setPaiPais({
+    user.setPaiRest({
       pais: [
         new Pai("p4"),
         new Pai(53), // normal 5 pin
@@ -127,7 +127,7 @@ Deno.test("MahjongUser", async (t) => {
       paiJikaze: new Pai("z1"),
     });
     // Set up hand with 2-3 of pinzu
-    user.setPaiPais({
+    user.setPaiRest({
       pais: [
         new Pai("p2"),
         new Pai("p3"),
@@ -149,7 +149,7 @@ Deno.test("MahjongUser", async (t) => {
       point: 25000,
       paiJikaze: new Pai("z1"),
     });
-    user.setPaiPais({
+    user.setPaiRest({
       pais: [
         new Pai("p3"),
         new Pai("p3"),
@@ -172,7 +172,7 @@ Deno.test("MahjongUser", async (t) => {
       point: 25000,
       paiJikaze: new Pai("z1"),
     });
-    user.setPaiPais({
+    user.setPaiRest({
       pais: [
         new Pai(52), // Red 5 pin
         new Pai(53), // Normal 5 pin
@@ -199,7 +199,7 @@ Deno.test("MahjongUser", async (t) => {
       point: 25000,
       paiJikaze: new Pai("z1"),
     });
-    user.setPaiPais({
+    user.setPaiRest({
       pais: [
         new Pai("p3"),
         new Pai("p4"),
@@ -219,7 +219,7 @@ Deno.test("MahjongUser", async (t) => {
       point: 25000,
       paiJikaze: new Pai("z1"),
     });
-    user.setPaiPais({
+    user.setPaiRest({
       pais: [
         new Pai("p3"),
         new Pai("p3"),
@@ -243,7 +243,7 @@ Deno.test("MahjongUser", async (t) => {
       point: 25000,
       paiJikaze: new Pai("z1"),
     });
-    user.setPaiPais({
+    user.setPaiRest({
       pais: [
         new Pai(52), // Red 5 pin
         new Pai(53), // Normal 5 pin
@@ -267,7 +267,7 @@ Deno.test("MahjongUser", async (t) => {
       point: 25000,
       paiJikaze: new Pai("z1"),
     });
-    user.setPaiPais({
+    user.setPaiRest({
       pais: [
         new Pai("p3"),
         new Pai("p3"),
@@ -287,7 +287,7 @@ Deno.test("MahjongUser", async (t) => {
       point: 25000,
       paiJikaze: new Pai("z1"),
     });
-    user.setPaiPais({
+    user.setPaiRest({
       pais: [
         new Pai("p3"),
         new Pai("p3"),
@@ -314,7 +314,7 @@ Deno.test("MahjongUser", async (t) => {
       point: 25000,
       paiJikaze: new Pai("z1"),
     });
-    user.setPaiPais({
+    user.setPaiRest({
       pais: [
         new Pai("p3"),
         new Pai("p3"),
@@ -342,7 +342,7 @@ Deno.test("MahjongUser", async (t) => {
       point: 25000,
       paiJikaze: new Pai("z1"),
     });
-    user.setPaiPais({
+    user.setPaiRest({
       pais: [
         new Pai(52), // Red 5 pin
         new Pai(53), // Normal 5 pin
@@ -365,7 +365,7 @@ Deno.test("MahjongUser", async (t) => {
       point: 25000,
       paiJikaze: new Pai("z1"),
     });
-    user.setPaiPais({
+    user.setPaiRest({
       pais: [
         new Pai("p3"),
         new Pai("p3"),
@@ -474,11 +474,43 @@ Deno.test("MahjongUser", async (t) => {
     });
     const handPai = new Pai("p1");
     const tsumoPai = new Pai("p2");
-    user.setPaiPais({ pais: [handPai] });
+    user.setPaiRest({ pais: [handPai] });
     user.setPaiTsumo({ pai: tsumoPai });
 
     user.dahai({ pai: handPai });
     expect(user.paiTsumo).toBeUndefined();
     expect(user.paiRest).toEqual([tsumoPai]);
   });
+});
+
+
+Deno.test("should return valid chi combinations", () => {
+  const user = new MahjongUser({
+    id: "test-user",
+    point: 25000,
+    paiJikaze: new Pai("z1"),
+  });
+  // Set up hand with s3, s4, s8, s1, s5, p3, p4, p5, p8, p6, m7, p4
+  user.setPaiRest({
+    pais: [
+      new Pai("m7"),
+      new Pai("p3"),
+      new Pai("p4"),
+      new Pai("p4"),
+      new Pai("p5"),
+      new Pai("p6"),
+      new Pai("p8"),
+      new Pai("s1"),
+      new Pai("s3"),
+      new Pai("s4"),
+      new Pai("s5"),
+      new Pai("s8"),
+    ],
+  });
+
+  // Test chi with m6 (should return [m6, m7])
+  const chiPai = new Pai("m6");
+  const results = user.canChi({ pai: chiPai });
+  console.log(results)
+  expect(results.length).toBe(0);
 });

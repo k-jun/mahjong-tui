@@ -87,7 +87,9 @@ type state = {
 };
 
 export const fixtures = async (
-  input: ({ name, params }: { name: string; params: inputParams }) => void,
+  input: (
+    { name, params }: { name: string; params: inputParams },
+  ) => Promise<void>,
   limit: number = 1_000_000_000,
 ) => {
   let cnt = 0;
@@ -128,40 +130,40 @@ export const fixtures = async (
 
         switch (e.tagName) {
           case "INIT":
-            state = { ...state, ..._init(e, state, input) };
+            state = { ...state, ...await _init(e, state, input) };
             state.isAfterAnKan = false;
             state.isAfterMinKan = false;
             state.isAfterKaKan = false;
             break;
           case "N":
-            _naki(e, state, input);
+            await _naki(e, state, input);
             break;
           case "DORA":
-            _dora(e, input);
+            await _dora(e, input);
             break;
           case "REACH":
-            _richi(e, input);
+            await _richi(e, input);
             break;
           case "AGARI":
             cnt += 1;
-            _agari(e, state, input);
+            await _agari(e, state, input);
             break;
           case "RYUUKYOKU":
             cnt += 1;
-            _ryukyoku(e, input);
+            await _ryukyoku(e, input);
             break;
           default:
             if (
               /^[TUVW](\d{1,3})$/.test(e.tagName) &&
               Number(e.tagName.slice(1)) <= 135
             ) {
-              _tsumo(e, state, input);
+              await _tsumo(e, state, input);
             }
             if (
               /^[DEFG](\d{1,3})$/.test(e.tagName) &&
               Number(e.tagName.slice(1)) <= 135
             ) {
-              _dahai(e, state, input);
+              await _dahai(e, state, input);
             }
             break;
         }
@@ -194,13 +196,13 @@ const isYonmaAriAriAka = (e: Element): boolean => {
   return true;
 };
 
-const _init = (
+const _init = async (
   e: Element,
   s: state,
-  input: ({ name, params }: { name: string; params: inputParams }) => void,
-): { oya: number; kyoku: number } => {
+  input: ({ name, params }: { name: string; params: inputParams }) => Promise<void>,
+): Promise<{ oya: number; kyoku: number }> => {
   const seeds = e.attributes.getNamedItem("seed")!.value.split(",");
-  input({
+  await input({
     name: "INIT",
     params: {
       init: {
@@ -229,14 +231,14 @@ const _init = (
   };
 };
 
-const _tsumo = (
+const _tsumo = async (
   e: Element,
   s: state,
-  input: ({ name, params }: { name: string; params: inputParams }) => void,
+  input: ({ name, params }: { name: string; params: inputParams }) => Promise<void>,
 ) => {
   const who = ["T", "U", "V", "W"].findIndex((x) => x == e.tagName[0]);
   if (s.isAfterAnKan || s.isAfterMinKan || s.isAfterKaKan) {
-    input({
+    await input({
       name: "RNSHN",
       params: {
         tsumo: { who, hai: new Pai(Number(e.tagName.slice(1))) },
@@ -246,7 +248,7 @@ const _tsumo = (
     s.isAfterMinKan = false;
     s.isAfterKaKan = false;
   } else {
-    input({
+    await input({
       name: "TSUMO",
       params: {
         tsumo: { who, hai: new Pai(Number(e.tagName.slice(1))) },
@@ -255,13 +257,13 @@ const _tsumo = (
   }
 };
 
-const _dahai = (
+const _dahai = async (
   e: Element,
   s: state,
-  input: ({ name, params }: { name: string; params: inputParams }) => void,
+  input: ({ name, params }: { name: string; params: inputParams }) => Promise<void>,
 ) => {
   const who = ["D", "E", "F", "G"].findIndex((x) => x == e.tagName[0]);
-  input({
+  await input({
     name: "DAHAI",
     params: {
       dahai: { who, hai: new Pai(Number(e.tagName.slice(1))) },
@@ -269,10 +271,12 @@ const _dahai = (
   });
 };
 
-const _naki = (
+const _naki = async (
   e: Element,
   s: state,
-  input: ({ name, params }: { name: string; params: inputParams }) => void,
+  input: (
+    { name, params }: { name: string; params: inputParams },
+  ) => Promise<void>,
 ) => {
   const who = e.attributes.getNamedItem("who")!.value;
   const set = _parseM(Number(e.attributes.getNamedItem("m")!.value));
@@ -285,7 +289,7 @@ const _naki = (
   if (set.type == PaiSetType.MINKAN) {
     s.isAfterMinKan = true;
   }
-  input({
+  await input({
     name: "NAKI",
     params: {
       naki: {
@@ -296,11 +300,13 @@ const _naki = (
   });
 };
 
-const _dora = (
+const _dora = async (
   e: Element,
-  input: ({ name, params }: { name: string; params: inputParams }) => void,
+  input: (
+    { name, params }: { name: string; params: inputParams },
+  ) => Promise<void>,
 ) => {
-  input({
+  await input({
     name: "DORA",
     params: {
       dora: { hai: new Pai(Number(e.attributes.getNamedItem("hai")!.value)) },
@@ -308,9 +314,11 @@ const _dora = (
   });
 };
 
-const _richi = (
+const _richi = async (
   e: Element,
-  input: ({ name, params }: { name: string; params: inputParams }) => void,
+  input: (
+    { name, params }: { name: string; params: inputParams },
+  ) => Promise<void>,
 ) => {
   const who = Number(e.attributes.getNamedItem("who")!.value);
   const step = Number(e.attributes.getNamedItem("step")!.value);
@@ -318,7 +326,7 @@ const _richi = (
     e.attributes.getNamedItem("ten")?.value.split(",").map((e) =>
       Number(e) * 100
     ) ?? [];
-  input({
+  await input({
     name: "RICHI",
     params: {
       richi: { who, step, ten },
@@ -326,10 +334,12 @@ const _richi = (
   });
 };
 
-const _agari = (
+const _agari = async (
   e: Element,
   s: state,
-  input: ({ name, params }: { name: string; params: inputParams }) => void,
+  input: (
+    { name, params }: { name: string; params: inputParams },
+  ) => Promise<void>,
 ) => {
   const attrs = new Map<string, string>();
   for (let i = 0; i < e.attributes.length; i++) {
@@ -424,7 +434,7 @@ const _agari = (
     attrs.get("hai")?.split(",").map((e: string) => new Pai(Number(e))) ?? [];
   paiRest.splice(paiRest.findIndex((e) => e.id == paiLast.id), 1)[0];
 
-  input({
+  await input({
     name: "AGARI",
     params: {
       agari: {
@@ -579,9 +589,11 @@ const _parseM = (m: number): PaiSet => {
   }
 };
 
-const _ryukyoku = (
+const _ryukyoku = async (
   e: Element,
-  input: ({ name, params }: { name: string; params: inputParams }) => void,
+  input: (
+    { name, params }: { name: string; params: inputParams },
+  ) => Promise<void>,
 ) => {
   // const sc = e.attrs.get("sc")?.split(",").map(Number) ?? [];
   const ba = e.attributes.getNamedItem("ba")!.value;
@@ -596,7 +608,7 @@ const _ryukyoku = (
     const nxt = bfr + sc[i + 1] * 100;
     score.push(nxt);
   }
-  input({
+  await input({
     name: "RYUKYOKU",
     params: {
       ryukyoku: {

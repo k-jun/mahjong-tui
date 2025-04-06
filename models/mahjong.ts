@@ -1,6 +1,8 @@
+import { createMutex, Mutex } from "@117/mutex";
 import { MahjongUser } from "./mahjong_user.ts";
 import {
   Pai,
+  PaiAll,
   PaiKaze,
   PaiSet,
   PaiSetType,
@@ -20,12 +22,25 @@ export enum MahjongCommand {
   RNSHN = "rinshan",
   NAKI = "naki",
   DORA = "dora",
+  SKIP = "skip",
+}
+
+export enum MahjongActionType {
+  TSUMO = "tsumo",
+  RON = "ron",
+  ANKAN = "ankan",
+  KAKAN = "kakan",
+  MINKAN = "minkan",
+  PON = "pon",
+  CHI = "chi",
+  OWARI = "owari",
 }
 
 export type MahjongAction = {
-  player: Player;
-  command: MahjongCommand;
-  enable: boolean;
+  user: MahjongUser;
+  type: MahjongActionType;
+  isSkipped: boolean;
+  set?: PaiSet;
 };
 
 export class Mahjong {
@@ -39,6 +54,7 @@ export class Mahjong {
   turnUserIdx: number = 0;
   actions: MahjongAction[] = [];
   result?: TokutenOutput;
+  mutex: Mutex = createMutex();
 
   kyotaku: number = 0;
   honba: number = 0;
@@ -75,6 +91,15 @@ export class Mahjong {
     this.turnUserIdx = userIdx;
   }
 
+  generate(): Pai[] {
+    const pais = [...PaiAll];
+    for (let i = pais.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [pais[i], pais[j]] = [pais[j], pais[i]];
+    }
+    return pais;
+  }
+
   gameStart(pais: Pai[]): void {
     this.paiYama = pais;
     for (let i = 0; i < 4; i++) {
@@ -83,13 +108,13 @@ export class Mahjong {
 
     for (let i = 0; i < 3; i++) {
       for (let j = 0; j < 4; j++) {
-        this.users[(j + this.kyoku) % 4].setPaiPais({
+        this.users[(j + this.kyoku) % 4].setPaiRest({
           pais: this.paiYama.splice(-4).reverse(),
         });
       }
     }
     for (let i = 0; i < 4; i++) {
-      this.users[(i + this.kyoku) % 4].setPaiPais({
+      this.users[(i + this.kyoku) % 4].setPaiRest({
         pais: this.paiYama.splice(-1),
       });
     }
@@ -115,6 +140,7 @@ export class Mahjong {
     this.isAgari = isAgari;
     this.isRenchan = isRenchan || this.isRenchan;
     this.isHonbaTaken = true;
+    this.output(this);
   }
 
   gameReset(): void {
@@ -130,6 +156,8 @@ export class Mahjong {
     this.paiRinshan = [];
     this.isHonbaTaken = false;
     this.users.forEach((e) => e.reset());
+    this.actions = [];
+    this.output(this);
   }
 
   updateBakyo(): void {
@@ -150,23 +178,152 @@ export class Mahjong {
   }
 
   tsumo({ user }: { user: MahjongUser }): void {
-    user.setPaiTsumo({ pai: this.paiYama.splice(-1)[0] });
+    const pai = this.paiYama.splice(-1)[0];
+    user.setPaiTsumo({ pai });
+
+    this.actionSetAfterTsumo({ from: user, pai });
+    this.output(this);
+  }
+
+  getPlayer(jicha: number, tacha: number): Player {
+    switch ((tacha - jicha + 4) % 4) {
+      case 0:
+        return Player.JICHA;
+      case 1:
+        return Player.SHIMOCHA;
+      case 2:
+        return Player.TOIMEN;
+      case 3:
+        return Player.TOIMEN;
+      default:
+        throw new Error("failed to getPlayer");
+    }
+  }
+
+  actionSetAfterTsumo({ from, pai }: { from: MahjongUser; pai: Pai }): void {
+    this.actions = [];
+    const userIdx = this.users.findIndex((e) => e.id === from.id);
+    const user = this.users[userIdx];
+
+    // tsumo
+    const params = this.buildParams({
+      user,
+      pai,
+      options: { isTsumo: true, isChankan: false },
+    });
+    const result = new Tokuten({ ...params }).count();
+    if (result.pointSum > 0) {
+      this.actions.push({
+        user,
+        type: MahjongActionType.TSUMO,
+        isSkipped: false,
+      });
+    }
+    // ankan
+    const setAnkan = user.canAnkan();
+    if (setAnkan.length > 0) {
+      this.actions.push({
+        user,
+        type: MahjongActionType.ANKAN,
+        isSkipped: false,
+      });
+    }
+    // kakan
+    const setKakan = user.canKakan();
+    if (setKakan.length > 0) {
+      this.actions.push({
+        user,
+        type: MahjongActionType.KAKAN,
+        isSkipped: false,
+      });
+    }
+  }
+
+  actionSetAfterDahai({ from, pai }: { from: MahjongUser; pai: Pai }): void {
+    this.actions = [];
+    const fromIdx = this.users.findIndex((e) => e.id === from.id);
+
+    // ron
+    for (let i = 1; i < 4; i++) {
+      const user = this.users[(fromIdx + i) % 4];
+      const params = this.buildParams({
+        user,
+        pai,
+        options: { isTsumo: false, isChankan: false },
+      });
+      const result = new Tokuten({ ...params }).count();
+      if (result.pointSum > 0) {
+        this.actions.push({
+          user,
+          type: MahjongActionType.RON,
+          isSkipped: false,
+        });
+      }
+    }
+    // minkan
+    for (let i = 1; i < 4; i++) {
+      const user = this.users[(fromIdx + i) % 4];
+      const userIdx = this.users.findIndex((e) => e.id === user.id);
+      const set = user.canMinkan({
+        pai,
+        fromWho: this.getPlayer(userIdx, fromIdx),
+      });
+      if (set.length > 0) {
+        this.actions.push({
+          user,
+          type: MahjongActionType.MINKAN,
+          isSkipped: false,
+        });
+      }
+    }
+    // pon
+    for (let i = 1; i < 4; i++) {
+      const user = this.users[(fromIdx + i) % 4];
+      const userIdx = this.users.findIndex((e) => e.id === user.id);
+      const set = user.canPon({
+        pai,
+        fromWho: this.getPlayer(userIdx, fromIdx),
+      });
+      if (set.length > 0) {
+        this.actions.push({
+          user,
+          type: MahjongActionType.PON,
+          isSkipped: false,
+        });
+      }
+    }
+    // chi
+    for (let i = 1; i < 2; i++) {
+      const user = this.users[(fromIdx + i) % 4];
+      const set = user.canChi({ pai });
+
+      if (set.length > 0) {
+        this.actions.push({
+          user,
+          type: MahjongActionType.CHI,
+          isSkipped: false,
+        });
+      }
+    }
   }
 
   dahai({ user, pai }: { user: MahjongUser; pai: Pai }): void {
+    if (this.turnUser().id !== user.id) {
+      throw new Error("when dahai called, not your turn");
+    }
+
     if (user.isAfterKakan) {
       this.users.forEach((e) => e.isIppatsu = false);
       user.isAfterKakan = false;
     }
-    if (user.id !== this.turnUser().id) {
-      throw new Error("when dahai called, not your turn");
-    }
-
     user.dahai({ pai });
     user.isIppatsu = false;
     user.isRinshankaiho = false;
+    this.actionSetAfterDahai({ from: user, pai });
 
-    this.turnNext();
+    if (this.actions.length === 0) {
+      this.turnNext();
+    }
   }
 
   dora(): void {
@@ -280,18 +437,19 @@ export class Mahjong {
     });
   }
 
-  agari(
-    { user, from, pai, isChankan = false }: {
+  buildParams(
+    { user, pai, options }: {
       user: MahjongUser;
-      from: MahjongUser;
       pai: Pai;
-      isChankan?: boolean;
+      options: {
+        isTsumo: boolean;
+        isChankan: boolean;
+      };
     },
-  ): void {
+  ): TokutenInput {
     const allMenzen = this.users.every((u) => u.paiSets.length === 0);
-    const isTsumo = user.id === from.id;
-
-    const params: TokutenInput = {
+    const { isTsumo, isChankan } = options;
+    return {
       paiRest: user.paiRest,
       paiLast: pai,
       paiSets: user.paiSets,
@@ -316,6 +474,22 @@ export class Mahjong {
         isTenho: isTsumo && this.turnRest() === 69,
       },
     };
+  }
+
+  agari(
+    { user, from, pai, isChankan = false }: {
+      user: MahjongUser;
+      from: MahjongUser;
+      pai: Pai;
+      isChankan?: boolean;
+    },
+  ): void {
+    const isTsumo = user.id === from.id;
+    const params = this.buildParams({
+      user,
+      pai,
+      options: { isTsumo, isChankan },
+    });
     const result = new Tokuten({ ...params }).count();
     this.result = result;
 
@@ -431,6 +605,38 @@ export class Mahjong {
   }
 
   naki({ user, set }: { user: MahjongUser; set: PaiSet }): void {
+    const action = this.actions.find((action) => {
+      if (action.user.id !== user.id) {
+        return false;
+      }
+      switch (set.type) {
+        case PaiSetType.MINKO:
+          return action.type === MahjongActionType.PON;
+        case PaiSetType.MINSHUN:
+          return action.type === MahjongActionType.CHI;
+        case PaiSetType.MINKAN:
+          return action.type === MahjongActionType.MINKAN;
+        case PaiSetType.ANKAN:
+          return action.type === MahjongActionType.ANKAN;
+        case PaiSetType.KAKAN:
+          return action.type === MahjongActionType.KAKAN;
+        default:
+          return false;
+      }
+    });
+
+    if (action === undefined) {
+      throw new Error("when naki called, action is not allowed");
+    }
+
+    action.set = set;
+    const validActions = this.actions.filter((e) =>
+      !e.isSkipped && (e.user.id === user.id && e.type === action.type)
+    );
+    if (validActions[0].user.id !== user.id) {
+      this.output(this);
+      return;
+    }
     user.naki({ set });
     this.turnMove({ user });
 
@@ -446,7 +652,41 @@ export class Mahjong {
     this.users.forEach((e) => e.isIppatsu = false);
   }
 
-  input(
+  skip({ user }: { user: MahjongUser }): void {
+    const beforeActions = this.actions.filter((e) => !e.isSkipped);
+    this.actions.forEach((e) => {
+      if (e.user.id === user.id) {
+        e.isSkipped = true;
+      }
+    });
+
+    const isAfterTsumo = this.actions.every((e) =>
+      [
+        MahjongActionType.TSUMO,
+        MahjongActionType.ANKAN,
+        MahjongActionType.KAKAN,
+      ].includes(e.type)
+    );
+
+    const afterActions = this.actions.filter((e) => !e.isSkipped);
+    if (
+      beforeActions.length !== 0 && afterActions.length === 0 && !isAfterTsumo
+    ) {
+      this.turnNext();
+      return;
+    }
+
+    if (afterActions.length === 0) {
+      return;
+    }
+
+    if (afterActions[0].set !== undefined) {
+      this.naki({ user: afterActions[0].user, set: afterActions[0].set! });
+    }
+    this.output(this);
+  }
+
+  async input(
     action: MahjongCommand,
     { user, params }: {
       user: MahjongUser;
@@ -470,7 +710,9 @@ export class Mahjong {
         };
       };
     },
-  ): void {
+  ): Promise<void> {
+    // mutex lock
+    await this.mutex.acquire();
     switch (action) {
       case MahjongCommand.TSUMO: {
         this.tsumo({ user });
@@ -513,6 +755,12 @@ export class Mahjong {
         this.dora();
         break;
       }
+      case MahjongCommand.SKIP: {
+        this.skip({ user });
+        break;
+      }
     }
+    // mutex unlock
+    this.mutex.release();
   }
 }
