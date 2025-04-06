@@ -13,15 +13,15 @@ export class Room {
     return this.users.length < defaultRoomSize;
   }
 
-  join(id: string) {
+  join(id: string): void {
     this.users.push(new User(id));
   }
 
-  leave(id: string) {
+  leave(id: string): void {
     this.users = this.users.filter((user) => user.id !== id);
   }
 
-  size() {
+  size(): number {
     return this.users.length;
   }
 }

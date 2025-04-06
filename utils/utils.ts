@@ -259,7 +259,7 @@ const _tsumo = async (
 
 const _dahai = async (
   e: Element,
-  s: state,
+  _s: state,
   input: ({ name, params }: { name: string; params: inputParams }) => Promise<void>,
 ) => {
   const who = ["D", "E", "F", "G"].findIndex((x) => x == e.tagName[0]);

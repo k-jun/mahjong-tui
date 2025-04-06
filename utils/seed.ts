@@ -81,7 +81,7 @@ class MT19937ar {
     this.mti = this.N;
   }
 
-  init_by_array(init_key: number[]) {
+  init_by_array(init_key: number[]): void {
     this.init_genrand(19650218);
     let i = 1;
     let j = 0;
@@ -115,7 +115,7 @@ class MT19937ar {
     this.mt[0] = 0x80000000n;
   }
 
-  genrand_int32() {
+  genrand_int32(): bigint {
     const mag01 = [0x0n, this.MATRIX_A];
 
     if (this.mti >= this.N) {
