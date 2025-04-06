@@ -9,6 +9,13 @@ Deno.test("mahjong all", async () => {
 
   let globalGame: Mahjong = new Mahjong(userIds, mockOutput);
   await fixtures(async ({ name, params }): Promise<void> => {
+    // console.log(
+    //   name,
+    //   globalGame.kyoku,
+    //   globalGame.honba,
+    //   globalGame.turnUserIdx,
+    //   globalGame.turnRest(),
+    // );
     switch (name) {
       case "INIT": {
         const { hai0, hai1, hai2, hai3, yama } = params.init!;

@@ -39,7 +39,7 @@ export enum MahjongActionType {
 export type MahjongAction = {
   user: MahjongUser;
   type: MahjongActionType;
-  isSkipped: boolean;
+  enable?: boolean;
   set?: PaiSet;
 };
 
@@ -200,6 +200,25 @@ export class Mahjong {
     }
   }
 
+  actionSetAfterKakan({ from, pai }: { from: MahjongUser; pai: Pai }): void {
+    const fromIdx = this.users.findIndex((e) => e.id === from.id);
+    for (let i = 1; i < 4; i++) {
+      const user = this.users[(fromIdx + i) % 4];
+      const params = this.buildParams({
+        user,
+        pai,
+        options: { isTsumo: false, isChankan: true },
+      });
+      const result = new Tokuten({ ...params }).count();
+      if (result.pointSum > 0) {
+        this.actions.push({
+          user,
+          type: MahjongActionType.RON,
+        });
+      }
+    }
+  }
+
   actionSetAfterTsumo({ from, pai }: { from: MahjongUser; pai: Pai }): void {
     this.actions = [];
     const userIdx = this.users.findIndex((e) => e.id === from.id);
@@ -216,7 +235,6 @@ export class Mahjong {
       this.actions.push({
         user,
         type: MahjongActionType.TSUMO,
-        isSkipped: false,
       });
     }
     // ankan
@@ -225,7 +243,6 @@ export class Mahjong {
       this.actions.push({
         user,
         type: MahjongActionType.ANKAN,
-        isSkipped: false,
       });
     }
     // kakan
@@ -234,7 +251,6 @@ export class Mahjong {
       this.actions.push({
         user,
         type: MahjongActionType.KAKAN,
-        isSkipped: false,
       });
     }
   }
@@ -256,7 +272,6 @@ export class Mahjong {
         this.actions.push({
           user,
           type: MahjongActionType.RON,
-          isSkipped: false,
         });
       }
     }
@@ -272,7 +287,6 @@ export class Mahjong {
         this.actions.push({
           user,
           type: MahjongActionType.MINKAN,
-          isSkipped: false,
         });
       }
     }
@@ -288,7 +302,6 @@ export class Mahjong {
         this.actions.push({
           user,
           type: MahjongActionType.PON,
-          isSkipped: false,
         });
       }
     }
@@ -301,7 +314,6 @@ export class Mahjong {
         this.actions.push({
           user,
           type: MahjongActionType.CHI,
-          isSkipped: false,
         });
       }
     }
@@ -335,8 +347,8 @@ export class Mahjong {
   rinshanTsumo({ user }: { user: MahjongUser }): void {
     const pai = this.paiRinshan.splice(0, 1)[0];
     user.setPaiTsumo({ pai });
-    this.actionSetAfterTsumo({ from: user, pai });
     user.isRinshankaiho = true;
+    this.actionSetAfterTsumo({ from: user, pai });
   }
 
   isPaoDaisangen(
@@ -487,6 +499,33 @@ export class Mahjong {
     },
   ): void {
     const isTsumo = user.id === from.id;
+
+    const action = this.actions.find((action) => {
+      if (action.user.id !== user.id) {
+        return false;
+      }
+      if (isTsumo) {
+        return action.type === MahjongActionType.TSUMO;
+      }
+      return action.type === MahjongActionType.RON;
+    });
+
+    if (action === undefined) {
+      throw new Error("when agari called, action is not allowed");
+    }
+
+    action.enable = true;
+    if (!isTsumo) {
+      // ダブロン
+      const actionRons = this.actions.filter((e) =>
+        e.enable === undefined && e.type === MahjongActionType.RON
+      );
+      if (actionRons.length >= 1) {
+        // 他にロンの Action を持っているユーザーが存在するので、その結果を待つ。
+        this.output(this);
+        return;
+      }
+    }
     const params = this.buildParams({
       user,
       pai,
@@ -632,8 +671,10 @@ export class Mahjong {
     }
 
     action.set = set;
+    action.enable = true;
+
     const validActions = this.actions.filter((e) =>
-      !e.isSkipped && (e.user.id === user.id && e.type === action.type)
+      e.enable !== false && (e.user.id === user.id && e.type === action.type)
     );
     if (validActions[0].user.id !== user.id) {
       this.output(this);
@@ -651,16 +692,20 @@ export class Mahjong {
 
     if (set.type === PaiSetType.KAKAN) {
       user.isAfterKakan = true;
+      this.actionSetAfterKakan({
+        from: user,
+        pai: set.paiCall[set.paiCall.length - 1],
+      });
       return;
     }
     this.users.forEach((e) => e.isIppatsu = false);
   }
 
   skip({ user }: { user: MahjongUser }): void {
-    const beforeActions = this.actions.filter((e) => !e.isSkipped);
+    const beforeActions = this.actions.filter((e) => e.enable !== false);
     this.actions.forEach((e) => {
       if (e.user.id === user.id) {
-        e.isSkipped = true;
+        e.enable = false;
       }
     });
 
@@ -672,7 +717,7 @@ export class Mahjong {
       ].includes(e.type)
     );
 
-    const afterActions = this.actions.filter((e) => !e.isSkipped);
+    const afterActions = this.actions.filter((e) => e.enable !== false);
     if (
       beforeActions.length !== 0 && afterActions.length === 0 && !isAfterTsumo
     ) {
@@ -684,7 +729,7 @@ export class Mahjong {
       return;
     }
 
-    if (afterActions[0].set !== undefined) {
+    if (afterActions[0].enable === true) {
       this.naki({ user: afterActions[0].user, set: afterActions[0].set! });
     }
     this.output(this);
