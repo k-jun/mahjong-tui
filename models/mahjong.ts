@@ -40,7 +40,14 @@ export type MahjongAction = {
   user: MahjongUser;
   type: MahjongActionType;
   enable?: boolean;
-  set?: PaiSet;
+  naki?: {
+    set: PaiSet;
+  };
+  agari?: {
+    fromUser: MahjongUser;
+    paiAgari: Pai;
+    isChankan?: boolean;
+  };
 };
 
 export class Mahjong {
@@ -53,7 +60,7 @@ export class Mahjong {
   users: MahjongUser[] = [];
   turnUserIdx: number = 0;
   actions: MahjongAction[] = [];
-  result?: TokutenOutput;
+  result: TokutenOutput[] = [];
   mutex: Mutex = createMutex();
 
   kyotaku: number = 0;
@@ -150,6 +157,7 @@ export class Mahjong {
       this.isAgari = false;
       this.isRenchan = false;
     }
+    this.result = [];
     this.paiWanpai = [];
     this.paiDora = [];
     this.paiDoraUra = [];
@@ -490,6 +498,43 @@ export class Mahjong {
     };
   }
 
+  calcPoint(
+    { user, from, pai, isChankan = false }: {
+      user: MahjongUser;
+      from: MahjongUser;
+      pai: Pai;
+      isChankan?: boolean;
+    },
+  ): void {
+    const isTsumo = user.id === from.id;
+    const params = this.buildParams({
+      user,
+      pai,
+      options: { isTsumo, isChankan },
+    });
+    const result = new Tokuten({ ...params }).count();
+    this.result.push(result);
+
+    const honba = this.isHonbaTaken ? 0 : this.honba;
+    const pao = this.isPao({
+      user,
+      yakus: result.yakus.map((e) => e.str),
+    });
+
+    user.point += result.pointSum + (this.kyotaku * 1000) + (honba * 300);
+    let pointMinus = [];
+    if (isTsumo) {
+      pointMinus = this.agariMinusPointTsumo({ user, result, pao });
+    } else {
+      pointMinus = this.agariMinusPointRon({ user, from, result, pao });
+    }
+    for (const [idx, user] of this.users.entries()) {
+      user.point -= pointMinus[idx];
+    }
+    const isOya = user.id === this.users[this.kyoku % 4].id;
+    this.gameEnded({ isAgari: true, isRenchan: isOya });
+  }
+
   agari(
     { user, from, pai, isChankan = false }: {
       user: MahjongUser;
@@ -515,43 +560,34 @@ export class Mahjong {
     }
 
     action.enable = true;
-    if (!isTsumo) {
-      // ダブロン
-      const actionRons = this.actions.filter((e) =>
-        e.enable === undefined && e.type === MahjongActionType.RON
-      );
-      if (actionRons.length >= 1) {
-        // 他にロンの Action を持っているユーザーが存在するので、その結果を待つ。
-        this.output(this);
-        return;
-      }
-    }
-    const params = this.buildParams({
-      user,
-      pai,
-      options: { isTsumo, isChankan },
-    });
-    const result = new Tokuten({ ...params }).count();
-    this.result = result;
+    action.agari = { fromUser: from, paiAgari: pai, isChankan };
 
-    const honba = this.isHonbaTaken ? 0 : this.honba;
-    const pao = this.isPao({
-      user,
-      yakus: result.yakus.map((e) => e.str),
-    });
-
-    user.point += this.result.pointSum + (this.kyotaku * 1000) + (honba * 300);
-    let pointMinus = [];
     if (isTsumo) {
-      pointMinus = this.agariMinusPointTsumo({ user, result, pao });
-    } else {
-      pointMinus = this.agariMinusPointRon({ user, from, result, pao });
+      this.calcPoint({ user, from, pai, isChankan });
+      return;
     }
-    for (const [idx, user] of this.users.entries()) {
-      user.point -= pointMinus[idx];
+    // ダブロン
+    const actionUndefined = this.actions.filter((e) =>
+      e.enable === undefined && e.type === MahjongActionType.RON
+    );
+    if (actionUndefined.length >= 1) {
+      this.output(this);
+      return;
     }
-    const isOya = user.id === this.users[this.kyoku % 4].id;
-    this.gameEnded({ isAgari: true, isRenchan: isOya });
+    const actionEnable = this.actions.filter((e) =>
+      e.enable === true && e.type === MahjongActionType.RON
+    );
+    for (const action of actionEnable) {
+      if (action.agari === undefined) {
+        throw new Error("when agari called, action.agari is undefined");
+      }
+      this.calcPoint({
+        user: action.user,
+        from: action.agari!.fromUser,
+        pai: action.agari!.paiAgari,
+        isChankan: action.agari?.isChankan ?? false,
+      });
+    }
   }
 
   richi({ user }: { user: MahjongUser }): void {
@@ -670,7 +706,7 @@ export class Mahjong {
       throw new Error("when naki called, action is not allowed");
     }
 
-    action.set = set;
+    action.naki = { set };
     action.enable = true;
 
     const validActions = this.actions.filter((e) =>
@@ -702,9 +738,13 @@ export class Mahjong {
   }
 
   skip({ user }: { user: MahjongUser }): void {
-    const beforeActions = this.actions.filter((e) => e.enable !== false);
+    if (this.actions.filter((e) => e.enable === undefined).length === 0) {
+      return;
+    }
+
+    // update
     this.actions.forEach((e) => {
-      if (e.user.id === user.id) {
+      if (e.user.id === user.id && e.enable === undefined) {
         e.enable = false;
       }
     });
@@ -717,20 +757,52 @@ export class Mahjong {
       ].includes(e.type)
     );
 
-    const afterActions = this.actions.filter((e) => e.enable !== false);
-    if (
-      beforeActions.length !== 0 && afterActions.length === 0 && !isAfterTsumo
-    ) {
+    if (this.actions.every((e) => e.enable === false) && !isAfterTsumo) {
       this.turnNext();
       return;
     }
 
-    if (afterActions.length === 0) {
-      return;
-    }
+    const actionActive = this.actions.filter((
+      e,
+    ) => (e.enable === true || e.enable === undefined));
+    const isRon = (e: MahjongAction) => e.type === MahjongActionType.RON;
+    const isUndef = (e: MahjongAction) => e.enable === undefined;
+    actionActive.sort((a, b) => {
+      if (isRon(a) && isRon(b)) {
+        if (isUndef(a) && !isUndef(b)) return -1;
+        if (!isUndef(a) && isUndef(b)) return 1;
+      }
+      return 0;
+    });
 
-    if (afterActions[0].enable === true) {
-      this.naki({ user: afterActions[0].user, set: afterActions[0].set! });
+    let isRonCalled = false;
+    for (const action of actionActive) {
+      if (action.type === MahjongActionType.RON) {
+        if (action.enable === undefined) {
+          break;
+        }
+        if (action.enable === true) {
+          isRonCalled = true;
+          this.agari({
+            user: action.user,
+            from: action.agari!.fromUser,
+            pai: action.agari!.paiAgari,
+          });
+        }
+      }
+
+      if (action.type !== MahjongActionType.RON) {
+        if (isRonCalled) {
+          break;
+        }
+        if (action.enable === undefined) {
+          break;
+        }
+        if (action.enable === true) {
+          this.naki({ user: action.user, set: action.naki!.set });
+          break;
+        }
+      }
     }
     this.output(this);
   }

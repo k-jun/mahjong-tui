@@ -370,7 +370,8 @@ const _agari = async (
       paiDoraUra.push(new Pai(Number(e)));
     });
   }
-  const yakus: { str: string; val: number; yakuman: boolean }[] = [];
+  const yakus: 
+  { str: string; val: number; yakuman: boolean }[] = [];
   if (attrs.get("yaku")) {
     const a = attrs.get("yaku")?.split(",") ?? [];
     for (let i = 0; i < a.length; i += 2) {

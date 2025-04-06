@@ -1,4 +1,4 @@
-import { Mahjong, MahjongCommand } from "./mahjong.ts";
+import { Mahjong, MahjongCommand, MahjongActionType } from "./mahjong.ts";
 import { expect } from "jsr:@std/expect";
 import { fixtures } from "../utils/utils.ts";
 import { Pai, PaiSet } from "@k-jun/mahjong";
@@ -8,18 +8,70 @@ Deno.test("mahjong all", async () => {
   const mockOutput = (_: Mahjong) => {};
 
   let globalGame: Mahjong = new Mahjong(userIds, mockOutput);
+  let resultChecker: {
+    yakus: {
+      str: string;
+      val: number;
+      yakuman: boolean;
+    }[];
+    score: number[];
+    paiDora: Pai[];
+    paiDoraUra: Pai[];
+    owari: number[] | undefined;
+  }[] = [];
   await fixtures(async ({ name, params }): Promise<void> => {
-    // console.log(
-    //   name,
-    //   globalGame.kyoku,
-    //   globalGame.honba,
-    //   globalGame.turnUserIdx,
-    //   globalGame.turnRest(),
-    // );
+    console.log(
+      name,
+      globalGame.kyoku,
+      globalGame.honba,
+      globalGame.turnUserIdx,
+      globalGame.turnRest(),
+    );
     switch (name) {
       case "INIT": {
         const { hai0, hai1, hai2, hai3, yama } = params.init!;
 
+        const actionUndefined = globalGame.actions.filter((e) =>
+          e.enable === undefined && e.type === MahjongActionType.RON
+        );
+        for (const action of actionUndefined) {
+          await globalGame.input(MahjongCommand.SKIP, {
+            user: action.user,
+            params: {},
+          });
+        }
+        resultChecker.forEach(
+          ({ yakus, score, paiDora, paiDoraUra, owari }, idx) => {
+            const actYakus = globalGame.result[idx].yakus
+              .filter((e) => e.val > 0).map((
+                e,
+              ) => ({
+                ...e,
+              })).sort((a, b) => a.str.localeCompare(b.str));
+
+            expect(globalGame.paiDora).toEqual(
+              paiDora.map((e) => new Pai(e.id)),
+            );
+            if (paiDoraUra.length > 0) {
+              expect(globalGame.paiDoraUra).toEqual(
+                paiDoraUra.map((e) => new Pai(e.id)),
+              );
+            }
+            expect(actYakus).toEqual(
+              yakus.filter((e) => e.val > 0).sort((a, b) =>
+                a.str.localeCompare(b.str)
+              ),
+            );
+
+            if (idx === resultChecker.length - 1) {
+              expect(globalGame.users.map((e) => e.point)).toEqual(score);
+              if (owari !== undefined) {
+                globalGame = new Mahjong(userIds, mockOutput);
+              }
+            }
+          },
+        );
+        resultChecker = [];
         globalGame.gameReset();
         globalGame.gameStart(yama.map((e) => new Pai(e.id)));
 
@@ -76,31 +128,13 @@ Deno.test("mahjong all", async () => {
             },
           });
         }
-
-        const actYakus = globalGame.result?.yakus.filter((e) => e.val > 0).map((
-          e,
-        ) => ({
-          ...e,
-        })).sort((a, b) => a.str.localeCompare(b.str));
-
-        expect(globalGame.paiDora).toEqual(
-          paiDora.map((e) => new Pai(e.id)),
-        );
-        if (paiDoraUra.length > 0) {
-          expect(globalGame.paiDoraUra).toEqual(
-            paiDoraUra.map((e) => new Pai(e.id)),
-          );
-        }
-        expect(actYakus).toEqual(
-          yakus.filter((e) => e.val > 0).sort((a, b) =>
-            a.str.localeCompare(b.str)
-          ),
-        );
-
-        expect(globalGame.users.map((e) => e.point)).toEqual(score);
-        if (owari !== undefined) {
-          globalGame = new Mahjong(userIds, mockOutput);
-        }
+        resultChecker.push({
+          yakus,
+          score,
+          paiDora,
+          paiDoraUra,
+          owari,
+        });
         break;
       }
       case "TSUMO": {
