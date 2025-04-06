@@ -269,26 +269,32 @@ export class MahjongUser extends User {
   }
 
   canKakan(): PaiSet[] {
-    if (!this.paiTsumo) {
+    if (this.paiTsumo === undefined) {
       return [];
     }
 
     const result = [];
-    const paiSet = this.paiSets.find((e) =>
-      e.type == PaiSetType.MINKO && e.pais[0].fmt == this.paiTsumo?.fmt
-    );
-    if (paiSet) {
-      result.push(
-        new PaiSet({
-          paiCall: [
-            ...paiSet.paiCall,
-            ...(this.paiTsumo ? [this.paiTsumo] : []),
-          ],
-          paiRest: paiSet.paiRest,
-          type: PaiSetType.KAKAN,
-        }),
-      );
+    const paiAll = [...this.paiRest, this.paiTsumo];
+
+    for (const set of this.paiSets) {
+      if (set.type !== PaiSetType.MINKO) {
+        continue;
+      }
+
+      for (const pai of paiAll) {
+        if (pai.fmt !== set.paiCall[0].fmt) {
+          continue;
+        }
+        result.push(
+          new PaiSet({
+            paiCall: [...set.paiCall, pai],
+            paiRest: set.paiRest,
+            type: PaiSetType.KAKAN,
+          }),
+        );
+      }
     }
+
     return result;
   }
 

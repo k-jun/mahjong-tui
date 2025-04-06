@@ -333,7 +333,9 @@ export class Mahjong {
   }
 
   rinshanTsumo({ user }: { user: MahjongUser }): void {
-    user.setPaiTsumo({ pai: this.paiRinshan.splice(0, 1)[0] });
+    const pai = this.paiRinshan.splice(0, 1)[0];
+    user.setPaiTsumo({ pai });
+    this.actionSetAfterTsumo({ from: user, pai });
     user.isRinshankaiho = true;
   }
 
@@ -637,7 +639,9 @@ export class Mahjong {
       this.output(this);
       return;
     }
+    this.actions = [];
     user.naki({ set });
+
     this.turnMove({ user });
 
     const userIdx = this.users.findIndex((e) => e.id === user.id);

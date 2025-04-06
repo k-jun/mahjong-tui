@@ -204,5 +204,5 @@ Deno.test("mahjong all", async () => {
         break;
       }
     }
-  }, 20);
+  });
 });
