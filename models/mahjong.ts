@@ -331,7 +331,6 @@ export class Mahjong {
     if (this.turnUser().id !== user.id) {
       throw new Error("when dahai called, not your turn");
     }
-
     if (user.isAfterKakan) {
       this.users.forEach((e) => e.isIppatsu = false);
       user.isAfterKakan = false;
@@ -709,17 +708,25 @@ export class Mahjong {
 
     action.naki = { set };
     action.enable = true;
+    for (const a of this.actions) {
+      if (a.user.id === user.id && a.enable === undefined) {
+        a.enable = false;
+      }
+    }
 
-    const validActions = this.actions.filter((e) =>
-      e.enable !== false && (e.user.id === user.id && e.type === action.type)
-    );
-    if (validActions[0].user.id !== user.id) {
+    const primaryAction = this.actions.find((e) => {
+      if (e.enable === false) {
+        return false;
+      }
+      return true;
+    });
+    if (primaryAction!.user.id !== user.id) {
       this.output(this);
       return;
     }
+
     this.actions = [];
     user.naki({ set });
-
     this.turnMove({ user });
 
     const userIdx = this.users.findIndex((e) => e.id === user.id);

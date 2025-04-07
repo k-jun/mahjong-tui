@@ -3,58 +3,6 @@ import { expect } from "jsr:@std/expect";
 import { fixtures } from "../utils/utils.ts";
 import { Pai, PaiSet } from "@k-jun/mahjong";
 
-async function _done(
-  globalGame: Mahjong,
-  checker: {
-    yakus: { str: string; val: number; yakuman: boolean }[];
-    score: number[];
-    paiDora: Pai[];
-    paiDoraUra: Pai[];
-  }[],
-): Promise<void> {
-  if (globalGame.actions.length === 0) {
-    return;
-  }
-
-  const actionUndefined = globalGame.actions.filter((e) =>
-    e.enable === undefined && e.type === MahjongActionType.RON
-  );
-  for (const action of actionUndefined) {
-    await globalGame.input(MahjongCommand.SKIP, {
-      user: action.user,
-      params: {},
-    });
-  }
-  checker.forEach(
-    ({ yakus, score, paiDora, paiDoraUra }, idx) => {
-      const actYakus = globalGame.result[idx].yakus
-        .filter((e) => e.val > 0).map((
-          e,
-        ) => ({
-          ...e,
-        })).sort((a, b) => a.str.localeCompare(b.str));
-
-      expect(globalGame.paiDora).toEqual(
-        paiDora.map((e) => new Pai(e.id)),
-      );
-      if (paiDoraUra.length > 0) {
-        expect(globalGame.paiDoraUra).toEqual(
-          paiDoraUra.map((e) => new Pai(e.id)),
-        );
-      }
-      expect(actYakus).toEqual(
-        yakus.filter((e) => e.val > 0).sort((a, b) =>
-          a.str.localeCompare(b.str)
-        ),
-      );
-
-      if (idx === checker.length - 1) {
-        expect(globalGame.users.map((e) => e.point)).toEqual(score);
-      }
-    },
-  );
-}
-
 Deno.test("mahjong all", async () => {
   const userIds = ["0", "1", "2", "3"];
   const mockOutput = (_: Mahjong) => {};
@@ -203,6 +151,10 @@ Deno.test("mahjong all", async () => {
       }
       case "NAKI": {
         const { who, set } = params.naki!;
+
+        // 暗槓が選択され、それがかつ、ほかプレイヤーの槍槓を選択可能にした場合、槍槓が actions に新しく加わってしまう。
+        // ここで skip したいのは暗槓選択前に表示されていた、pon. chi などの他アクションのため、暗槓選択前の actions を保存しておく。
+        const beforeActions = [...globalGame.actions];
         await globalGame.input(MahjongCommand.NAKI, {
           user: globalGame.users[who],
           params: {
@@ -217,7 +169,7 @@ Deno.test("mahjong all", async () => {
           },
         });
 
-        const otherActions = globalGame.actions.filter((e) =>
+        const otherActions = beforeActions.filter((e) =>
           e.user.id !== globalGame.users[who].id
         );
         for (let i = 0; i < otherActions.length; i++) {
@@ -263,3 +215,55 @@ Deno.test("mahjong all", async () => {
     }
   });
 });
+
+async function _done(
+  globalGame: Mahjong,
+  checker: {
+    yakus: { str: string; val: number; yakuman: boolean }[];
+    score: number[];
+    paiDora: Pai[];
+    paiDoraUra: Pai[];
+  }[],
+): Promise<void> {
+  if (globalGame.actions.length === 0) {
+    return;
+  }
+
+  const actionUndefined = globalGame.actions.filter((e) =>
+    e.enable === undefined && e.type === MahjongActionType.RON
+  );
+  for (const action of actionUndefined) {
+    await globalGame.input(MahjongCommand.SKIP, {
+      user: action.user,
+      params: {},
+    });
+  }
+  checker.forEach(
+    ({ yakus, score, paiDora, paiDoraUra }, idx) => {
+      const actYakus = globalGame.result[idx].yakus
+        .filter((e) => e.val > 0).map((
+          e,
+        ) => ({
+          ...e,
+        })).sort((a, b) => a.str.localeCompare(b.str));
+
+      expect(globalGame.paiDora).toEqual(
+        paiDora.map((e) => new Pai(e.id)),
+      );
+      if (paiDoraUra.length > 0) {
+        expect(globalGame.paiDoraUra).toEqual(
+          paiDoraUra.map((e) => new Pai(e.id)),
+        );
+      }
+      expect(actYakus).toEqual(
+        yakus.filter((e) => e.val > 0).sort((a, b) =>
+          a.str.localeCompare(b.str)
+        ),
+      );
+
+      if (idx === checker.length - 1) {
+        expect(globalGame.users.map((e) => e.point)).toEqual(score);
+      }
+    },
+  );
+}
