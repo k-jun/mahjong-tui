@@ -513,6 +513,7 @@ export class Mahjong {
       options: { isTsumo, isChankan },
     });
     const result = new Tokuten({ ...params }).count();
+
     this.result.push(result);
 
     const honba = this.isHonbaTaken ? 0 : this.honba;
@@ -765,6 +766,7 @@ export class Mahjong {
     const actionActive = this.actions.filter((
       e,
     ) => (e.enable === true || e.enable === undefined));
+
     const isRon = (e: MahjongAction) => e.type === MahjongActionType.RON;
     const isUndef = (e: MahjongAction) => e.enable === undefined;
     actionActive.sort((a, b) => {
@@ -775,34 +777,20 @@ export class Mahjong {
       return 0;
     });
 
-    let isRonCalled = false;
     for (const action of actionActive) {
+      if (action.enable === undefined) {
+        break;
+      }
       if (action.type === MahjongActionType.RON) {
-        if (action.enable === undefined) {
-          break;
-        }
-        if (action.enable === true) {
-          isRonCalled = true;
-          this.agari({
-            user: action.user,
-            from: action.agari!.fromUser,
-            pai: action.agari!.paiAgari,
-          });
-        }
+        this.agari({
+          user: action.user,
+          from: action.agari!.fromUser,
+          pai: action.agari!.paiAgari,
+        });
+        break;
       }
-
-      if (action.type !== MahjongActionType.RON) {
-        if (isRonCalled) {
-          break;
-        }
-        if (action.enable === undefined) {
-          break;
-        }
-        if (action.enable === true) {
-          this.naki({ user: action.user, set: action.naki!.set });
-          break;
-        }
-      }
+      this.naki({ user: action.user, set: action.naki!.set });
+      break;
     }
     this.output(this);
   }

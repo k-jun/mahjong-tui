@@ -130,7 +130,7 @@ export const fixtures = async (
 
         switch (e.tagName) {
           case "INIT":
-            state = { ...state, ...await _init(e, state, input) };
+            await _init(e, state, input);
             state.isAfterAnKan = false;
             state.isAfterMinKan = false;
             state.isAfterKaKan = false;
@@ -171,6 +171,7 @@ export const fixtures = async (
           break;
         }
       }
+      // await _done(input);
       if (cnt >= limit) {
         break;
       }
@@ -199,8 +200,10 @@ const isYonmaAriAriAka = (e: Element): boolean => {
 const _init = async (
   e: Element,
   s: state,
-  input: ({ name, params }: { name: string; params: inputParams }) => Promise<void>,
-): Promise<{ oya: number; kyoku: number }> => {
+  input: (
+    { name, params }: { name: string; params: inputParams },
+  ) => Promise<void>,
+): Promise<void> => {
   const seeds = e.attributes.getNamedItem("seed")!.value.split(",");
   await input({
     name: "INIT",
@@ -224,17 +227,16 @@ const _init = async (
       },
     },
   });
-
-  return {
-    kyoku: Number(seeds[0]),
-    oya: Number(e.attributes.getNamedItem("oya")!.value),
-  };
+  s.kyoku = Number(seeds[0]);
+  s.oya = Number(e.attributes.getNamedItem("oya")!.value);
 };
 
 const _tsumo = async (
   e: Element,
   s: state,
-  input: ({ name, params }: { name: string; params: inputParams }) => Promise<void>,
+  input: (
+    { name, params }: { name: string; params: inputParams },
+  ) => Promise<void>,
 ) => {
   const who = ["T", "U", "V", "W"].findIndex((x) => x == e.tagName[0]);
   if (s.isAfterAnKan || s.isAfterMinKan || s.isAfterKaKan) {
@@ -260,7 +262,9 @@ const _tsumo = async (
 const _dahai = async (
   e: Element,
   _s: state,
-  input: ({ name, params }: { name: string; params: inputParams }) => Promise<void>,
+  input: (
+    { name, params }: { name: string; params: inputParams },
+  ) => Promise<void>,
 ) => {
   const who = ["D", "E", "F", "G"].findIndex((x) => x == e.tagName[0]);
   await input({
@@ -370,8 +374,7 @@ const _agari = async (
       paiDoraUra.push(new Pai(Number(e)));
     });
   }
-  const yakus: 
-  { str: string; val: number; yakuman: boolean }[] = [];
+  const yakus: { str: string; val: number; yakuman: boolean }[] = [];
   if (attrs.get("yaku")) {
     const a = attrs.get("yaku")?.split(",") ?? [];
     for (let i = 0; i < a.length; i += 2) {

@@ -511,6 +511,5 @@ Deno.test("should return valid chi combinations", () => {
   // Test chi with m6 (should return [m6, m7])
   const chiPai = new Pai("m6");
   const results = user.canChi({ pai: chiPai });
-  console.log(results)
   expect(results.length).toBe(0);
 });
