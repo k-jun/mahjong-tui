@@ -308,6 +308,75 @@ Deno.test("MahjongUser", async (t) => {
     expect(results[0].type).toBe(PaiSetType.ANKAN);
   });
 
+  await t.step("should handle ankan with multiple tile types", () => {
+    const user = new MahjongUser({
+      id: "test-user",
+      point: 25000,
+      paiJikaze: new Pai("z1"),
+    });
+    user.isRichi = true
+    user.setPaiRest({
+      pais: [
+        new Pai("p2"),
+        new Pai("p2"),
+        new Pai("p2"),
+        new Pai("p3"),
+        new Pai("p4"),
+        new Pai("p5"),
+        new Pai("p6"),
+        new Pai("m4"),
+        new Pai("m5"),
+        new Pai("m6"),
+        new Pai("s4"),
+        new Pai("s5"),
+        new Pai("s6"),
+      ]
+    });
+    user.setPaiTsumo({ pai: new Pai("p2") });
+
+    const results = user.canAnkan();
+    expect(results.length).toBe(0);
+  });
+
+  await t.step("should handle ankan with 6m6m6m3p3p7p8p6s7s8s tsumo6m", () => {
+    const user = new MahjongUser({
+      id: "test-user",
+      point: 25000,
+      paiJikaze: new Pai("z1"),
+    });
+    user.isRichi = true
+    user.setPaiRest({
+      pais: [
+        new Pai("m6"),
+        new Pai("m6"),
+        new Pai("m6"),
+        new Pai("p3"),
+        new Pai("p3"),
+        new Pai("p7"),
+        new Pai("p8"),
+        new Pai("s6"),
+        new Pai("s7"),
+        new Pai("s8"),
+        new Pai("z4"),
+        new Pai("z4"),
+        new Pai("z4"),
+      ]
+    });
+    user.setPaiTsumo({ pai: new Pai("m6") });
+
+    const results = user.canAnkan();
+
+    expect(results.length).toBe(1);
+    expect(results[0].paiRest.map((p) => p.fmt)).toEqual([
+      "m6",
+      "m6",
+      "m6",
+      "m6",
+    ]);
+    expect(results[0].type).toBe(PaiSetType.ANKAN);
+    expect(results[0].fromWho).toBe(Player.JICHA);
+  });
+
   await t.step("should handle ankan with tsumo pai", () => {
     const user = new MahjongUser({
       id: "test-user",

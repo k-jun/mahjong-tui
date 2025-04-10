@@ -19,6 +19,13 @@ Deno.test("mahjong all", async () => {
     paiDoraUra: Pai[];
   }[] = [];
   await fixtures(async ({ name, params }): Promise<void> => {
+    // console.log(
+    //   name,
+    //   globalGame.kyoku,
+    //   globalGame.honba,
+    //   globalGame.turnUserIdx,
+    //   globalGame.turnRest(),
+    // );
     switch (name) {
       case "DONE": {
         break;
@@ -29,13 +36,6 @@ Deno.test("mahjong all", async () => {
         resultChecker = [];
         globalGame.gameReset();
         globalGame.gameStart(yama.map((e) => new Pai(e.id)));
-        // console.log(
-        //   name,
-        //   globalGame.kyoku,
-        //   globalGame.honba,
-        //   globalGame.turnUserIdx,
-        //   globalGame.turnRest(),
-        // );
 
         expect(globalGame.users.map((e) => e.paiRest.length)).toEqual(
           new Array(4).fill(13),
@@ -140,11 +140,11 @@ Deno.test("mahjong all", async () => {
       }
       case "RICHI": {
         const { who, step, ten } = params.richi!;
+        await globalGame.input(MahjongCommand.RICHI, {
+          user: globalGame.users[who],
+          params: { richi: { step } },
+        });
         if (step == 2) {
-          await globalGame.input(MahjongCommand.RICHI, {
-            user: globalGame.users[who],
-            params: {},
-          });
           expect(globalGame.users.map((e) => e.point)).toEqual(ten);
         }
         break;

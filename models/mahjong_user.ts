@@ -23,6 +23,7 @@ export class MahjongUser extends User {
   isRinshankaiho: boolean = false;
   isCalled: boolean = false;
   isAfterKakan: boolean = false;
+  isFuriten: boolean = false;
 
   constructor(
     { id, point, paiJikaze }: { id: string; point: number; paiJikaze: Pai },
@@ -58,6 +59,10 @@ export class MahjongUser extends User {
     }
     if (this.isRichi && !fromTsumo) {
       throw new Error("invalid this.paiTsumo when dahai called");
+    }
+
+    if (!this.isRichi && this.isFuriten) {
+      this.isFuriten = false;
     }
 
     if (fromTsumo) {
@@ -108,12 +113,13 @@ export class MahjongUser extends User {
     this.isAfterKakan = false;
   }
 
-  isTenpai(): boolean {
+  machi(): Pai[] {
     const count: Map<string, number> = new Map();
     for (const pai of this.paiRest) {
       count.set(pai.fmt, (count.get(pai.fmt) ?? 0) + 1);
     }
 
+    const result: Pai[] = [];
     for (const lastPai of PaiAllKind) {
       const params: ShantenInput = {
         paiRest: [...this.paiRest, lastPai],
@@ -121,11 +127,29 @@ export class MahjongUser extends User {
       };
       const shanten = new Shanten(params).count();
       if (shanten === -1 && count.get(lastPai.fmt) !== 4) {
-        return true;
+        result.push(lastPai);
+      }
+    }
+    return result;
+  }
+
+  canRon(): boolean {
+    if (this.isFuriten) {
+      return false;
+    }
+
+    const machi = this.machi();
+    if (machi.length === 0) {
+      return false;
+    }
+
+    for (const pai of machi) {
+      if (this.paiKawa.includes(pai)) {
+        return false;
       }
     }
 
-    return false;
+    return true;
   }
 
   isNagashimangan(): boolean {
@@ -254,14 +278,24 @@ export class MahjongUser extends User {
       counts[pai.fmt].push(pai);
     }
 
-    for (const [_, value] of Object.entries(counts)) {
+    for (const [key, value] of Object.entries(counts)) {
       if (value.length >= 4) {
-        result.push(
-          new PaiSet({
-            paiRest: value.slice(0, 4),
-            type: PaiSetType.ANKAN,
-          }),
-        );
+        // リーチ後に待ちの変わる暗槓は出来ない
+        const set = new PaiSet({
+          paiRest: value.slice(0, 4),
+          type: PaiSetType.ANKAN,
+        });
+        if (this.isRichi) {
+          const before = this.machi().map((e) => e.fmt).join(",");
+          const copyUser = new MahjongUser({ ...this });
+          copyUser.paiRest = paiAll.filter((e) => e.fmt !== key);
+          copyUser.paiSets = [...this.paiSets, set];
+          const after = copyUser.machi().map((e) => e.fmt).join(",");
+          if (before !== after) {
+            continue;
+          }
+        }
+        result.push(set);
       }
     }
 
@@ -302,7 +336,7 @@ export class MahjongUser extends User {
     if (!this.paiTsumo) {
       return [];
     }
-    if (this.paiSets.length > 0) {
+    if (this.paiSets.some((e) => e.isOpen())) {
       return [];
     }
 
@@ -313,7 +347,7 @@ export class MahjongUser extends User {
       paiRest.splice(idx, 1);
       const x = new Shanten({
         paiRest: paiRest,
-        paiSets: [],
+        paiSets: this.paiSets,
       }).count();
       if (x != 0) {
         continue;

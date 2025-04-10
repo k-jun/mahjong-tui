@@ -34,6 +34,7 @@ export enum MahjongActionType {
   PON = "pon",
   CHI = "chi",
   OWARI = "owari",
+  RICHI = "richi",
 }
 
 export type MahjongAction = {
@@ -261,6 +262,15 @@ export class Mahjong {
         type: MahjongActionType.KAKAN,
       });
     }
+
+    // richi
+    const pais = user.canRichi();
+    if (pais.length > 0) {
+      this.actions.push({
+        user,
+        type: MahjongActionType.RICHI,
+      });
+    }
   }
 
   actionSetAfterDahai({ from, pai }: { from: MahjongUser; pai: Pai }): void {
@@ -276,12 +286,13 @@ export class Mahjong {
         options: { isTsumo: false, isChankan: false },
       });
       const result = new Tokuten({ ...params }).count();
-      if (result.pointSum > 0) {
-        this.actions.push({
-          user,
-          type: MahjongActionType.RON,
-        });
+      if (result.pointSum === 0) {
+        continue;
       }
+      if (!user.canRon()) {
+        continue;
+      }
+      this.actions.push({ user, type: MahjongActionType.RON });
     }
     // minkan
     for (let i = 1; i < 4; i++) {
@@ -556,7 +567,9 @@ export class Mahjong {
     });
 
     if (action === undefined) {
-      throw new Error("when agari called, action is not allowed");
+      throw new Error(
+        "when agari called, action: `ron` or `tsumo` is not allowed",
+      );
     }
 
     action.enable = true;
@@ -590,9 +603,26 @@ export class Mahjong {
     }
   }
 
-  richi({ user }: { user: MahjongUser }): void {
+  richi({ user, step }: { user: MahjongUser; step: number }): void {
     if (user.isRichi) {
       throw new Error("when richi called, already richi");
+    }
+
+    if (step === 1) {
+      const action = this.actions.find((action) => {
+        if (action.user.id !== user.id) {
+          return false;
+        }
+        return action.type === MahjongActionType.RICHI;
+      });
+
+      if (action === undefined) {
+        throw new Error(
+          "when richi called, action: `richi` is not allowed",
+        );
+      }
+      this.actions = [];
+      return;
     }
 
     const allMenzen = this.users.every((u) => u.paiSets.length === 0);
@@ -663,7 +693,7 @@ export class Mahjong {
       throw new Error("when owari called, pai remained");
     }
 
-    const isTenpai = this.users.map((e) => e.isTenpai());
+    const isTenpai = this.users.map((e) => e.machi().length > 0);
     const pointsNagashimangan = this.owariNagashimangan();
     const points = this.owariNormal({ isTenpai });
 
@@ -703,7 +733,7 @@ export class Mahjong {
     });
 
     if (action === undefined) {
-      throw new Error("when naki called, action is not allowed");
+      throw new Error(`when naki called, action: ${set.type} is not allowed`);
     }
 
     action.naki = { set };
@@ -757,6 +787,15 @@ export class Mahjong {
       }
     });
 
+    // furiten
+    if (
+      this.actions.some((e) =>
+        e.user.id == user.id && e.type === MahjongActionType.RON
+      )
+    ) {
+      user.isFuriten = true;
+    }
+
     const isAfterTsumo = this.actions.every((e) =>
       [
         MahjongActionType.TSUMO,
@@ -770,9 +809,9 @@ export class Mahjong {
       return;
     }
 
-    const actionActive = this.actions.filter((
-      e,
-    ) => (e.enable === true || e.enable === undefined));
+    const actionActive = this.actions.filter((e) =>
+      [undefined, true].includes(e.enable)
+    );
 
     const isRon = (e: MahjongAction) => e.type === MahjongActionType.RON;
     const isUndef = (e: MahjongAction) => e.enable === undefined;
@@ -811,6 +850,9 @@ export class Mahjong {
           fromUser: MahjongUser;
           paiAgari: Pai;
         };
+        richi?: {
+          step: number;
+        };
         chnkn?: {
           fromUser: MahjongUser;
           paiChnkn: Pai;
@@ -845,7 +887,8 @@ export class Mahjong {
         break;
       }
       case MahjongCommand.RICHI: {
-        this.richi({ user });
+        const { step } = params.richi!;
+        this.richi({ user, step });
         break;
       }
       case MahjongCommand.OWARI: {
