@@ -16,7 +16,7 @@ OnServerConnection(io, rooms);
 OnServerJoinRoom(io, rooms);
 OnServerLeaveRoom(io, rooms);
 
-await Deno.serve({
+Deno.serve({
   handler: io.handler(),
   port: port,
 });

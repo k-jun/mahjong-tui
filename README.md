@@ -3,7 +3,7 @@
 ## Run
 
 ```bash
-deno run -A src/main.ts
+deno run -A server/main.ts
 ```
 
 ## Test
