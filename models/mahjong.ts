@@ -12,7 +12,7 @@ import {
   TokutenOutput,
 } from "@k-jun/mahjong";
 
-export enum MahjongCommand {
+export enum MahjongInput {
   TSUMO = "tsumo",
   DAHAI = "dahai",
   AGARI = "agari",
@@ -48,6 +48,29 @@ export type MahjongAction = {
     fromUser: MahjongUser;
     paiAgari: Pai;
     isChankan?: boolean;
+  };
+};
+
+export type MahjongInputParams = {
+  agari?: {
+    fromUser: MahjongUser;
+      paiAgari: Pai;
+    };
+    richi?: {
+      step: number;
+    };
+    chnkn?: {
+      fromUser: MahjongUser;
+      paiChnkn: Pai;
+    };
+    dahai?: {
+      paiDahai: Pai;
+    };
+    naki?: {
+      set: PaiSet;
+    };
+    owari?: {
+    nagashi: boolean;
   };
 };
 
@@ -135,6 +158,8 @@ export class Mahjong {
     this.paiDora.push(omote);
     this.turnUserIdx = this.kyoku % 4;
     this.paiBakaze = PaiKaze[Math.floor(this.kyoku / 4)];
+
+    console.log("call output")
     this.output(this);
   }
 
@@ -842,79 +867,58 @@ export class Mahjong {
   }
 
   async input(
-    action: MahjongCommand,
+    action: MahjongInput,
     { user, params }: {
       user: MahjongUser;
-      params: {
-        agari?: {
-          fromUser: MahjongUser;
-          paiAgari: Pai;
-        };
-        richi?: {
-          step: number;
-        };
-        chnkn?: {
-          fromUser: MahjongUser;
-          paiChnkn: Pai;
-        };
-        dahai?: {
-          paiDahai: Pai;
-        };
-        naki?: {
-          set: PaiSet;
-        };
-        owari?: {
-          nagashi: boolean;
-        };
-      };
+      params: MahjongInputParams;
     },
   ): Promise<void> {
     // mutex lock
     await this.mutex.acquire();
     switch (action) {
-      case MahjongCommand.TSUMO: {
+      case MahjongInput.TSUMO: {
         this.tsumo({ user });
         break;
       }
-      case MahjongCommand.DAHAI: {
+      case MahjongInput.DAHAI: {
         const { paiDahai } = params.dahai!;
         this.dahai({ user, pai: paiDahai });
         break;
       }
-      case MahjongCommand.AGARI: {
+      case MahjongInput.AGARI: {
         const { paiAgari, fromUser } = params.agari!;
         this.agari({ user, from: fromUser, pai: paiAgari });
         break;
       }
-      case MahjongCommand.RICHI: {
+      case MahjongInput.RICHI: {
         const { step } = params.richi!;
         this.richi({ user, step });
         break;
       }
-      case MahjongCommand.OWARI: {
+      case MahjongInput.OWARI: {
         const { nagashi } = params.owari!;
         this.owari({ nagashi });
         break;
       }
-      case MahjongCommand.RNSHN: {
+      case MahjongInput.RNSHN: {
         this.rinshanTsumo({ user });
         break;
       }
-      case MahjongCommand.CHNKN: {
+      case MahjongInput.CHNKN: {
         const { paiChnkn, fromUser } = params.chnkn!;
         this.agari({ user, from: fromUser, pai: paiChnkn, isChankan: true });
         break;
       }
-      case MahjongCommand.NAKI: {
+      case MahjongInput.NAKI: {
         const { set } = params.naki!;
         this.naki({ user, set });
         break;
       }
-      case MahjongCommand.DORA: {
+      case MahjongInput.DORA: {
         this.dora();
         break;
       }
-      case MahjongCommand.SKIP: {
+      case MahjongInput.SKIP: {
         this.skip({ user });
         break;
       }

@@ -1,4 +1,4 @@
-import { Mahjong, MahjongActionType, MahjongCommand } from "./mahjong.ts";
+import { Mahjong, MahjongActionType, MahjongInput } from "./mahjong.ts";
 import { expect } from "jsr:@std/expect";
 import { fixtures } from "../utils/utils.ts";
 import { Pai, PaiSet } from "@k-jun/mahjong";
@@ -69,7 +69,7 @@ Deno.test("mahjong all", async () => {
         const isChankan = yakus.map((e) => e.str).includes("槍槓");
 
         if (isChankan) {
-          await globalGame.input(MahjongCommand.CHNKN, {
+          await globalGame.input(MahjongInput.CHNKN, {
             user: globalGame.users[who],
             params: {
               chnkn: {
@@ -79,7 +79,7 @@ Deno.test("mahjong all", async () => {
             },
           });
         } else {
-          await globalGame.input(MahjongCommand.AGARI, {
+          await globalGame.input(MahjongInput.AGARI, {
             user: globalGame.users[who],
             params: {
               agari: {
@@ -103,13 +103,13 @@ Deno.test("mahjong all", async () => {
       }
       case "TSUMO": {
         for (let i = 0; i < globalGame.actions.length; i++) {
-          await globalGame.input(MahjongCommand.SKIP, {
+          await globalGame.input(MahjongInput.SKIP, {
             user: globalGame.actions[i].user,
             params: {},
           });
         }
         const { who, hai } = params.tsumo!;
-        await globalGame.input(MahjongCommand.TSUMO, {
+        await globalGame.input(MahjongInput.TSUMO, {
           user: globalGame.turnUser(),
           params: {},
         });
@@ -119,7 +119,7 @@ Deno.test("mahjong all", async () => {
       }
       case "RNSHN": {
         const { who, hai } = params.tsumo!;
-        await globalGame.input(MahjongCommand.RNSHN, {
+        await globalGame.input(MahjongInput.RNSHN, {
           user: globalGame.turnUser(),
           params: {},
         });
@@ -132,7 +132,7 @@ Deno.test("mahjong all", async () => {
       case "DAHAI": {
         const { who, hai } = params.dahai!;
         expect(globalGame.turnUserIdx).toEqual(who);
-        await globalGame.input(MahjongCommand.DAHAI, {
+        await globalGame.input(MahjongInput.DAHAI, {
           user: globalGame.turnUser(),
           params: { dahai: { paiDahai: new Pai(hai.id) } },
         });
@@ -140,7 +140,7 @@ Deno.test("mahjong all", async () => {
       }
       case "RICHI": {
         const { who, step, ten } = params.richi!;
-        await globalGame.input(MahjongCommand.RICHI, {
+        await globalGame.input(MahjongInput.RICHI, {
           user: globalGame.users[who],
           params: { richi: { step } },
         });
@@ -155,7 +155,7 @@ Deno.test("mahjong all", async () => {
         // 暗槓が選択され、それがかつ、ほかプレイヤーの槍槓を選択可能にした場合、槍槓が actions に新しく加わってしまう。
         // ここで skip したいのは暗槓選択前に表示されていた、pon. chi などの他アクションのため、暗槓選択前の actions を保存しておく。
         const beforeActions = [...globalGame.actions];
-        await globalGame.input(MahjongCommand.NAKI, {
+        await globalGame.input(MahjongInput.NAKI, {
           user: globalGame.users[who],
           params: {
             naki: {
@@ -173,7 +173,7 @@ Deno.test("mahjong all", async () => {
           e.user.id !== globalGame.users[who].id
         );
         for (let i = 0; i < otherActions.length; i++) {
-          await globalGame.input(MahjongCommand.SKIP, {
+          await globalGame.input(MahjongInput.SKIP, {
             user: otherActions[i].user,
             params: {},
           });
@@ -189,7 +189,7 @@ Deno.test("mahjong all", async () => {
         ) {
           isNagashi = true;
         }
-        await globalGame.input(MahjongCommand.OWARI, {
+        await globalGame.input(MahjongInput.OWARI, {
           user: globalGame.turnUser(),
           params: {
             owari: { nagashi: isNagashi },
@@ -203,7 +203,7 @@ Deno.test("mahjong all", async () => {
       }
       case "DORA": {
         const { hai } = params.dora!;
-        await globalGame.input(MahjongCommand.DORA, {
+        await globalGame.input(MahjongInput.DORA, {
           user: globalGame.turnUser(),
           params: {},
         });
@@ -233,7 +233,7 @@ async function _done(
     e.enable === undefined && e.type === MahjongActionType.RON
   );
   for (const action of actionUndefined) {
-    await globalGame.input(MahjongCommand.SKIP, {
+    await globalGame.input(MahjongInput.SKIP, {
       user: action.user,
       params: {},
     });

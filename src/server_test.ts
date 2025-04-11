@@ -1,7 +1,9 @@
 import { expect } from "jsr:@std/expect";
 import { io as ioc, type Socket as ClientSocket } from "npm:socket.io-client";
 import { Room } from "../models/room.ts";
+import { Mahjong } from "../models/mahjong.ts";
 import { OnAll, OnServerJoinRoom, OnServerLeaveRoom } from "./server.ts";
+import { User } from "../models/user.ts";
 import {
     Server,
     Socket as ServerSocket,
