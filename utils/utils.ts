@@ -109,7 +109,7 @@ export const fixtures = async (
       }
       console.log("f.name", f.name);
       const dom = new JSDOM(text, { contentType: "text/xml" });
-      let state: state = {
+      const state: state = {
         enable: false,
         oya: 0,
         kyoku: 0,

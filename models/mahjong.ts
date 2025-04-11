@@ -54,22 +54,22 @@ export type MahjongAction = {
 export type MahjongInputParams = {
   agari?: {
     fromUser: MahjongUser;
-      paiAgari: Pai;
-    };
-    richi?: {
-      step: number;
-    };
-    chnkn?: {
-      fromUser: MahjongUser;
-      paiChnkn: Pai;
-    };
-    dahai?: {
-      paiDahai: Pai;
-    };
-    naki?: {
-      set: PaiSet;
-    };
-    owari?: {
+    paiAgari: Pai;
+  };
+  richi?: {
+    step: number;
+  };
+  chnkn?: {
+    fromUser: MahjongUser;
+    paiChnkn: Pai;
+  };
+  dahai?: {
+    paiDahai: Pai;
+  };
+  naki?: {
+    set: PaiSet;
+  };
+  owari?: {
     nagashi: boolean;
   };
 };
@@ -159,7 +159,7 @@ export class Mahjong {
     this.turnUserIdx = this.kyoku % 4;
     this.paiBakaze = PaiKaze[Math.floor(this.kyoku / 4)];
 
-    console.log("call output")
+    console.log("call output");
     this.output(this);
   }
 
