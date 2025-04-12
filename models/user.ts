@@ -4,3 +4,9 @@ export class User {
     this.id = id;
   }
 }
+
+export class CPU extends User {
+  constructor(id: string = "") {
+    super(id);
+  }
+}

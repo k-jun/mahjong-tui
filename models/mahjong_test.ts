@@ -5,9 +5,8 @@ import { Pai, PaiSet } from "@k-jun/mahjong";
 
 Deno.test("mahjong all", async () => {
   const userIds = ["0", "1", "2", "3"];
-  const mockOutput = (_: Mahjong) => {};
 
-  let globalGame: Mahjong = new Mahjong(userIds, mockOutput);
+  let globalGame: Mahjong = new Mahjong(userIds, async (_) => {});
   let resultChecker: {
     yakus: {
       str: string;
@@ -97,7 +96,7 @@ Deno.test("mahjong all", async () => {
         });
         if (owari !== undefined) {
           // await _done(globalGame, resultChecker);
-          globalGame = new Mahjong(userIds, mockOutput);
+          globalGame = new Mahjong(userIds, async (_) => {});
         }
         break;
       }
@@ -197,7 +196,7 @@ Deno.test("mahjong all", async () => {
         });
         expect(globalGame.users.map((e) => e.point)).toEqual(score);
         if (owari !== undefined) {
-          globalGame = new Mahjong(userIds, mockOutput);
+          globalGame = new Mahjong(userIds, async (_) => {});
         }
         break;
       }

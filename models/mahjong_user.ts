@@ -45,7 +45,7 @@ export class MahjongUser extends User {
 
   setPaiTsumo({ pai }: { pai: Pai }): void {
     if (this.paiTsumo !== undefined) {
-      throw new Error("invalid this.paiTsumo when setPaiTsumo called");
+      throw new Error("this.paiTsumo is already set when setPaiTsumo called");
     }
     this.paiTsumo = pai;
   }

@@ -1,11 +1,8 @@
 import { Server, Socket } from "https://deno.land/x/socket_io@0.2.1/mod.ts";
 import { Room } from "../models/room.ts";
+import { User } from "../models/user.ts";
 import { randomUUID } from "node:crypto";
-import {
-  Mahjong,
-  MahjongInput,
-  MahjongInputParams,
-} from "../models/mahjong.ts";
+import { MahjongInput, MahjongInputParams } from "../models/mahjong.ts";
 
 export const OnAll = (socket: Socket, rooms: { [key: string]: Room }) => {
   OnJoin(socket, rooms);
@@ -67,16 +64,15 @@ export const OnServerJoinRoom = (
     if (name != id) {
       let room = rooms[name.toString()];
       if (room == undefined) {
-        room = new Room();
+        room = new Room(async (mjg) => {
+          await io.to(name.toString()).emit("output", mjg);
+        });
         rooms[name.toString()] = room;
       }
-      room.join(id);
+      room.join(new User(id));
 
       if (room.size() == 4) {
-        const output = (mjg: Mahjong) => {
-          io.to(name.toString()).emit("output", mjg);
-        };
-        room.start(output);
+        room.start();
       }
     }
   });

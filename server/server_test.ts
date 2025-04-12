@@ -39,7 +39,9 @@ describe("Socket.IO Server", () => {
   });
 
   it("join-room && leave-room", async () => {
-    rooms["test-room"] = new Room();
+    rooms["test-room"] = new Room(async (mjg) => {
+      await io.to("test-room").emit("output", mjg);
+    });
     clientSocket.emit("join");
     await delay(1000);
     expect(rooms["test-room"].users[0].id).toEqual(serverSocket.id);

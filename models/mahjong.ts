@@ -11,6 +11,7 @@ import {
   TokutenInput,
   TokutenOutput,
 } from "@k-jun/mahjong";
+import seedrandom from "npm:seedrandom";
 
 export enum MahjongInput {
   TSUMO = "tsumo",
@@ -96,9 +97,12 @@ export class Mahjong {
   isEnded: boolean = false;
   isHonbaTaken: boolean = true;
 
-  output: (mjg: Mahjong) => void;
+  output: (mjg: Mahjong) => Promise<void>;
 
-  constructor(userIds: string[], output: (mjg: Mahjong) => void) {
+  constructor(
+    userIds: string[],
+    output: (mjg: Mahjong) => Promise<void>,
+  ) {
     this.users = userIds.map((val, idx) =>
       new MahjongUser({ id: val, point: 25000, paiJikaze: PaiKaze[idx] })
     );
@@ -124,8 +128,9 @@ export class Mahjong {
 
   generate(): Pai[] {
     const pais = [...PaiAll];
+    const rng = seedrandom("3");
     for (let i = pais.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
+      const j = Math.floor(rng() * (i + 1));
       [pais[i], pais[j]] = [pais[j], pais[i]];
     }
     return pais;
@@ -158,8 +163,6 @@ export class Mahjong {
     this.paiDora.push(omote);
     this.turnUserIdx = this.kyoku % 4;
     this.paiBakaze = PaiKaze[Math.floor(this.kyoku / 4)];
-
-    console.log("call output");
     this.output(this);
   }
 
@@ -212,11 +215,20 @@ export class Mahjong {
   }
 
   tsumo({ user }: { user: MahjongUser }): void {
+    if (this.actions.filter((e) => e.enable === undefined).length > 0) {
+      throw new Error("tsumo called while actions are not empty", {
+        cause: this.actions.map((e) => ({
+          user: e.user.id,
+          type: e.type,
+          enable: e.enable,
+        })),
+      });
+    }
+
     const pai = this.paiYama.splice(-1)[0];
     user.setPaiTsumo({ pai });
 
     this.actionSetAfterTsumo({ from: user, pai });
-    this.output(this);
   }
 
   getPlayer(jicha: number, tacha: number): Player {
@@ -365,7 +377,9 @@ export class Mahjong {
 
   dahai({ user, pai }: { user: MahjongUser; pai: Pai }): void {
     if (this.turnUser().id !== user.id) {
-      throw new Error("when dahai called, not your turn");
+      throw new Error("when dahai called, not your turn", {
+        cause: this.turnUser().id,
+      });
     }
     if (user.isAfterKakan) {
       this.users.forEach((e) => e.isIppatsu = false);
@@ -609,7 +623,6 @@ export class Mahjong {
       e.enable === undefined && e.type === MahjongActionType.RON
     );
     if (actionUndefined.length >= 1) {
-      this.output(this);
       return;
     }
     const actionEnable = this.actions.filter((e) =>
@@ -776,7 +789,6 @@ export class Mahjong {
       return true;
     });
     if (primaryAction!.user.id !== user.id) {
-      this.output(this);
       return;
     }
 
@@ -800,16 +812,16 @@ export class Mahjong {
     this.users.forEach((e) => e.isIppatsu = false);
   }
 
-  skip({ user }: { user: MahjongUser }): void {
-    if (this.actions.filter((e) => e.enable === undefined).length === 0) {
-      return;
+  skip({ user }: { user: MahjongUser }): boolean {
+    const liveActions = this.actions.filter((e) => e.enable === undefined);
+    const userActions = liveActions.filter((e) => e.user.id === user.id);
+    if (userActions.length === 0) {
+      return false;
     }
 
     // update
-    this.actions.forEach((e) => {
-      if (e.user.id === user.id && e.enable === undefined) {
-        e.enable = false;
-      }
+    userActions.forEach((e) => {
+      e.enable = false;
     });
 
     // furiten
@@ -830,8 +842,9 @@ export class Mahjong {
     );
 
     if (this.actions.every((e) => e.enable === false) && !isAfterTsumo) {
+      this.actions = [];
       this.turnNext();
-      return;
+      return true;
     }
 
     const actionActive = this.actions.filter((e) =>
@@ -863,7 +876,8 @@ export class Mahjong {
       this.naki({ user: action.user, set: action.naki!.set });
       break;
     }
-    this.output(this);
+
+    return false;
   }
 
   async input(
@@ -875,6 +889,8 @@ export class Mahjong {
   ): Promise<void> {
     // mutex lock
     await this.mutex.acquire();
+
+    let isRefresh = true;
     switch (action) {
       case MahjongInput.TSUMO: {
         this.tsumo({ user });
@@ -919,9 +935,13 @@ export class Mahjong {
         break;
       }
       case MahjongInput.SKIP: {
-        this.skip({ user });
+        isRefresh = this.skip({ user });
         break;
       }
+    }
+
+    if (isRefresh) {
+      this.output(this);
     }
     // mutex unlock
     this.mutex.release();
