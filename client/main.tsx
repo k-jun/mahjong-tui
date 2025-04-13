@@ -1,6 +1,6 @@
 import React, { JSX, useEffect, useState } from "npm:react";
 import { Pai } from "@k-jun/mahjong";
-import { PaiTSX, EmptyTSX } from "./pai.tsx";
+import { EmptyTSX, PaiTSX } from "./pai.tsx";
 import Ink, { Box, render, Text, useFocus } from "npm:ink";
 import { io } from "npm:socket.io-client";
 import { Mahjong } from "../models/mahjong.ts";
@@ -42,30 +42,73 @@ const App = (
           alignItems="flex-start"
           height={4}
         >
+          {toimen.paiTsumo
+            ? <PaiTSX text={new Pai(toimen.paiTsumo.id).dsp} key={0} />
+            : <EmptyTSX />}
+          <EmptyTSX />
           {toimen?.paiRest.sort((a, b) =>
             a.id - b.id
           ).map((e) =>
             new Pai(e.id)
-          ).map((e) => <PaiTSX text={e.dsp} key={e.id}>
-            {e.dsp}
-          </PaiTSX>)}
+          ).map((e) => <PaiTSX text={e.dsp} key={e.id} />)}
         </Box>
-        
 
         <Box
           flexDirection="row"
           justifyContent="space-between"
           width={70}
         >
-          <Box flexDirection="column" justifyContent="center" alignItems="center">
-            {shimocha?.paiRest.sort((a, b) => a.id - b.id).map((e) => new Pai(e.id))
-              .map((e, idx) => <PaiTSX text={e.dsp} key={e.id} enableTop={idx === 0} enableSide={idx === 12} />)}
+          <Box
+            flexDirection="column"
+            justifyContent="center"
+            alignItems="center"
+          >
+            {shimocha?.paiRest.sort((a, b) => a.id - b.id).map((e) =>
+              new Pai(e.id)
+            )
+              .map((e, idx) => (
+                <PaiTSX
+                  text={e.dsp}
+                  key={e.id}
+                  enableTop={idx === 0}
+                  enableSide={idx === 12}
+                />
+              ))}
+            <EmptyTSX enableSide={false} />
+            {shimocha?.paiTsumo
+              ? (
+                <PaiTSX
+                  text={new Pai(shimocha.paiTsumo.id).dsp}
+                  key={shimocha.paiTsumo.id}
+                />
+              )
+              : <EmptyTSX />}
           </Box>
-          <Box flexDirection="column" justifyContent="center" alignItems="center">
-            {kamicha?.paiRest.sort((a, b) => a.id - b.id).map((e) => new Pai(e.id))
-              .map((e, idx) => <PaiTSX text={e.dsp} key={e.id} enableTop={idx === 0} enableSide={idx === 12} />)}
-            <EmptyTSX />
-            {kamicha?.paiTsumo ? <PaiTSX text={new Pai(kamicha?.paiTsumo?.id ?? 0).dsp} key={0} /> : <EmptyTSX />}
+          <Box flexDirection="column" justifyContent="center" alignItems="center" width={12}>
+            <Text color="green">kawa</Text>
+            <Text color="green">kawa</Text>
+            <Text color="green">kawa</Text>
+          </Box>
+          <Box
+            flexDirection="column"
+            justifyContent="center"
+            alignItems="center"
+          >
+            {kamicha?.paiTsumo
+              ? <PaiTSX text={new Pai(kamicha?.paiTsumo?.id ?? 0).dsp} key={0} />
+              : <EmptyTSX />}
+            <EmptyTSX enableSide={false} />
+            {kamicha?.paiRest.sort((a, b) => a.id - b.id).map((e) =>
+              new Pai(e.id)
+            )
+              .map((e, idx) => (
+                <PaiTSX
+                  text={e.dsp}
+                  key={e.id}
+                  enableTop={idx === 0}
+                  enableSide={idx === 12}
+                />
+              ))}
           </Box>
         </Box>
 
@@ -75,10 +118,12 @@ const App = (
           alignItems="flex-end"
           height={4}
         >
-          {jicha?.paiRest.sort((a, b) => a.id - b.id).map((e)   => new Pai(e.id))
+          {jicha?.paiRest.sort((a, b) => a.id - b.id).map((e) => new Pai(e.id))
             .map((e) => <PaiTSX text={e.dsp} key={e.id} />)}
           <EmptyTSX />
-          {jicha?.paiTsumo ? <PaiTSX text={new Pai(jicha?.paiTsumo?.id ?? 0).dsp} key={0} /> : <EmptyTSX />}
+          {jicha?.paiTsumo
+            ? <PaiTSX text={new Pai(jicha?.paiTsumo?.id ?? 0).dsp} key={0} />
+            : <EmptyTSX />}
         </Box>
       </Box>
     </Box>

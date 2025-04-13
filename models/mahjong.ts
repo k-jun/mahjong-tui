@@ -87,6 +87,7 @@ export class Mahjong {
   actions: MahjongAction[] = [];
   result: TokutenOutput[] = [];
   mutex: Mutex = createMutex();
+  state: string = "";
 
   kyotaku: number = 0;
   honba: number = 0;
@@ -107,6 +108,7 @@ export class Mahjong {
       new User({ id: val, point: 25000, paiJikaze: PaiKaze[idx] })
     );
     this.output = output;
+    this.state = crypto.randomUUID();
   }
 
   turnUser(): User {
@@ -941,6 +943,7 @@ export class Mahjong {
     }
 
     if (isRefresh) {
+      this.state = crypto.randomUUID();
       this.output(this);
     }
     // mutex unlock

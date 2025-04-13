@@ -1,36 +1,55 @@
 // import { CPU } from "./cpu.ts";
 import { Mahjong, MahjongInput, MahjongInputParams } from "./mahjong.ts";
+import { ActionDefault } from "./cpu.ts";
 
 const defaultRoomSize = 4;
 
+export class User {
+  id: string;
+  isCPU: boolean;
+
+  constructor(id: string, isCPU: boolean) {
+    this.id = id;
+    this.isCPU = isCPU;
+  }
+}
+
 export class Room {
-  userIds: string[];
+  users: User[];
   mahjong?: Mahjong;
   output: (mjg: Mahjong) => Promise<void>;
 
   constructor(output: (mjg: Mahjong) => Promise<void>) {
-    this.userIds = [];
+    this.users = [];
     this.output = output;
   }
 
   isOpen(): boolean {
-    return this.userIds.length < defaultRoomSize;
+    return this.users.length < defaultRoomSize;
   }
 
-  join(userId: string): void {
-    this.userIds.push(userId);
+  join(user: User): void {
+    this.users.push(user);
   }
 
   leave(userId: string): void {
-    this.userIds = this.userIds.filter((id) => id !== userId);
+    this.users = this.users.filter((user) => user.id !== userId);
   }
 
   size(): number {
-    return this.userIds.length;
+    return this.users.length;
   }
 
   start(): void {
-    this.mahjong = new Mahjong(this.userIds, this.output);
+    this.mahjong = new Mahjong(
+      this.users.map((user) => user.id),
+      async (mjg: Mahjong): Promise<void> => {
+        this.users.forEach((user) =>
+          ActionDefault(mjg, user.id, user.isCPU ? 1000 : 1000)
+        );
+        this.output(mjg);
+      },
+    );
     this.mahjong.gameStart(this.mahjong.generate());
   }
 

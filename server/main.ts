@@ -5,8 +5,8 @@ import {
 } from "./server.ts";
 
 import { Server } from "https://deno.land/x/socket_io@0.2.1/mod.ts";
-import { Room } from "../models/room.ts";
-import { CPU } from "../models/user.ts";
+import { Room, User } from "../models/room.ts";
+import { ActionDefault } from "../models/cpu.ts";
 
 const io = new Server({ cors: { origin: "*" } });
 const rooms: { [key: string]: Room } = {};
@@ -17,9 +17,9 @@ rooms["debug"] = new Room(async (mjg) => {
   await io.emit("output", mjg);
 });
 
-rooms["debug"].join(new CPU("1"));
-rooms["debug"].join(new CPU("2"));
-rooms["debug"].join(new CPU("3"));
+rooms["debug"].join(new User("1", true));
+rooms["debug"].join(new User("2", true));
+rooms["debug"].join(new User("3", true));
 
 OnServerConnection(io, rooms);
 OnServerJoinRoom(io, rooms);

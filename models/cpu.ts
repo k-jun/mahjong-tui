@@ -2,14 +2,20 @@ import { Mahjong, MahjongInput } from "./mahjong.ts";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-export const autoAction = async (
+export const ActionDefault = async (
   mahjong: Mahjong,
   userId: string,
+  timeout: number,
 ): Promise<void> => {
-  await sleep(1000);
+  const beforeState = mahjong.state;
+  await sleep(timeout);
+  if (mahjong.state !== beforeState) {
+    return;
+  }
   if (mahjong.turnRest() === 0) {
     return;
   }
+
   const user = mahjong.users.find((e) => e.id === userId);
   if (!user) {
     throw new Error("User not found");

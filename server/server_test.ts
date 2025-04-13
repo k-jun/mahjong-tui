@@ -44,7 +44,7 @@ describe("Socket.IO Server", () => {
     });
     clientSocket.emit("join");
     await delay(1000);
-    expect(rooms["test-room"].userIds[0]).toEqual(serverSocket.id);
+    expect(rooms["test-room"].users[0].id).toEqual(serverSocket.id);
 
     clientSocket.emit("leave", "test-room");
     await delay(1000);
