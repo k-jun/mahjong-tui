@@ -582,3 +582,152 @@ Deno.test("should return valid chi combinations", () => {
   const results = user.canChi({ pai: chiPai });
   expect(results.length).toBe(0);
 });
+
+
+Deno.test("should return valid richi candidates", async (t) => {
+  await t.step("should return empty array when no tsumo pai", () => {
+    const user = new User({
+      id: "test-user",
+      point: 25000,
+      paiJikaze: new Pai("z1"),
+    });
+    user.setPaiRest({
+      pais: [
+        new Pai("m1"),
+        new Pai("m1"),
+        new Pai("m1"),
+        new Pai("m2"),
+        new Pai("m3"),
+        new Pai("m4"),
+        new Pai("m5"),
+        new Pai("m6"),
+        new Pai("m7"),
+        new Pai("m8"),
+        new Pai("m9"),
+        new Pai("m9"),
+        new Pai("m9"),
+      ],
+    });
+    const results = user.canRichi();
+    expect(results.length).toBe(0);
+  });
+
+  await t.step("should return empty array when hand is not closed", () => {
+    const user = new User({
+      id: "test-user",
+      point: 25000,
+      paiJikaze: new Pai("z1"),
+    });
+    user.setPaiRest({
+      pais: [
+        new Pai("m1"),
+        new Pai("m1"),
+        new Pai("m1"),
+        new Pai("m2"),
+        new Pai("m3"),
+        new Pai("m4"),
+        new Pai("m5"),
+        new Pai("m6"),
+        new Pai("m7"),
+        new Pai("m8"),
+        new Pai("m9"),
+        new Pai("m9"),
+        new Pai("m9"),
+      ],
+    });
+    user.setPaiTsumo({ pai: new Pai("m1") });
+    user.paiSets.push(new PaiSet({
+      paiCall: [new Pai("p1"), new Pai("p1"), new Pai("p1")],
+      paiRest: [],
+      type: PaiSetType.MINKO,
+    }));
+    const results = user.canRichi();
+    expect(results.length).toBe(0);
+  });
+
+  await t.step("should return empty array when point is less than 1000", () => {
+    const user = new User({
+      id: "test-user",
+      point: 500,
+      paiJikaze: new Pai("z1"),
+    });
+    user.setPaiRest({
+      pais: [
+        new Pai("m1"),
+        new Pai("m1"),
+        new Pai("m1"),
+        new Pai("m2"),
+        new Pai("m3"),
+        new Pai("m4"),
+        new Pai("m5"),
+        new Pai("m6"),
+        new Pai("m7"),
+        new Pai("m8"),
+        new Pai("m9"),
+        new Pai("m9"),
+        new Pai("m9"),
+      ],
+    });
+    user.setPaiTsumo({ pai: new Pai("m1") });
+    const results = user.canRichi();
+    expect(results.length).toBe(0);
+  });
+
+  await t.step("should return valid richi candidates when tenpai", () => {
+    const user = new User({
+      id: "test-user",
+      point: 25000,
+      paiJikaze: new Pai("z1"),
+    });
+    user.setPaiRest({
+      pais: [
+        new Pai("m1"),
+        new Pai("m1"),
+        new Pai("m1"),
+        new Pai("m2"),
+        new Pai("m3"),
+        new Pai("m4"),
+        new Pai("m5"),
+        new Pai("m6"),
+        new Pai("m7"),
+        new Pai("m8"),
+        new Pai("m9"),
+        new Pai("m9"),
+        new Pai("m9"),
+      ],
+    });
+    user.setPaiTsumo({ pai: new Pai("m1") });
+    const results = user.canRichi();
+    expect(results.length).toBe(14);
+    expect(results[0].fmt).toBe("m1");
+  });
+
+  await t.step("should return valid richi candidates when tenpai with 4 pairs", () => {
+    const user = new User({
+      id: "test-user",
+      point: 25000,
+      paiJikaze: new Pai("z1"),
+    });
+    user.setPaiRest({
+      pais: [
+        new Pai("s4"),
+        new Pai("s5"),
+        new Pai("s5"),
+        new Pai("s5"),
+        new Pai("s5"),
+        new Pai("s9"),
+        new Pai("s9"),
+        new Pai("s9"),
+        new Pai("s9"),
+        new Pai("z4"),
+        new Pai("z4"),
+        new Pai("z4"),
+        new Pai("z4"),
+      ],
+    });
+    user.setPaiTsumo({ pai: new Pai("s3") });
+    const results = user.canRichi();
+    expect(results.length).toBe(8);
+    expect(results[0].fmt).toBe("s9");
+  });
+});

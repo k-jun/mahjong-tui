@@ -4,25 +4,32 @@ import { Pai } from "@k-jun/mahjong";
 import { EmptyTSX, PaiTSX } from "./pai.tsx";
 import React, { JSX } from "npm:react";
 
-export const JichaTSX = ({ jicha, height, width }: { jicha: User, height: number, width: number }): JSX.Element => (
-  <Box
-    flexDirection="row"
-    justifyContent="center"
-    alignItems="flex-end"
-    height={height}
-    width={width}
-  >
-    {jicha?.paiRest.sort((a, b) => a.id - b.id).map((e) => new Pai(e.id))
-      .map((e) => <PaiTSX text={e.dsp} key={e.id} />)}
-    <EmptyTSX />
-    {jicha?.paiTsumo
-      ? <PaiTSX text={new Pai(jicha?.paiTsumo?.id ?? 0).dsp} key={0} />
-      : <EmptyTSX />}
-  </Box>
-);
+export const JichaTSX = (
+  { jicha, height, width }: { jicha: User; height: number; width: number },
+): JSX.Element => {
+  const paiSets = jicha.paiSets.map((e) => e.pais).flat();
+  return (
+    <Box
+      flexDirection="row"
+      justifyContent="center"
+      alignItems="flex-end"
+      height={height}
+      width={width}
+    >
+      {jicha?.paiRest.sort((a, b) => a.id - b.id).map((e) => new Pai(e.id))
+        .map((e) => <PaiTSX text={e.dsp} key={e.id} />)}
+      <EmptyTSX />
+      {jicha?.paiTsumo
+        ? <PaiTSX text={new Pai(jicha?.paiTsumo?.id ?? 0).dsp} key={0} />
+        : <EmptyTSX />}
+      <EmptyTSX />
+      {paiSets.map((e) => <PaiTSX text={new Pai(e.id).dsp} key={e.id} />)}
+    </Box>
+  );
+};
 
 export const JichaKawaTSX = (
-  { jicha, height, width }: { jicha: User, height: number, width: number },
+  { jicha, height, width }: { jicha: User; height: number; width: number },
 ): JSX.Element => {
   const columns: number[][] = [[], [], [], [], [], []];
   jicha.paiKawa.forEach((e, idx) => {

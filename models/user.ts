@@ -15,6 +15,7 @@ export class User {
   paiKawa: Pai[];
   paiTsumo?: Pai;
   paiJikaze: Pai;
+  paiCalled: Pai[];
   point: number = 0;
 
   isRichi: boolean = false;
@@ -32,6 +33,7 @@ export class User {
     this.paiRest = [];
     this.paiSets = [];
     this.paiKawa = [];
+    this.paiCalled = [];
     this.paiJikaze = paiJikaze;
     this.point = point;
   }
@@ -147,6 +149,9 @@ export class User {
       if (this.paiKawa.includes(pai)) {
         return false;
       }
+      if (this.paiCalled.includes(pai)) {
+        return false;
+      }
     }
 
     return true;
@@ -187,6 +192,7 @@ export class User {
           paiRest: [a[idx1], b[idx2]],
           paiCall: [pai],
           type: PaiSetType.MINSHUN,
+          fromWho: Player.KAMICHA,
         }),
       );
     };
@@ -337,6 +343,9 @@ export class User {
       return [];
     }
     if (this.paiSets.some((e) => e.isOpen())) {
+      return [];
+    }
+    if (this.point < 1000) {
       return [];
     }
 

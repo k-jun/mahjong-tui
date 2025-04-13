@@ -45,7 +45,7 @@ export class Room {
       this.users.map((user) => user.id),
       async (mjg: Mahjong): Promise<void> => {
         this.users.forEach((user) =>
-          ActionDefault(mjg, user.id, user.isCPU ? 100 : 100)
+          ActionDefault(mjg, user.id, user.isCPU ? 500 : 500)
         );
         this.output(mjg);
       },

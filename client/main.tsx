@@ -7,8 +7,7 @@ import { ShimochaKawaTSX, ShimochaTSX } from "./shimocha.tsx";
 import { KamichaKawaTSX, KamichaTSX } from "./kamicha.tsx";
 import { JichaKawaTSX, JichaTSX } from "./jicha.tsx";
 const socket = io("http://localhost:8080");
-
-// import { withFullScreen } from "npm:fullscreen-ink";
+import { withFullScreen } from "npm:fullscreen-ink";
 const App = (
   { mahjong, socketId }: { mahjong?: Mahjong; socketId: string },
 ): JSX.Element => {
@@ -33,22 +32,22 @@ const App = (
         justifyContent="flex-start"
         justifyItems="center"
         alignItems="center"
-        height={70}
+        height={60}
         width={100}
         borderStyle="round"
         borderColor="green"
       >
-        <Box height={70} width={4}>
+        <Box height={60} width={4}>
           <ShimochaTSX shimocha={shimocha} />
         </Box>
         <Box
           flexDirection="column"
           justifyContent="space-between"
           alignItems="center"
-          width={70}
-          height={70}
+          width={80}
+          height={60}
         >
-          <ToimenTSX toimen={toimen} height={4} width={70} />
+          <ToimenTSX toimen={toimen} height={4} width={80} />
           <Box flexDirection="row" alignItems="center">
             <ShimochaKawaTSX shimocha={shimocha} height={14} width={12} />
             <Box flexDirection="column">
@@ -58,9 +57,9 @@ const App = (
             </Box>
             <KamichaKawaTSX kamicha={kamicha} height={14} width={12} />
           </Box>
-          <JichaTSX jicha={jicha} height={4} width={70} />
+          <JichaTSX jicha={jicha} height={4} width={80} />
         </Box>
-        <Box height={70} width={4}>
+        <Box height={60} width={4}>
           <KamichaTSX kamicha={kamicha} />
         </Box>
       </Box>
@@ -73,8 +72,8 @@ socket.on("connect", () => {
 });
 
 socket.on("output", (data: Mahjong) => {
-  console.log(data.users.map((e) => e.paiTsumo));
-  ink.rerender(<App mahjong={data} socketId={socket.id ?? ""} />);
+  ink.instance.rerender(<App mahjong={data} socketId={socket.id ?? ""} />);
 });
 
-const ink = render(<App mahjong={undefined} socketId={""} />);
+const ink = withFullScreen(<App mahjong={undefined} socketId={""} />);
+ink.start();

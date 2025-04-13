@@ -783,22 +783,24 @@ export class Mahjong {
         a.enable = false;
       }
     }
-
-    const primaryAction = this.actions.find((e) => {
-      if (e.enable === false) {
-        return false;
-      }
-      return true;
-    });
+    const primaryAction = this.actions.find((e) =>
+      [undefined, true].includes(e.enable)
+    );
     if (primaryAction!.user.id !== user.id) {
       return;
     }
 
     this.actions = [];
     user.naki({ set });
-    this.turnMove({ user });
 
     const userIdx = this.users.findIndex((e) => e.id === user.id);
+    const fromUser = this.users[(userIdx + set.fromWho) % 4];
+    fromUser.paiKawa = fromUser.paiKawa.filter((e) =>
+      e.id !== set.paiCall[0].id
+    );
+    fromUser.paiCalled.push(set.paiCall[0]);
+    this.turnMove({ user });
+
     if (set.fromWho !== Player.JICHA) {
       this.users[(userIdx + set.fromWho) % 4].isCalled = true;
     }
@@ -840,12 +842,15 @@ export class Mahjong {
         MahjongActionType.TSUMO,
         MahjongActionType.ANKAN,
         MahjongActionType.KAKAN,
+        MahjongActionType.RICHI,
       ].includes(e.type)
     );
 
-    if (this.actions.every((e) => e.enable === false) && !isAfterTsumo) {
+    if (this.actions.every((e) => e.enable === false)) {
       this.actions = [];
-      this.turnNext();
+      if (!isAfterTsumo) {
+        this.turnNext();
+      }
       return true;
     }
 
@@ -891,7 +896,6 @@ export class Mahjong {
   ): Promise<void> {
     // mutex lock
     await this.mutex.acquire();
-
     let isRefresh = true;
     switch (action) {
       case MahjongInput.TSUMO: {

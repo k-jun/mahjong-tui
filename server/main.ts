@@ -21,6 +21,7 @@ rooms["debug"].join(new User("1", true));
 rooms["debug"].join(new User("2", true));
 rooms["debug"].join(new User("3", true));
 
+
 OnServerConnection(io, rooms);
 OnServerJoinRoom(io, rooms);
 OnServerLeaveRoom(io, rooms);
