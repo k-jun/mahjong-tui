@@ -18,7 +18,11 @@ export const ActionDefault = async (
 
   const user = mahjong.users.find((e) => e.id === userId);
   if (!user) {
-    throw new Error("User not found");
+    throw new Error(
+      `User not found uesrs:${
+        mahjong.users.map((e) => e.id)
+      }, userId:${userId}`,
+    );
   }
 
   const liveActions = mahjong.actions.filter((e) => e.enable === undefined);
