@@ -49,8 +49,29 @@ export const ActionDefault = async (
           const kawa = mahjong.turnUser().paiKawa;
           const pai = kawa[kawa.length - 1];
           const userIdx = mahjong.users.findIndex((e) => e.id === userId);
-          
-          const sets = user.canPon({ pai, fromWho: mahjong.getPlayer(userIdx, mahjong.turnUserIdx) });
+
+          const sets = user.canPon({
+            pai,
+            fromWho: mahjong.getPlayer(userIdx, mahjong.turnUserIdx),
+          });
+          mahjong.input(MahjongInput.NAKI, {
+            user,
+            params: {
+              naki: {
+                set: sets[0],
+              },
+            },
+          });
+          break;
+        }
+        case MahjongActionType.MINKAN: {
+          const kawa = mahjong.turnUser().paiKawa;
+          const pai = kawa[kawa.length - 1];
+          const userIdx = mahjong.users.findIndex((e) => e.id === userId);
+          const sets = user.canMinkan({
+            pai,
+            fromWho: mahjong.getPlayer(userIdx, mahjong.turnUserIdx),
+          });
           mahjong.input(MahjongInput.NAKI, {
             user,
             params: {

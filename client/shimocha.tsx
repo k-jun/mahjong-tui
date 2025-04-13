@@ -5,7 +5,7 @@ import { EmptyTSX, PaiTSX } from "./pai.tsx";
 import React, { JSX } from "npm:react";
 
 export const ShimochaTSX = ({ shimocha }: { shimocha: User }): JSX.Element => {
-  const paiSets = shimocha.paiSets.map((e) => e.pais).flat();
+  const paiSets = shimocha.paiSets.map((e) => e.pais).reverse().flat();
   return (
     <Box flexDirection="column" justifyContent="center" alignItems="center">
       {shimocha?.paiRest.sort((a, b) =>

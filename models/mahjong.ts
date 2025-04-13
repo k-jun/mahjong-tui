@@ -795,10 +795,12 @@ export class Mahjong {
 
     const userIdx = this.users.findIndex((e) => e.id === user.id);
     const fromUser = this.users[(userIdx + set.fromWho) % 4];
-    fromUser.paiKawa = fromUser.paiKawa.filter((e) =>
-      e.id !== set.paiCall[0].id
-    );
-    fromUser.paiCalled.push(set.paiCall[0]);
+    if (user.id !== fromUser.id) {
+      fromUser.paiKawa = fromUser.paiKawa.filter((e) =>
+        e.id !== set.paiCall[0].id
+      );
+      fromUser.paiCalled.push(set.paiCall[0]);
+    }
     this.turnMove({ user });
 
     if (set.fromWho !== Player.JICHA) {

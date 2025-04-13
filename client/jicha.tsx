@@ -7,7 +7,7 @@ import React, { JSX } from "npm:react";
 export const JichaTSX = (
   { jicha, height, width }: { jicha: User; height: number; width: number },
 ): JSX.Element => {
-  const paiSets = jicha.paiSets.map((e) => e.pais).flat();
+  const paiSets = jicha.paiSets.map((e) => e.pais).reverse().flat();
   return (
     <Box
       flexDirection="row"
