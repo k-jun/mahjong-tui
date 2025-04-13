@@ -6,7 +6,6 @@ import {
 
 import { Server } from "https://deno.land/x/socket_io@0.2.1/mod.ts";
 import { Room, User } from "../models/room.ts";
-import { ActionDefault } from "../models/cpu.ts";
 
 const io = new Server({ cors: { origin: "*" } });
 const rooms: { [key: string]: Room } = {};

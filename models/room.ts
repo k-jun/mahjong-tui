@@ -43,6 +43,7 @@ export class Room {
   start(): void {
     this.mahjong = new Mahjong(
       this.users.map((user) => user.id),
+      // deno-lint-ignore require-await
       async (mjg: Mahjong): Promise<void> => {
         this.users.forEach((user) =>
           ActionDefault(mjg, user.id, user.isCPU ? 500 : 500)

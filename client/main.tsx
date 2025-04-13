@@ -1,5 +1,5 @@
 import React, { JSX } from "npm:react";
-import { Box, render, Text } from "npm:ink";
+import { Box, Text } from "npm:ink";
 import { io } from "npm:socket.io-client";
 import { Mahjong } from "../models/mahjong.ts";
 import { ToimenKawaTSX, ToimenTSX } from "./toimen.tsx";
@@ -75,5 +75,5 @@ socket.on("output", (data: Mahjong) => {
   ink.instance.rerender(<App mahjong={data} socketId={socket.id ?? ""} />);
 });
 
-const ink = withFullScreen(<App mahjong={undefined} socketId={""} />);
+const ink = withFullScreen(<App mahjong={undefined} socketId="" />);
 ink.start();
