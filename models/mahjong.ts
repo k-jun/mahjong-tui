@@ -1,5 +1,5 @@
 import { createMutex, Mutex } from "@117/mutex";
-import { MahjongUser } from "./mahjong_user.ts";
+import { User } from "./user.ts";
 import {
   Pai,
   PaiAll,
@@ -39,14 +39,14 @@ export enum MahjongActionType {
 }
 
 export type MahjongAction = {
-  user: MahjongUser;
+  user: User;
   type: MahjongActionType;
   enable?: boolean;
   naki?: {
     set: PaiSet;
   };
   agari?: {
-    fromUser: MahjongUser;
+    fromUser: User;
     paiAgari: Pai;
     isChankan?: boolean;
   };
@@ -54,14 +54,14 @@ export type MahjongAction = {
 
 export type MahjongInputParams = {
   agari?: {
-    fromUser: MahjongUser;
+    fromUser: User;
     paiAgari: Pai;
   };
   richi?: {
     step: number;
   };
   chnkn?: {
-    fromUser: MahjongUser;
+    fromUser: User;
     paiChnkn: Pai;
   };
   dahai?: {
@@ -82,7 +82,7 @@ export class Mahjong {
   paiBakaze: Pai = new Pai("z1");
   paiDora: Pai[] = [];
   paiDoraUra: Pai[] = [];
-  users: MahjongUser[] = [];
+  users: User[] = [];
   turnUserIdx: number = 0;
   actions: MahjongAction[] = [];
   result: TokutenOutput[] = [];
@@ -104,12 +104,12 @@ export class Mahjong {
     output: (mjg: Mahjong) => Promise<void>,
   ) {
     this.users = userIds.map((val, idx) =>
-      new MahjongUser({ id: val, point: 25000, paiJikaze: PaiKaze[idx] })
+      new User({ id: val, point: 25000, paiJikaze: PaiKaze[idx] })
     );
     this.output = output;
   }
 
-  turnUser(): MahjongUser {
+  turnUser(): User {
     return this.users[this.turnUserIdx];
   }
 
@@ -121,14 +121,14 @@ export class Mahjong {
     return this.paiYama.length + Math.floor(this.paiWanpai.length / 2) - 4;
   }
 
-  turnMove({ user }: { user: MahjongUser }): void {
+  turnMove({ user }: { user: User }): void {
     const userIdx = this.users.findIndex((e) => e.id === user.id);
     this.turnUserIdx = userIdx;
   }
 
   generate(): Pai[] {
     const pais = [...PaiAll];
-    const rng = seedrandom("3");
+    const rng = seedrandom();
     for (let i = pais.length - 1; i > 0; i--) {
       const j = Math.floor(rng() * (i + 1));
       [pais[i], pais[j]] = [pais[j], pais[i]];
@@ -214,7 +214,7 @@ export class Mahjong {
     }
   }
 
-  tsumo({ user }: { user: MahjongUser }): void {
+  tsumo({ user }: { user: User }): void {
     if (this.actions.filter((e) => e.enable === undefined).length > 0) {
       throw new Error("tsumo called while actions are not empty", {
         cause: this.actions.map((e) => ({
@@ -246,7 +246,7 @@ export class Mahjong {
     }
   }
 
-  actionSetAfterKakan({ from, pai }: { from: MahjongUser; pai: Pai }): void {
+  actionSetAfterKakan({ from, pai }: { from: User; pai: Pai }): void {
     const fromIdx = this.users.findIndex((e) => e.id === from.id);
     for (let i = 1; i < 4; i++) {
       const user = this.users[(fromIdx + i) % 4];
@@ -265,7 +265,7 @@ export class Mahjong {
     }
   }
 
-  actionSetAfterTsumo({ from, pai }: { from: MahjongUser; pai: Pai }): void {
+  actionSetAfterTsumo({ from, pai }: { from: User; pai: Pai }): void {
     this.actions = [];
     const userIdx = this.users.findIndex((e) => e.id === from.id);
     const user = this.users[userIdx];
@@ -310,7 +310,7 @@ export class Mahjong {
     }
   }
 
-  actionSetAfterDahai({ from, pai }: { from: MahjongUser; pai: Pai }): void {
+  actionSetAfterDahai({ from, pai }: { from: User; pai: Pai }): void {
     this.actions = [];
     const fromIdx = this.users.findIndex((e) => e.id === from.id);
 
@@ -375,7 +375,7 @@ export class Mahjong {
     }
   }
 
-  dahai({ user, pai }: { user: MahjongUser; pai: Pai }): void {
+  dahai({ user, pai }: { user: User; pai: Pai }): void {
     if (this.turnUser().id !== user.id) {
       throw new Error("when dahai called, not your turn", {
         cause: this.turnUser().id,
@@ -401,7 +401,7 @@ export class Mahjong {
     this.paiDora.push(omote);
   }
 
-  rinshanTsumo({ user }: { user: MahjongUser }): void {
+  rinshanTsumo({ user }: { user: User }): void {
     const pai = this.paiRinshan.splice(0, 1)[0];
     user.setPaiTsumo({ pai });
     user.isRinshankaiho = true;
@@ -409,7 +409,7 @@ export class Mahjong {
   }
 
   isPaoDaisangen(
-    { user, yakus }: { user: MahjongUser; yakus: string[] },
+    { user, yakus }: { user: User; yakus: string[] },
   ): Player {
     if (!yakus.includes("大三元")) {
       return Player.JICHA;
@@ -423,7 +423,7 @@ export class Mahjong {
   }
 
   isPaoDaisushi(
-    { user, yakus }: { user: MahjongUser; yakus: string[] },
+    { user, yakus }: { user: User; yakus: string[] },
   ): Player {
     if (!yakus.includes("大四喜")) {
       return Player.JICHA;
@@ -440,7 +440,7 @@ export class Mahjong {
     return set?.fromWho ?? Player.JICHA;
   }
 
-  isPao({ user, yakus }: { user: MahjongUser; yakus: string[] }): Player {
+  isPao({ user, yakus }: { user: User; yakus: string[] }): Player {
     const daisangen = this.isPaoDaisangen({ user, yakus });
     const daisushi = this.isPaoDaisushi({ user, yakus });
     return daisangen === Player.JICHA ? daisushi : daisangen;
@@ -448,7 +448,7 @@ export class Mahjong {
 
   agariMinusPointTsumo(
     { user, result, pao }: {
-      user: MahjongUser;
+      user: User;
       result: TokutenOutput;
       pao: Player;
     },
@@ -478,8 +478,8 @@ export class Mahjong {
 
   agariMinusPointRon(
     { user, from, result, pao }: {
-      user: MahjongUser;
-      from: MahjongUser;
+      user: User;
+      from: User;
       result: TokutenOutput;
       pao: Player;
     },
@@ -510,7 +510,7 @@ export class Mahjong {
 
   buildParams(
     { user, pai, options }: {
-      user: MahjongUser;
+      user: User;
       pai: Pai;
       options: {
         isTsumo: boolean;
@@ -549,8 +549,8 @@ export class Mahjong {
 
   calcPoint(
     { user, from, pai, isChankan = false }: {
-      user: MahjongUser;
-      from: MahjongUser;
+      user: User;
+      from: User;
       pai: Pai;
       isChankan?: boolean;
     },
@@ -587,8 +587,8 @@ export class Mahjong {
 
   agari(
     { user, from, pai, isChankan = false }: {
-      user: MahjongUser;
-      from: MahjongUser;
+      user: User;
+      from: User;
       pai: Pai;
       isChankan?: boolean;
     },
@@ -641,7 +641,7 @@ export class Mahjong {
     }
   }
 
-  richi({ user, step }: { user: MahjongUser; step: number }): void {
+  richi({ user, step }: { user: User; step: number }): void {
     if (user.isRichi) {
       throw new Error("when richi called, already richi");
     }
@@ -749,7 +749,7 @@ export class Mahjong {
     this.gameEnded({ isAgari: false, isRenchan: isOyaTempai });
   }
 
-  naki({ user, set }: { user: MahjongUser; set: PaiSet }): void {
+  naki({ user, set }: { user: User; set: PaiSet }): void {
     const action = this.actions.find((action) => {
       if (action.user.id !== user.id) {
         return false;
@@ -812,7 +812,7 @@ export class Mahjong {
     this.users.forEach((e) => e.isIppatsu = false);
   }
 
-  skip({ user }: { user: MahjongUser }): boolean {
+  skip({ user }: { user: User }): boolean {
     const liveActions = this.actions.filter((e) => e.enable === undefined);
     const userActions = liveActions.filter((e) => e.user.id === user.id);
     if (userActions.length === 0) {
@@ -883,7 +883,7 @@ export class Mahjong {
   async input(
     action: MahjongInput,
     { user, params }: {
-      user: MahjongUser;
+      user: User;
       params: MahjongInputParams;
     },
   ): Promise<void> {

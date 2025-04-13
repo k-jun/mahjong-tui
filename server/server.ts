@@ -1,6 +1,5 @@
 import { Server, Socket } from "https://deno.land/x/socket_io@0.2.1/mod.ts";
 import { Room } from "../models/room.ts";
-import { User } from "../models/user.ts";
 import { randomUUID } from "node:crypto";
 import { MahjongInput, MahjongInputParams } from "../models/mahjong.ts";
 
@@ -44,7 +43,9 @@ const OnLeave = (socket: Socket, _: { [key: string]: Room }) => {
 };
 
 const OnDisconnect = (socket: Socket, _: { [key: string]: Room }) => {
-  socket.on("disconnect", () => {});
+  socket.on("disconnect", () => {
+    console.log("disconnected", socket.id);
+  });
 };
 
 export const OnServerConnection = (
@@ -52,6 +53,7 @@ export const OnServerConnection = (
   rooms: { [key: string]: Room },
 ) => {
   io.on("connection", (socket: Socket) => {
+    console.log("connected", socket.id);
     OnAll(socket, rooms);
   });
 };
@@ -69,7 +71,7 @@ export const OnServerJoinRoom = (
         });
         rooms[name.toString()] = room;
       }
-      room.join(new User(id));
+      room.join(id);
 
       if (room.size() == 4) {
         room.start();
