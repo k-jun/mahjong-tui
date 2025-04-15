@@ -7,10 +7,12 @@ const defaultRoomSize = 4;
 export class User {
   id: string;
   isCPU: boolean;
+  state: Map<string, boolean>;
 
   constructor(id: string, isCPU: boolean) {
     this.id = id;
     this.isCPU = isCPU;
+    this.state = new Map();
   }
 }
 
@@ -46,7 +48,7 @@ export class Room {
       // deno-lint-ignore require-await
       async (mjg: Mahjong): Promise<void> => {
         this.users.forEach((user) =>
-          ActionDefault(mjg, user.id, user.isCPU ? 500 : 500)
+          ActionDefault(mjg, user.id, user.isCPU ? 500 : 500, user.state)
         );
         this.output(mjg);
       },

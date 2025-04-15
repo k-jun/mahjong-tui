@@ -6,8 +6,11 @@ import { ToimenKawaTSX, ToimenTSX } from "./toimen.tsx";
 import { ShimochaKawaTSX, ShimochaTSX } from "./shimocha.tsx";
 import { KamichaKawaTSX, KamichaTSX } from "./kamicha.tsx";
 import { JichaKawaTSX, JichaTSX } from "./jicha.tsx";
+import { CenterTSX } from "./center.tsx";
+import { render } from "npm:ink";
+// import { withFullScreen } from "npm:fullscreen-ink";
+
 const socket = io("http://localhost:8080");
-import { withFullScreen } from "npm:fullscreen-ink";
 const App = (
   { mahjong, socketId }: { mahjong?: Mahjong; socketId: string },
 ): JSX.Element => {
@@ -29,11 +32,11 @@ const App = (
     <Box flexDirection="column" justifyContent="center" alignItems="center">
       <Box
         flexDirection="row"
-        justifyContent="flex-start"
+        justifyContent="space-between"
         justifyItems="center"
         alignItems="center"
         height={60}
-        width={100}
+        width={110}
         borderStyle="round"
         borderColor="green"
       >
@@ -44,20 +47,20 @@ const App = (
           flexDirection="column"
           justifyContent="space-between"
           alignItems="center"
-          width={80}
+          width={100}
           height={60}
         >
-          <ToimenTSX toimen={toimen} height={4} width={80} />
+          <ToimenTSX toimen={toimen} height={4} width={100} />
           <Box flexDirection="row" alignItems="center">
             <ShimochaKawaTSX shimocha={shimocha} height={14} width={12} />
             <Box flexDirection="column">
               <ToimenKawaTSX toimen={toimen} height={8} width={24} />
-              <Box height={14} />
+              <CenterTSX mahjong={mahjong} height={14} width={24} socketId={socketId} />
               <JichaKawaTSX jicha={jicha} height={8} width={24} />
             </Box>
             <KamichaKawaTSX kamicha={kamicha} height={14} width={12} />
           </Box>
-          <JichaTSX jicha={jicha} height={4} width={80} />
+          <JichaTSX jicha={jicha} height={4} width={100} />
         </Box>
         <Box height={60} width={4}>
           <KamichaTSX kamicha={kamicha} />
@@ -72,8 +75,11 @@ socket.on("connect", () => {
 });
 
 socket.on("output", (data: Mahjong) => {
-  ink.instance.rerender(<App mahjong={data} socketId={socket.id ?? ""} />);
+  // ink.instance.rerender(<App mahjong={data} socketId={socket.id ?? ""} />);
+  ink.rerender(<App mahjong={data} socketId={socket.id ?? ""} />);
 });
 
-const ink = withFullScreen(<App mahjong={undefined} socketId="" />);
-ink.start();
+// const ink = withFullScreen(<App mahjong={undefined} socketId="" />);
+// ink.start();
+
+const ink = render(<App mahjong={undefined} socketId="" />);

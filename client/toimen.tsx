@@ -11,8 +11,7 @@ export const ToimenTSX = (
   return (
     <Box
       flexDirection="row"
-      justifyContent="flex-start"
-      alignItems="flex-start"
+      justifyContent="center"
       height={height}
       width={width}
   >
@@ -33,7 +32,7 @@ export const ToimenKawaTSX = (
   { toimen, height, width }: { toimen: User; height: number; width: number },
 ): JSX.Element => {
   const columns: number[][] = [[], [], [], [], [], []];
-  toimen.paiKawa.forEach((e, idx) => {
+  toimen.paiKawa.slice(0, 18).forEach((e, idx) => {
     columns[idx % 6].push(e.id);
   });
   return (

@@ -130,11 +130,11 @@ export class Mahjong {
 
   generate(): Pai[] {
     const pais = [...PaiAll];
-    const rng = seedrandom();
-    for (let i = pais.length - 1; i > 0; i--) {
-      const j = Math.floor(rng() * (i + 1));
-      [pais[i], pais[j]] = [pais[j], pais[i]];
-    }
+    // const rng = seedrandom();
+    // for (let i = pais.length - 1; i > 0; i--) {
+    //   const j = Math.floor(rng() * (i + 1));
+    //   [pais[i], pais[j]] = [pais[j], pais[i]];
+    // }
     return pais;
   }
 
@@ -285,9 +285,10 @@ export class Mahjong {
         type: MahjongActionType.TSUMO,
       });
     }
+
     // ankan
     const setAnkan = user.canAnkan();
-    if (setAnkan.length > 0) {
+    if (setAnkan.length > 0 && this.paiRinshan.length > 0) {
       this.actions.push({
         user,
         type: MahjongActionType.ANKAN,
@@ -295,7 +296,7 @@ export class Mahjong {
     }
     // kakan
     const setKakan = user.canKakan();
-    if (setKakan.length > 0) {
+    if (setKakan.length > 0 && this.paiRinshan.length > 0) {
       this.actions.push({
         user,
         type: MahjongActionType.KAKAN,
@@ -304,7 +305,7 @@ export class Mahjong {
 
     // richi
     const pais = user.canRichi();
-    if (pais.length > 0) {
+    if (pais.length > 0 && this.paiRinshan.length > 0) {
       this.actions.push({
         user,
         type: MahjongActionType.RICHI,
@@ -390,6 +391,15 @@ export class Mahjong {
     user.dahai({ pai });
     user.isIppatsu = false;
     user.isRinshankaiho = false;
+
+
+    // 四槓散了
+    if (this.paiRinshan.length === 0) {
+      this.input(MahjongInput.OWARI, { user, params: {
+        owari: { nagashi: true },
+      } });
+    }
+
     this.actionSetAfterDahai({ from: user, pai });
 
     if (this.actions.length === 0) {
@@ -898,6 +908,8 @@ export class Mahjong {
   ): Promise<void> {
     // mutex lock
     await this.mutex.acquire();
+
+    console.log(`input: ${action}, user: ${user.id}`);
     let isRefresh = true;
     switch (action) {
       case MahjongInput.TSUMO: {

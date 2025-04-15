@@ -6,6 +6,7 @@ export const ActionDefault = async (
   mahjong: Mahjong,
   userId: string,
   timeout: number,
+  state: Map<string, boolean>,
 ): Promise<void> => {
   const beforeState = mahjong.state;
   await sleep(timeout);
@@ -13,6 +14,9 @@ export const ActionDefault = async (
     return;
   }
   if (mahjong.turnRest() === 0) {
+    return;
+  }
+  if (mahjong.isEnded) {
     return;
   }
 
@@ -35,6 +39,7 @@ export const ActionDefault = async (
           const kawa = mahjong.turnUser().paiKawa;
           const pai = kawa[kawa.length - 1];
           const sets = user.canChi({ pai });
+          state.set("afterNaki", true);
           mahjong.input(MahjongInput.NAKI, {
             user,
             params: {
@@ -54,6 +59,7 @@ export const ActionDefault = async (
             pai,
             fromWho: mahjong.getPlayer(userIdx, mahjong.turnUserIdx),
           });
+          state.set("afterNaki", true);
           mahjong.input(MahjongInput.NAKI, {
             user,
             params: {
@@ -72,6 +78,7 @@ export const ActionDefault = async (
             pai,
             fromWho: mahjong.getPlayer(userIdx, mahjong.turnUserIdx),
           });
+          state.set("afterKan", true);
           mahjong.input(MahjongInput.NAKI, {
             user,
             params: {
@@ -84,6 +91,7 @@ export const ActionDefault = async (
         }
         case MahjongActionType.ANKAN: {
           const sets = user.canAnkan();
+          state.set("afterKan", true);
           mahjong.input(MahjongInput.NAKI, {
             user,
             params: {
@@ -104,13 +112,26 @@ export const ActionDefault = async (
 
   const turnUser = mahjong.turnUser();
   if (turnUser.id === user.id) {
-    if (turnUser.paiTsumo === undefined) {
-      mahjong.input(MahjongInput.TSUMO, { user, params: {} });
-    } else {
+    if (state.get("afterNaki")) {
+      state.set("afterNaki", false);
+      mahjong.input(MahjongInput.DAHAI, {
+        user,
+        params: { dahai: { paiDahai: turnUser.paiRest[0] } },
+      });
+      return;
+    }
+    if (state.get("afterKan")) {
+      state.set("afterKan", false);
+      mahjong.input(MahjongInput.RNSHN, { user, params: {} });
+      return;
+    }
+    if (turnUser.paiTsumo !== undefined) {
       mahjong.input(MahjongInput.DAHAI, {
         user,
         params: { dahai: { paiDahai: turnUser.paiTsumo } },
       });
+    } else {
+      mahjong.input(MahjongInput.TSUMO, { user, params: {} });
     }
   }
 };

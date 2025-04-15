@@ -2,8 +2,8 @@ import React from "npm:react";
 import { Box, Text } from "npm:ink";
 
 export const PaiTSX = (
-  { text, enableTop = true, enableBottom = true, enableSide = true }: {
-    text: string;
+  { text = "  ", enableTop = true, enableBottom = true, enableSide = true }: {
+    text?: string;
     key: number;
     enableTop?: boolean;
     enableBottom?: boolean;

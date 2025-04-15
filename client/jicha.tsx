@@ -12,7 +12,6 @@ export const JichaTSX = (
     <Box
       flexDirection="row"
       justifyContent="center"
-      alignItems="flex-end"
       height={height}
       width={width}
     >
