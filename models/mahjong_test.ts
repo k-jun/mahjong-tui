@@ -201,14 +201,14 @@ Deno.test("mahjong all", async () => {
         break;
       }
       case "DORA": {
-        const { hai } = params.dora!;
-        await globalGame.input(MahjongInput.DORA, {
-          user: globalGame.turnUser(),
-          params: {},
-        });
-        expect(globalGame.paiDora[globalGame.paiDora.length - 1].id).toEqual(
-          hai.id,
-        );
+        // const { hai } = params.dora!;
+        // await globalGame.input(MahjongInput.DORA, {
+        //   user: globalGame.turnUser(),
+        //   params: {},
+        // });
+        // expect(globalGame.paiDora[globalGame.paiDora.length - 1].id).toEqual(
+        //   hai.id,
+        // );
         break;
       }
     }

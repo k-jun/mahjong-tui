@@ -388,16 +388,22 @@ export class Mahjong {
       this.users.forEach((e) => e.isIppatsu = false);
       user.isAfterKakan = false;
     }
+    if (user.countMinkanKakan > 0) {
+      this.dora();
+      user.countMinkanKakan = 0;
+    }
     user.dahai({ pai });
     user.isIppatsu = false;
     user.isRinshankaiho = false;
 
-
     // 四槓散了
     if (this.paiRinshan.length === 0) {
-      this.input(MahjongInput.OWARI, { user, params: {
-        owari: { nagashi: true },
-      } });
+      this.input(MahjongInput.OWARI, {
+        user,
+        params: {
+          owari: { nagashi: true },
+        },
+      });
     }
 
     this.actionSetAfterDahai({ from: user, pai });
@@ -417,6 +423,12 @@ export class Mahjong {
     const pai = this.paiRinshan.splice(0, 1)[0];
     user.setPaiTsumo({ pai });
     user.isRinshankaiho = true;
+
+    if (user.countMinkanKakan > 1) {
+      this.dora();
+      user.countMinkanKakan -= 1;
+    }
+
     this.actionSetAfterTsumo({ from: user, pai });
   }
 
@@ -817,7 +829,14 @@ export class Mahjong {
       this.users[(userIdx + set.fromWho) % 4].isCalled = true;
     }
 
+    if (set.type === PaiSetType.ANKAN) {
+      this.dora();
+    }
+    if (set.type === PaiSetType.MINKAN) {
+      user.countMinkanKakan += 1;
+    }
     if (set.type === PaiSetType.KAKAN) {
+      user.countMinkanKakan += 1;
       user.isAfterKakan = true;
       this.actionSetAfterKakan({
         from: user,
@@ -908,8 +927,6 @@ export class Mahjong {
   ): Promise<void> {
     // mutex lock
     await this.mutex.acquire();
-
-    console.log(`input: ${action}, user: ${user.id}`);
     let isRefresh = true;
     switch (action) {
       case MahjongInput.TSUMO: {
@@ -950,10 +967,10 @@ export class Mahjong {
         this.naki({ user, set });
         break;
       }
-      case MahjongInput.DORA: {
-        this.dora();
-        break;
-      }
+      // case MahjongInput.DORA: {
+      //   this.dora();
+      //   break;
+      // }
       case MahjongInput.SKIP: {
         isRefresh = this.skip({ user });
         break;
