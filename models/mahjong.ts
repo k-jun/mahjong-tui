@@ -258,12 +258,10 @@ export class Mahjong {
         options: { isTsumo: false, isChankan: true },
       });
       const result = new Tokuten({ ...params }).count();
-      if (result.pointSum > 0) {
-        this.actions.push({
-          user,
-          type: MahjongActionType.RON,
-        });
+      if (result.pointSum === 0) {
+        continue;
       }
+      this.actions.push({ user, type: MahjongActionType.RON });
     }
   }
 
@@ -831,9 +829,11 @@ export class Mahjong {
 
     if (set.type === PaiSetType.ANKAN) {
       this.dora();
+      this.rinshanTsumo({ user });
     }
     if (set.type === PaiSetType.MINKAN) {
       user.countMinkanKakan += 1;
+      this.rinshanTsumo({ user });
     }
     if (set.type === PaiSetType.KAKAN) {
       user.countMinkanKakan += 1;
@@ -842,6 +842,9 @@ export class Mahjong {
         from: user,
         pai: set.paiCall[set.paiCall.length - 1],
       });
+      if (this.actions.length === 0) {
+        this.rinshanTsumo({ user });
+      }
       return;
     }
     this.users.forEach((e) => e.isIppatsu = false);
@@ -881,6 +884,12 @@ export class Mahjong {
       this.actions = [];
       if (!isAfterTsumo) {
         this.turnNext();
+      }
+
+      // 槍槓がスキップされた場合には、嶺上自摸が残っているので処理する。
+      // isAfterKakan は dahai 実行時に、false になるのでここで判断に用いて問題無い。
+      if (this.turnUser().isAfterKakan) {
+        this.rinshanTsumo({ user: this.turnUser() });
       }
       return true;
     }
@@ -953,10 +962,10 @@ export class Mahjong {
         this.owari({ nagashi });
         break;
       }
-      case MahjongInput.RNSHN: {
-        this.rinshanTsumo({ user });
-        break;
-      }
+      // case MahjongInput.RNSHN: {
+      //   this.rinshanTsumo({ user });
+      //   break;
+      // }
       case MahjongInput.CHNKN: {
         const { paiChnkn, fromUser } = params.chnkn!;
         this.agari({ user, from: fromUser, pai: paiChnkn, isChankan: true });

@@ -118,10 +118,10 @@ Deno.test("mahjong all", async () => {
       }
       case "RNSHN": {
         const { who, hai } = params.tsumo!;
-        await globalGame.input(MahjongInput.RNSHN, {
-          user: globalGame.turnUser(),
-          params: {},
-        });
+        // await globalGame.input(MahjongInput.RNSHN, {
+        //   user: globalGame.turnUser(),
+        //   params: {},
+        // });
 
         expect(globalGame.turnUser().paiTsumo).toEqual(new Pai(hai.id));
         expect(globalGame.turnUserIdx).toEqual(who);
