@@ -18,13 +18,13 @@ Deno.test("mahjong all", async () => {
     paiDoraUra: Pai[];
   }[] = [];
   await fixtures(async ({ name, params }): Promise<void> => {
-    // console.log(
-    //   name,
-    //   globalGame.kyoku,
-    //   globalGame.honba,
-    //   globalGame.turnUserIdx,
-    //   globalGame.turnRest(),
-    // );
+    console.log(
+      name,
+      globalGame.kyoku,
+      globalGame.honba,
+      globalGame.turnUserIdx,
+      globalGame.turnRest(),
+    );
     switch (name) {
       case "DONE": {
         break;
@@ -102,16 +102,29 @@ Deno.test("mahjong all", async () => {
       }
       case "TSUMO": {
         for (let i = 0; i < globalGame.actions.length; i++) {
+          if (globalGame.actions[i].type === MahjongActionType.RICHI) {
+            continue;
+          }
+          if (globalGame.actions[i].type === MahjongActionType.TSUMO) {
+            continue;
+          }
+          if (globalGame.actions[i].type === MahjongActionType.KAKAN) {
+            continue;
+          }
+          if (globalGame.actions[i].type === MahjongActionType.ANKAN) {
+            continue;
+          }
           await globalGame.input(MahjongInput.SKIP, {
             user: globalGame.actions[i].user,
             params: {},
           });
         }
+
         const { who, hai } = params.tsumo!;
-        await globalGame.input(MahjongInput.TSUMO, {
-          user: globalGame.turnUser(),
-          params: {},
-        });
+        // await globalGame.input(MahjongInput.TSUMO, {
+        //   user: globalGame.turnUser(),
+        //   params: {},
+        // });
         expect(globalGame.turnUser().paiTsumo).toEqual(new Pai(hai.id));
         expect(globalGame.turnUserIdx).toEqual(who);
         break;
@@ -139,10 +152,12 @@ Deno.test("mahjong all", async () => {
       }
       case "RICHI": {
         const { who, step, ten } = params.richi!;
-        await globalGame.input(MahjongInput.RICHI, {
-          user: globalGame.users[who],
-          params: { richi: { step } },
-        });
+        if (step === 1) {
+          await globalGame.input(MahjongInput.RICHI, {
+            user: globalGame.users[who],
+            params: { richi: { step } },
+          });
+        }
         if (step == 2) {
           expect(globalGame.users.map((e) => e.point)).toEqual(ten);
         }

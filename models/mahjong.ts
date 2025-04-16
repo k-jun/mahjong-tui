@@ -115,12 +115,16 @@ export class Mahjong {
     return this.users[this.turnUserIdx];
   }
 
-  turnNext(): void {
+  turnNext(): boolean {
+    if (this.turnRest() === 0) {
+      return false;
+    }
     this.turnUserIdx = (this.turnUserIdx + 1) % 4;
+    return true;
   }
 
   turnRest(): number {
-    return this.paiYama.length + Math.floor(this.paiWanpai.length / 2) - 4;
+    return this.paiYama.length + this.paiRinshan.length - 4;
   }
 
   turnMove({ user }: { user: User }): void {
@@ -166,6 +170,8 @@ export class Mahjong {
     this.turnUserIdx = this.kyoku % 4;
     this.paiBakaze = PaiKaze[Math.floor(this.kyoku / 4)];
     this.output(this);
+
+    this.tsumo({ user: this.turnUser() });
   }
 
   gameEnded(
@@ -217,6 +223,10 @@ export class Mahjong {
   }
 
   tsumo({ user }: { user: User }): void {
+    if (this.turnRest() === 0) {
+      throw new Error("tsumo called while turnRest is 0");
+    }
+
     if (this.actions.filter((e) => e.enable === undefined).length > 0) {
       throw new Error("tsumo called while actions are not empty", {
         cause: this.actions.map((e) => ({
@@ -229,6 +239,22 @@ export class Mahjong {
 
     const pai = this.paiYama.splice(-1)[0];
     user.setPaiTsumo({ pai });
+
+    this.actionSetAfterTsumo({ from: user, pai });
+  }
+
+  rinshanTsumo({ user }: { user: User }): void {
+    if (this.turnRest() === 0) {
+      throw new Error("rinshanTsumo called while turnRest is 0");
+    }
+    const pai = this.paiRinshan.splice(0, 1)[0];
+    user.setPaiTsumo({ pai });
+    user.isRinshankaiho = true;
+
+    if (user.countMinkanKakan > 1) {
+      this.dora();
+      user.countMinkanKakan -= 1;
+    }
 
     this.actionSetAfterTsumo({ from: user, pai });
   }
@@ -276,6 +302,7 @@ export class Mahjong {
       pai,
       options: { isTsumo: true, isChankan: false },
     });
+
     const result = new Tokuten({ ...params }).count();
     if (result.pointSum > 0) {
       this.actions.push({
@@ -407,7 +434,9 @@ export class Mahjong {
     this.actionSetAfterDahai({ from: user, pai });
 
     if (this.actions.length === 0) {
-      this.turnNext();
+      if (this.turnNext()) {
+        this.tsumo({ user: this.turnUser() });
+      }
     }
   }
 
@@ -415,19 +444,6 @@ export class Mahjong {
     const [ura, omote] = this.paiWanpai.splice(0, 2);
     this.paiDoraUra.push(ura);
     this.paiDora.push(omote);
-  }
-
-  rinshanTsumo({ user }: { user: User }): void {
-    const pai = this.paiRinshan.splice(0, 1)[0];
-    user.setPaiTsumo({ pai });
-    user.isRinshankaiho = true;
-
-    if (user.countMinkanKakan > 1) {
-      this.dora();
-      user.countMinkanKakan -= 1;
-    }
-
-    this.actionSetAfterTsumo({ from: user, pai });
   }
 
   isPaoDaisangen(
@@ -686,6 +702,7 @@ export class Mahjong {
     }
 
     const allMenzen = this.users.every((u) => u.paiSets.length === 0);
+    console.log("this.turnRest()", this.turnRest());
     const isDabururichi = [69, 68, 67, 66].includes(this.turnRest()) &&
       allMenzen;
     if (isDabururichi) {
@@ -883,7 +900,9 @@ export class Mahjong {
     if (this.actions.every((e) => e.enable === false)) {
       this.actions = [];
       if (!isAfterTsumo) {
-        this.turnNext();
+        if (this.turnNext()) {
+          this.tsumo({ user: this.turnUser() });
+        }
       }
 
       // 槍槓がスキップされた場合には、嶺上自摸が残っているので処理する。
@@ -938,10 +957,10 @@ export class Mahjong {
     await this.mutex.acquire();
     let isRefresh = true;
     switch (action) {
-      case MahjongInput.TSUMO: {
-        this.tsumo({ user });
-        break;
-      }
+      // case MahjongInput.TSUMO: {
+      //   this.tsumo({ user });
+      //   break;
+      // }
       case MahjongInput.DAHAI: {
         const { paiDahai } = params.dahai!;
         this.dahai({ user, pai: paiDahai });

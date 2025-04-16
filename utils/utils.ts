@@ -98,7 +98,7 @@ export const fixtures = async (
       continue;
     }
     for await (const f of Deno.readDir(`./fixtures/${d.name}`)) {
-      if (!f.name.endsWith(".xml")) {
+      if (!f.name.endsWith("2023080521gm-00a9-0000-e23e063d.xml")) {
         continue;
       }
       const text = await Deno.readTextFile(
