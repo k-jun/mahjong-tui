@@ -24,6 +24,7 @@ export class User {
   isRinshankaiho: boolean = false;
   isCalled: boolean = false;
   isAfterKakan: boolean = false;
+  isAfterRichi: boolean = false;
   countMinkanKakan: number = 0;
   isFuriten: boolean = false;
 
@@ -114,6 +115,7 @@ export class User {
     this.isIppatsu = false;
     this.isCalled = false;
     this.isAfterKakan = false;
+    this.isAfterRichi = false;
     this.countMinkanKakan = 0;
   }
 

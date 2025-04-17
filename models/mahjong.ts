@@ -432,8 +432,8 @@ export class Mahjong {
     }
 
     this.actionSetAfterDahai({ from: user, pai });
-
     if (this.actions.length === 0) {
+      this.richiAfter({ user });
       if (this.turnNext()) {
         this.tsumo({ user: this.turnUser() });
       }
@@ -679,41 +679,44 @@ export class Mahjong {
     }
   }
 
-  richi({ user, step }: { user: User; step: number }): void {
+  richiBefore({ user }: { user: User }): void {
     if (user.isRichi) {
       throw new Error("when richi called, already richi");
     }
-
-    if (step === 1) {
-      const action = this.actions.find((action) => {
-        if (action.user.id !== user.id) {
-          return false;
-        }
-        return action.type === MahjongActionType.RICHI;
-      });
-
-      if (action === undefined) {
-        throw new Error(
-          "when richi called, action: `richi` is not allowed",
-        );
+    const action = this.actions.find((action) => {
+      if (action.user.id !== user.id) {
+        return false;
       }
-      this.actions = [];
-      return;
-    }
+      return action.type === MahjongActionType.RICHI;
+    });
 
-    const allMenzen = this.users.every((u) => u.paiSets.length === 0);
-    console.log("this.turnRest()", this.turnRest());
-    const isDabururichi = [69, 68, 67, 66].includes(this.turnRest()) &&
-      allMenzen;
-    if (isDabururichi) {
-      user.isDabururichi = true;
-    } else {
-      user.isRichi = true;
+    if (action === undefined) {
+      throw new Error(
+        "when richi called, action: `richi` is not allowed",
+      );
     }
+    this.actions = [];
+    user.isAfterRichi = true;
 
-    user.isIppatsu = true;
-    user.point -= 1000;
-    this.kyotaku += 1;
+    return;
+  }
+
+  richiAfter({ user }: { user: User }): void {
+    if (user.isAfterRichi) {
+      const allMenzen = this.users.every((u) => u.paiSets.length === 0);
+      const isDabururichi = [69, 68, 67, 66].includes(this.turnRest()) &&
+        allMenzen;
+      if (isDabururichi) {
+        user.isDabururichi = true;
+      } else {
+        user.isRichi = true;
+      }
+
+      user.isIppatsu = true;
+      user.point -= 1000;
+      this.kyotaku += 1;
+      user.isAfterRichi = false;
+    }
   }
 
   owariNagashimangan(): number[] {
@@ -828,6 +831,9 @@ export class Mahjong {
     }
 
     this.actions = [];
+    if (this.turnUser().isAfterRichi) {
+      this.richiAfter({ user: this.turnUser() });
+    }
     user.naki({ set });
 
     const userIdx = this.users.findIndex((e) => e.id === user.id);
@@ -900,6 +906,7 @@ export class Mahjong {
     if (this.actions.every((e) => e.enable === false)) {
       this.actions = [];
       if (!isAfterTsumo) {
+        this.richiAfter({ user: this.turnUser() });
         if (this.turnNext()) {
           this.tsumo({ user: this.turnUser() });
         }
@@ -957,10 +964,6 @@ export class Mahjong {
     await this.mutex.acquire();
     let isRefresh = true;
     switch (action) {
-      // case MahjongInput.TSUMO: {
-      //   this.tsumo({ user });
-      //   break;
-      // }
       case MahjongInput.DAHAI: {
         const { paiDahai } = params.dahai!;
         this.dahai({ user, pai: paiDahai });
@@ -972,8 +975,7 @@ export class Mahjong {
         break;
       }
       case MahjongInput.RICHI: {
-        const { step } = params.richi!;
-        this.richi({ user, step });
+        this.richiBefore({ user });
         break;
       }
       case MahjongInput.OWARI: {
@@ -981,10 +983,6 @@ export class Mahjong {
         this.owari({ nagashi });
         break;
       }
-      // case MahjongInput.RNSHN: {
-      //   this.rinshanTsumo({ user });
-      //   break;
-      // }
       case MahjongInput.CHNKN: {
         const { paiChnkn, fromUser } = params.chnkn!;
         this.agari({ user, from: fromUser, pai: paiChnkn, isChankan: true });
@@ -995,10 +993,6 @@ export class Mahjong {
         this.naki({ user, set });
         break;
       }
-      // case MahjongInput.DORA: {
-      //   this.dora();
-      //   break;
-      // }
       case MahjongInput.SKIP: {
         isRefresh = this.skip({ user });
         break;

@@ -17,20 +17,25 @@ Deno.test("mahjong all", async () => {
     paiDora: Pai[];
     paiDoraUra: Pai[];
   }[] = [];
+  const state = {
+    isAfterRichi: false,
+    checkAterRichi: () => {},
+  };
   await fixtures(async ({ name, params }): Promise<void> => {
-    console.log(
-      name,
-      globalGame.kyoku,
-      globalGame.honba,
-      globalGame.turnUserIdx,
-      globalGame.turnRest(),
-    );
+    // console.log(
+    //   name,
+    //   globalGame.kyoku,
+    //   globalGame.honba,
+    //   globalGame.turnUserIdx,
+    //   globalGame.turnRest(),
+    // );
     switch (name) {
       case "DONE": {
         break;
       }
       case "INIT": {
         await _done(globalGame, resultChecker);
+        state.isAfterRichi = false;
         const { hai0, hai1, hai2, hai3, yama } = params.init!;
         resultChecker = [];
         globalGame.gameReset();
@@ -120,6 +125,11 @@ Deno.test("mahjong all", async () => {
           });
         }
 
+        if (state.isAfterRichi) {
+          state.checkAterRichi();
+          state.isAfterRichi = false;
+        }
+
         const { who, hai } = params.tsumo!;
         // await globalGame.input(MahjongInput.TSUMO, {
         //   user: globalGame.turnUser(),
@@ -159,7 +169,10 @@ Deno.test("mahjong all", async () => {
           });
         }
         if (step == 2) {
-          expect(globalGame.users.map((e) => e.point)).toEqual(ten);
+          state.isAfterRichi = true;
+          state.checkAterRichi = () => {
+            expect(globalGame.users.map((e) => e.point)).toEqual(ten);
+          };
         }
         break;
       }
@@ -195,6 +208,13 @@ Deno.test("mahjong all", async () => {
         break;
       }
       case "RYUKYOKU": {
+        globalGame.users.forEach(async (e) => {
+          await globalGame.input(MahjongInput.SKIP, {
+            user: e,
+            params: {},
+          });
+        });
+
         const { score, owari, type } = params.ryukyoku!;
         let isNagashi = false;
         if (
