@@ -2,6 +2,7 @@
   "version": "4",
   "specifiers": {
     "jsr:@117/mutex@^1.0.8": "1.0.8",
+    "jsr:@k-jun/mahjong@~0.4.11": "0.4.11",
     "jsr:@std/assert@^1.0.10": "1.0.11",
     "jsr:@std/assert@^1.0.11": "1.0.11",
     "jsr:@std/expect@*": "1.0.13",
@@ -24,6 +25,13 @@
   "jsr": {
     "@117/mutex@1.0.8": {
       "integrity": "8f14ef3e124ae427c92f93951fbe36b5cfad3aa74f84d443b2acf3034683255d"
+    },
+    "@k-jun/mahjong@0.4.11": {
+      "integrity": "586bb4da26c2671d662bc72d7e05dfef41ee544ead793566056e210f7ae6cbe4",
+      "dependencies": [
+        "npm:@types/jsdom",
+        "npm:jsdom"
+      ]
     },
     "@std/assert@1.0.10": {
       "integrity": "59b5cbac5bd55459a19045d95cc7c2ff787b4f8527c0dd195078ff6f9481fbb3",
@@ -855,7 +863,8 @@
   },
   "workspace": {
     "dependencies": [
-      "jsr:@117/mutex@^1.0.8"
+      "jsr:@117/mutex@^1.0.8",
+      "jsr:@k-jun/mahjong@~0.4.11"
     ]
   }
 }

@@ -51,7 +51,7 @@ Deno.test("MahjongUser", async (t) => {
 
     user.setPaiTsumo({ pai: tsumoPai });
     expect(() => user.setPaiTsumo({ pai: tsumoPai })).toThrow(
-      "invalid this.paiTsumo when setPaiTsumo called",
+      "this.paiTsumo is already set when setPaiTsumo called",
     );
   });
 
