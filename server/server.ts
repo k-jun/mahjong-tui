@@ -2,7 +2,7 @@ import { Server, Socket } from "https://deno.land/x/socket_io@0.2.1/mod.ts";
 import { Room, User } from "../models/room.ts";
 import { randomUUID } from "node:crypto";
 import { MahjongInput, MahjongInputParams } from "../models/mahjong.ts";
-
+import { Pai } from "@k-jun/mahjong";
 export const OnAll = (socket: Socket, rooms: { [key: string]: Room }) => {
   OnJoin(socket, rooms);
   OnLeave(socket, rooms);
@@ -14,6 +14,11 @@ const OnInput = (socket: Socket, rooms: { [key: string]: Room }) => {
   socket.on(
     "input",
     (name: string, input: MahjongInput, params: MahjongInputParams) => {
+      if (params.dahai?.paiDahai) {
+        params.dahai.paiDahai = new Pai(params.dahai.paiDahai.id);
+      }
+
+      // console.log(name, input, params);
       const room = rooms[name];
       room.input(socket.id, input, params);
     },
@@ -67,10 +72,13 @@ export const OnServerJoinRoom = (
       let room = rooms[name.toString()];
       if (room == undefined) {
         room = new Room(async (mjg) => {
-          await io.to(name.toString()).emit("output", mjg);
+          await io.to(name.toString()).emit("output", name, mjg);
         });
         rooms[name.toString()] = room;
       }
+      room.join(new User("1", true));
+      room.join(new User("2", true));
+      room.join(new User("3", true));
       room.join(new User(id, false));
 
       if (room.size() == 4) {
@@ -88,9 +96,10 @@ export const OnServerLeaveRoom = (
     if (name != id && name in rooms) {
       const room = rooms[name];
       room.leave(id);
-      if (room.size() == 0) {
-        delete rooms[name];
-      }
+      delete rooms[name];
+      // if (room.size() == 0) {
+      //   delete rooms[name];
+      // }
     }
   });
 };

@@ -94,6 +94,8 @@ export class Mahjong {
   isEnded: boolean = false;
   isHonbaTaken: boolean = false;
 
+  sleepSec: number = 0.5;
+
   output: (mjg: Mahjong) => Promise<void>;
 
   constructor(
@@ -111,8 +113,11 @@ export class Mahjong {
     return this.users[this.turnUserIdx];
   }
 
-  turnNext(): boolean {
+  async turnNext(): Promise<boolean> {
     if (this.turnRest() === 0) {
+      this.output(this);
+      await this.sleep();
+      this.owari({ nagashi: false });
       return false;
     }
     this.turnUserIdx = (this.turnUserIdx + 1) % 4;
@@ -128,6 +133,13 @@ export class Mahjong {
     this.turnUserIdx = userIdx;
   }
 
+  sleep(): Promise<void> {
+    if (this.sleepSec === 0) {
+      return Promise.resolve();
+    }
+    return new Promise((resolve) => setTimeout(resolve, this.sleepSec * 1000));
+  }
+
   generate(): Pai[] {
     const pais = [...PaiAll];
     const rng = seedrandom();
@@ -138,7 +150,7 @@ export class Mahjong {
     return pais;
   }
 
-  gameStart(pais: Pai[]): void {
+  async gameStart(pais: Pai[]): Promise<void> {
     this.paiYama = pais;
     for (let i = 0; i < 4; i++) {
       this.users[(i + this.kyoku) % 4].paiJikaze = PaiKaze[i];
@@ -165,9 +177,8 @@ export class Mahjong {
     this.paiDora.push(omote);
     this.turnUserIdx = this.kyoku % 4;
     this.paiBakaze = PaiKaze[Math.floor(this.kyoku / 4)];
+    await this.tsumo({ user: this.turnUser() });
     this.output(this);
-
-    this.tsumo({ user: this.turnUser() });
   }
 
   gameEnded(
@@ -218,22 +229,25 @@ export class Mahjong {
     }
   }
 
-  tsumo({ user }: { user: User }): void {
+  async tsumo({ user }: { user: User }): Promise<void> {
     if (this.turnRest() === 0) {
       throw new Error("tsumo called while turnRest is 0");
     }
 
+    this.output(this);
+    await this.sleep();
     const pai = this.paiYama.splice(-1)[0];
     user.setPaiTsumo({ pai });
-
     this.actionSetAfterTsumo({ from: user, pai });
   }
 
-  tsumoRinshan({ user }: { user: User }): void {
+  async tsumoRinshan({ user }: { user: User }): Promise<void> {
     if (this.turnRest() === 0) {
       throw new Error("tsumoRinshan called while turnRest is 0");
     }
 
+    this.output(this);
+    await this.sleep();
     const pai = this.paiRinshan.splice(0, 1)[0];
     user.setPaiTsumo({ pai });
 
@@ -280,6 +294,7 @@ export class Mahjong {
 
   actionSetAfterTsumo({ from, pai }: { from: User; pai: Pai }): void {
     this.actions = [];
+
     const userIdx = this.users.findIndex((e) => e.id === from.id);
     const user = this.users[userIdx];
 
@@ -297,26 +312,30 @@ export class Mahjong {
 
     // ankan
     const setAnkan = user.canAnkan();
-    if (setAnkan.length > 0 && this.paiRinshan.length > 0) {
+    if (
+      setAnkan.length > 0 && this.paiRinshan.length > 0 && this.turnRest() > 0
+    ) {
       this.actions.push({ user, type: MahjongActionType.ANKAN });
     }
     // kakan
     const setKakan = user.canKakan();
-    if (setKakan.length > 0 && this.paiRinshan.length > 0) {
+    if (
+      setKakan.length > 0 && this.paiRinshan.length > 0 && this.turnRest() > 0
+    ) {
       this.actions.push({ user, type: MahjongActionType.KAKAN });
     }
 
     // richi
     const pais = user.canRichi();
-    if (pais.length > 0 && this.paiRinshan.length > 0) {
+    if (pais.length > 0 && this.paiRinshan.length > 0 && this.turnRest() > 0) {
       this.actions.push({ user, type: MahjongActionType.RICHI });
     }
   }
 
   actionSetAfterDahai({ from, pai }: { from: User; pai: Pai }): void {
     this.actions = [];
-    const fromIdx = this.users.findIndex((e) => e.id === from.id);
 
+    const fromIdx = this.users.findIndex((e) => e.id === from.id);
     // ron
     for (let i = 1; i < 4; i++) {
       const user = this.users[(fromIdx + i) % 4];
@@ -334,6 +353,12 @@ export class Mahjong {
       }
       this.actions.push({ user, type: MahjongActionType.RON });
     }
+
+    // 海底牌 は鳴くことが出来ない
+    if (this.turnRest() === 0) {
+      return;
+    }
+
     // minkan
     for (let i = 1; i < 4; i++) {
       const user = this.users[(fromIdx + i) % 4];
@@ -368,7 +393,7 @@ export class Mahjong {
     }
   }
 
-  dahai({ user, pai }: { user: User; pai: Pai }): void {
+  async dahai({ user, pai }: { user: User; pai: Pai }): Promise<void> {
     if (this.turnUser().id !== user.id) {
       throw new Error("when dahai called, not your turn");
     }
@@ -387,12 +412,9 @@ export class Mahjong {
 
     // 四槓散了
     if (this.paiRinshan.length === 0) {
-      this.input(MahjongInput.OWARI, {
-        user,
-        params: {
-          owari: { nagashi: true },
-        },
-      });
+      this.output(this);
+      await this.sleep();
+      this.owari({ nagashi: true });
     }
 
     // 四風連打
@@ -400,20 +422,17 @@ export class Mahjong {
       const allMenzen = this.users.every((u) => u.paiSets.length === 0);
       const allKaze = this.users.every((u) => u.paiKawa[0]?.fmt === pai.fmt);
       if (allMenzen && allKaze) {
-        this.input(MahjongInput.OWARI, {
-          user,
-          params: {
-            owari: { nagashi: true },
-          },
-        });
+        this.output(this);
+        await this.sleep();
+        this.owari({ nagashi: true });
       }
     }
 
     this.actionSetAfterDahai({ from: user, pai });
     if (this.actions.length === 0) {
-      this.richiAfter({ user });
-      if (this.turnNext()) {
-        this.tsumo({ user: this.turnUser() });
+      await this.richiAfter({ user });
+      if (await this.turnNext()) {
+        await this.tsumo({ user: this.turnUser() });
       }
     }
   }
@@ -601,14 +620,14 @@ export class Mahjong {
     this.gameEnded({ isAgari: true, isRenchan: isOya });
   }
 
-  agari(
+  async agari(
     { user, from, pai, isChankan = false }: {
       user: User;
       from: User;
       pai: Pai;
       isChankan?: boolean;
     },
-  ): void {
+  ): Promise<void> {
     const isTsumo = user.id === from.id;
     const action = this.actions.find((action) => {
       if (action.user.id !== user.id) {
@@ -644,10 +663,9 @@ export class Mahjong {
 
     // 三家和了
     if (actionEnable.length === 3) {
-      this.input(MahjongInput.OWARI, {
-        user,
-        params: { owari: { nagashi: true } },
-      });
+      this.output(this);
+      await this.sleep();
+      this.owari({ nagashi: true });
       return;
     }
 
@@ -686,7 +704,7 @@ export class Mahjong {
     return;
   }
 
-  richiAfter({ user }: { user: User }): void {
+  async richiAfter({ user }: { user: User }): Promise<void> {
     if (!user.isAfterRichi) {
       return;
     }
@@ -707,10 +725,9 @@ export class Mahjong {
 
     // 四家立直
     if (this.users.every((e) => e.isRichi)) {
-      this.input(MahjongInput.OWARI, {
-        user: this.users[this.kyoku % 4],
-        params: { owari: { nagashi: true } },
-      });
+      this.output(this);
+      await this.sleep();
+      this.owari({ nagashi: true });
     }
   }
 
@@ -786,7 +803,7 @@ export class Mahjong {
     this.gameEnded({ isAgari: false, isRenchan: isOyaTempai });
   }
 
-  naki({ user, set }: { user: User; set: PaiSet }): void {
+  async naki({ user, set }: { user: User; set: PaiSet }): Promise<void> {
     const action = this.actions.find((action) => {
       if (action.user.id !== user.id) {
         return false;
@@ -827,7 +844,7 @@ export class Mahjong {
 
     this.actions = [];
     if (this.turnUser().isAfterRichi) {
-      this.richiAfter({ user: this.turnUser() });
+      await this.richiAfter({ user: this.turnUser() });
     }
     user.naki({ set });
 
@@ -847,11 +864,11 @@ export class Mahjong {
 
     if (set.type === PaiSetType.ANKAN) {
       this.dora();
-      this.tsumoRinshan({ user });
+      await this.tsumoRinshan({ user });
     }
     if (set.type === PaiSetType.MINKAN) {
       user.countMinkanKakan += 1;
-      this.tsumoRinshan({ user });
+      await this.tsumoRinshan({ user });
     }
     if (set.type === PaiSetType.KAKAN) {
       user.countMinkanKakan += 1;
@@ -861,14 +878,14 @@ export class Mahjong {
         pai: set.paiCall[set.paiCall.length - 1],
       });
       if (this.actions.length === 0) {
-        this.tsumoRinshan({ user });
+        await this.tsumoRinshan({ user });
       }
       return;
     }
     this.users.forEach((e) => e.isIppatsu = false);
   }
 
-  skip({ user }: { user: User }): boolean {
+  async skip({ user }: { user: User }): Promise<boolean> {
     const liveActions = this.actions.filter((e) => e.enable === undefined);
     const userActions = liveActions.filter((e) => e.user.id === user.id);
     if (userActions.length === 0) {
@@ -901,13 +918,13 @@ export class Mahjong {
     if (this.actions.every((e) => e.enable === false)) {
       this.actions = [];
       if (this.turnUser().isAfterKakan) {
-        this.tsumoRinshan({ user: this.turnUser() });
+        await this.tsumoRinshan({ user: this.turnUser() });
       }
-      
+
       if (!isAfterTsumo) {
-        this.richiAfter({ user: this.turnUser() });
-        if (this.turnNext()) {
-          this.tsumo({ user: this.turnUser() });
+        await this.richiAfter({ user: this.turnUser() });
+        if (await this.turnNext()) {
+          await this.tsumo({ user: this.turnUser() });
         }
       }
 
@@ -961,35 +978,40 @@ export class Mahjong {
     switch (action) {
       case MahjongInput.DAHAI: {
         const { paiDahai } = params.dahai!;
-        this.dahai({ user, pai: paiDahai });
+        await this.dahai({ user, pai: paiDahai });
         break;
       }
       case MahjongInput.AGARI: {
         const { paiAgari, fromUser } = params.agari!;
-        this.agari({ user, from: fromUser, pai: paiAgari });
+        await this.agari({ user, from: fromUser, pai: paiAgari });
         break;
       }
       case MahjongInput.RICHI: {
-        this.richiBefore({ user });
+        await this.richiBefore({ user });
         break;
       }
       case MahjongInput.OWARI: {
         const { nagashi } = params.owari!;
-        this.owari({ nagashi });
+        await this.owari({ nagashi });
         break;
       }
       case MahjongInput.CHNKN: {
         const { paiChnkn, fromUser } = params.chnkn!;
-        this.agari({ user, from: fromUser, pai: paiChnkn, isChankan: true });
+        await this.agari({
+          user,
+          from: fromUser,
+          pai: paiChnkn,
+          isChankan: true,
+        });
         break;
       }
       case MahjongInput.NAKI: {
         const { set } = params.naki!;
-        this.naki({ user, set });
+        await this.naki({ user, set });
         break;
       }
       case MahjongInput.SKIP: {
-        isRefresh = this.skip({ user });
+        isRefresh = await this.skip({ user });
         break;
       }
     }

@@ -13,12 +13,14 @@ export const KamichaTSX = ({ kamicha }: { kamicha: User }): JSX.Element => {
       justifyContent="center"
       alignItems="center"
     >
-      {paiSets.map((e, idx) => <PaiTSX
-        text={new Pai(e.id).dsp}
-        key={e.id}
-        enableTop={idx === 0}
-        enableSide={idx === paiSets.length - 1}
-      />)}
+      {paiSets.map((e, idx) => (
+        <PaiTSX
+          text={new Pai(e.id).dsp}
+          key={e.id}
+          enableTop={idx === 0}
+          enableSide={idx === paiSets.length - 1}
+        />
+      ))}
       <EmptyTSX enableTop={false} enableSide={false} />
       {kamicha?.paiTsumo
         ? (

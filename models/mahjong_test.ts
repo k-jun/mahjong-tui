@@ -38,8 +38,9 @@ Deno.test("mahjong all", async () => {
         const { hai0, hai1, hai2, hai3, yama, score, kyoku, honba, kyotk } =
           params.init!;
         resultChecker = [];
+        globalGame.sleepSec = 0;
         globalGame.gameReset();
-        globalGame.gameStart(yama.map((e) => new Pai(e.id)));
+        await globalGame.gameStart(yama.map((e) => new Pai(e.id)));
 
         expect(globalGame.users.map((e) => e.paiRest.length)).toEqual(
           new Array(4).fill(13),
@@ -236,8 +237,6 @@ Deno.test("mahjong all", async () => {
         let isNagashi = false;
         if (type === "yao9") {
           isNagashi = true;
-        }
-        if (type === "" || type === "yao9" || type === "nm") {
           await globalGame.input(MahjongInput.OWARI, {
             user: globalGame.turnUser(),
             params: {

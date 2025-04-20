@@ -13,10 +13,10 @@ export const ActionDefault = async (
   if (mahjong.state !== beforeState) {
     return;
   }
-  if (mahjong.turnRest() === 0) {
-    return;
-  }
-  if (mahjong.isEnded) {
+  if (mahjong.isEnded && mahjong.turnUser().id === userId) {
+    await sleep(10000);
+    mahjong.gameReset();
+    await mahjong.gameStart(mahjong.generate());
     return;
   }
 
@@ -89,6 +89,19 @@ export const ActionDefault = async (
           });
           break;
         }
+        case MahjongActionType.KAKAN: {
+          const sets = user.canKakan();
+          state.set("afterKan", true);
+          mahjong.input(MahjongInput.NAKI, {
+            user,
+            params: {
+              naki: {
+                set: sets[0],
+              },
+            },
+          });
+          break;
+        }
         case MahjongActionType.ANKAN: {
           const sets = user.canAnkan();
           state.set("afterKan", true);
@@ -97,6 +110,32 @@ export const ActionDefault = async (
             params: {
               naki: {
                 set: sets[0],
+              },
+            },
+          });
+          break;
+        }
+        case MahjongActionType.RON: {
+          const kawa = mahjong.turnUser().paiKawa;
+          const pai = kawa[kawa.length - 1];
+          mahjong.input(MahjongInput.AGARI, {
+            user,
+            params: {
+              agari: {
+                fromUser: mahjong.turnUser(),
+                paiAgari: pai,
+              },
+            },
+          });
+          break;
+        }
+        case MahjongActionType.TSUMO: {
+          mahjong.input(MahjongInput.AGARI, {
+            user,
+            params: {
+              agari: {
+                fromUser: mahjong.turnUser(),
+                paiAgari: user.paiTsumo!,
               },
             },
           });
@@ -112,26 +151,23 @@ export const ActionDefault = async (
 
   const turnUser = mahjong.turnUser();
   if (turnUser.id === user.id) {
+    const allPais = [...turnUser.paiRest].sort((a, b) => a.id - b.id);
+
     if (state.get("afterNaki")) {
       state.set("afterNaki", false);
       mahjong.input(MahjongInput.DAHAI, {
         user,
-        params: { dahai: { paiDahai: turnUser.paiRest[0] } },
+        params: { dahai: { paiDahai: allPais[allPais.length - 1] } },
       });
-      return;
-    }
-    if (state.get("afterKan")) {
-      state.set("afterKan", false);
-      mahjong.input(MahjongInput.RNSHN, { user, params: {} });
       return;
     }
     if (turnUser.paiTsumo !== undefined) {
+      allPais.push(turnUser.paiTsumo);
+      allPais.sort((a, b) => a.id - b.id);
       mahjong.input(MahjongInput.DAHAI, {
         user,
-        params: { dahai: { paiDahai: turnUser.paiTsumo } },
+        params: { dahai: { paiDahai: allPais[allPais.length - 1] } },
       });
-    } else {
-      mahjong.input(MahjongInput.TSUMO, { user, params: {} });
     }
   }
 };

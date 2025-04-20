@@ -18,8 +18,10 @@ export const CenterTSX = (
   const kamicha = mahjong?.users[(userIndex + 1) % 4];
   const toimen = mahjong?.users[(userIndex + 2) % 4];
   const shimocha = mahjong?.users[(userIndex + 3) % 4];
+  const turnRest = mahjong.paiYama.length + mahjong.paiRinshan.length - 4;
 
-  const kyoku = ["東", "南", "西", "北"][mahjong.kyoku / 4].toString() +
+  const kyoku =
+    ["東", "南", "西", "北"][Math.floor(mahjong.kyoku / 4)].toString() +
     (mahjong.kyoku % 4 + 1).toString();
 
   const paiDora = mahjong.paiDora;
@@ -55,9 +57,13 @@ export const CenterTSX = (
         alignItems="center"
         height={3}
       >
-        <Text>{new Pai(toimen.paiJikaze?.id ?? 0).dsp} {toimen.point}</Text>
-        <Text>{new Pai(kamicha.paiJikaze?.id ?? 0).dsp} {kamicha.point} {new Pai(shimocha.paiJikaze?.id ?? 0).dsp} {shimocha.point}</Text>
-        <Text>{new Pai(jicha.paiJikaze?.id ?? 0).dsp} {jicha.point}</Text>
+        <Text>{new Pai(toimen.paiJikaze?.id ?? 0).dsp}{toimen.point}</Text>
+        <Text>
+          {new Pai(kamicha.paiJikaze?.id ?? 0).dsp}
+          {kamicha.point} {new Pai(shimocha.paiJikaze?.id ?? 0).dsp}
+          {shimocha.point}
+        </Text>
+        <Text>{new Pai(jicha.paiJikaze?.id ?? 0).dsp}{jicha.point}</Text>
       </Box>
       <Box
         flexDirection="row"
@@ -72,6 +78,7 @@ export const CenterTSX = (
           width={11}
         >
           <Text>{kyoku}</Text>
+          <Text>{turnRest}</Text>
         </Box>
         <Box
           flexDirection="column"

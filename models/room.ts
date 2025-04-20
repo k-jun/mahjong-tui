@@ -48,7 +48,7 @@ export class Room {
       // deno-lint-ignore require-await
       async (mjg: Mahjong): Promise<void> => {
         this.users.forEach((user) =>
-          ActionDefault(mjg, user.id, user.isCPU ? 500 : 500, user.state)
+          ActionDefault(mjg, user.id, user.isCPU ? 500 : 100000, user.state)
         );
         this.output(mjg);
       },
