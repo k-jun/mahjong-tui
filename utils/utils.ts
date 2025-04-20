@@ -11,7 +11,7 @@ type inputParams = {
     honba: number;
     kyotk: number;
     dora: number;
-    ten: number[];
+    score: number[];
     oya: number;
     hai0: Pai[];
     hai1: Pai[];
@@ -215,7 +215,7 @@ const _init = async (
         kyotk: Number(seeds[2]),
         dora: Number(seeds[5]),
         oya: Number(e.attributes.getNamedItem("oya")!.value),
-        ten: e.attributes.getNamedItem("ten")!.value.split(",").map(Number),
+        score: e.attributes.getNamedItem("ten")!.value.split(",").map(e => Number(e) * 100),
         hai0: e.attributes.getNamedItem("hai0")!.value.split(",").map(Number)
           .map((e) => new Pai(e)),
         hai1: e.attributes.getNamedItem("hai1")!.value.split(",").map(Number)

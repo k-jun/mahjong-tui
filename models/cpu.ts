@@ -57,7 +57,7 @@ export const ActionDefault = async (
 
           const sets = user.canPon({
             pai,
-            fromWho: mahjong.getPlayer(userIdx, mahjong.turnUserIdx),
+            fromWho: mahjong.fromWho(userIdx, mahjong.turnUserIdx),
           });
           state.set("afterNaki", true);
           mahjong.input(MahjongInput.NAKI, {
@@ -76,7 +76,7 @@ export const ActionDefault = async (
           const userIdx = mahjong.users.findIndex((e) => e.id === userId);
           const sets = user.canMinkan({
             pai,
-            fromWho: mahjong.getPlayer(userIdx, mahjong.turnUserIdx),
+            fromWho: mahjong.fromWho(userIdx, mahjong.turnUserIdx),
           });
           state.set("afterKan", true);
           mahjong.input(MahjongInput.NAKI, {

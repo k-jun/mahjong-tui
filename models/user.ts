@@ -352,6 +352,9 @@ export class User {
     if (this.point < 1000) {
       return [];
     }
+    if (this.isRichi) {
+      return [];
+    }
 
     const result = [];
     const paiAll = [...this.paiRest, ...(this.paiTsumo ? [this.paiTsumo] : [])];

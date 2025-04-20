@@ -19,6 +19,7 @@ Deno.test("mahjong all", async () => {
   }[] = [];
   const state = {
     isAfterRichi: false,
+    isRon3: false,
     checkAterRichi: () => {},
   };
   await fixtures(async ({ name, params }): Promise<void> => {
@@ -30,13 +31,12 @@ Deno.test("mahjong all", async () => {
     //   globalGame.turnRest(),
     // );
     switch (name) {
-      case "DONE": {
-        break;
-      }
       case "INIT": {
-        await _done(globalGame, resultChecker);
+        await _done(globalGame, state, resultChecker);
         state.isAfterRichi = false;
-        const { hai0, hai1, hai2, hai3, yama } = params.init!;
+        state.isRon3 = false;
+        const { hai0, hai1, hai2, hai3, yama, score, kyoku, honba, kyotk } =
+          params.init!;
         resultChecker = [];
         globalGame.gameReset();
         globalGame.gameStart(yama.map((e) => new Pai(e.id)));
@@ -56,6 +56,10 @@ Deno.test("mahjong all", async () => {
         expect(globalGame.users[3].paiRest).toEqual(
           hai3.map((e) => new Pai(e.id)),
         );
+        expect(globalGame.users.map((e) => e.point)).toEqual(score);
+        expect(globalGame.kyoku).toEqual(kyoku);
+        expect(globalGame.honba).toEqual(honba);
+        expect(globalGame.kyotaku).toEqual(kyotk);
         break;
       }
       case "AGARI": {
@@ -100,7 +104,7 @@ Deno.test("mahjong all", async () => {
           paiDoraUra,
         });
         if (owari !== undefined) {
-          // await _done(globalGame, resultChecker);
+          await _done(globalGame, state, resultChecker);
           globalGame = new Mahjong(userIds, async (_) => {});
         }
         break;
@@ -131,20 +135,21 @@ Deno.test("mahjong all", async () => {
         }
 
         const { who, hai } = params.tsumo!;
-        // await globalGame.input(MahjongInput.TSUMO, {
-        //   user: globalGame.turnUser(),
-        //   params: {},
-        // });
         expect(globalGame.turnUser().paiTsumo).toEqual(new Pai(hai.id));
         expect(globalGame.turnUserIdx).toEqual(who);
         break;
       }
       case "RNSHN": {
         const { who, hai } = params.tsumo!;
-        // await globalGame.input(MahjongInput.RNSHN, {
-        //   user: globalGame.turnUser(),
-        //   params: {},
-        // });
+        for (const e of globalGame.actions) {
+          if (e.type !== MahjongActionType.RON) {
+            continue;
+          }
+          await globalGame.input(MahjongInput.SKIP, {
+            user: e.user,
+            params: {},
+          });
+        }
 
         expect(globalGame.turnUser().paiTsumo).toEqual(new Pai(hai.id));
         expect(globalGame.turnUserIdx).toEqual(who);
@@ -165,7 +170,7 @@ Deno.test("mahjong all", async () => {
         if (step === 1) {
           await globalGame.input(MahjongInput.RICHI, {
             user: globalGame.users[who],
-            params: { richi: { step } },
+            params: {},
           });
         }
         if (step == 2) {
@@ -178,10 +183,15 @@ Deno.test("mahjong all", async () => {
       }
       case "NAKI": {
         const { who, set } = params.naki!;
-
-        // 暗槓が選択され、それがかつ、ほかプレイヤーの槍槓を選択可能にした場合、槍槓が actions に新しく加わってしまう。
-        // ここで skip したいのは暗槓選択前に表示されていた、pon. chi などの他アクションのため、暗槓選択前の actions を保存しておく。
-        const beforeActions = [...globalGame.actions];
+        for (const a of globalGame.actions) {
+          if (a.user.id === globalGame.users[who].id) {
+            continue;
+          }
+          await globalGame.input(MahjongInput.SKIP, {
+            user: a.user,
+            params: {},
+          });
+        }
         await globalGame.input(MahjongInput.NAKI, {
           user: globalGame.users[who],
           params: {
@@ -195,55 +205,51 @@ Deno.test("mahjong all", async () => {
             },
           },
         });
-
-        const otherActions = beforeActions.filter((e) =>
-          e.user.id !== globalGame.users[who].id
-        );
-        for (let i = 0; i < otherActions.length; i++) {
-          await globalGame.input(MahjongInput.SKIP, {
-            user: otherActions[i].user,
-            params: {},
-          });
-        }
         break;
       }
       case "RYUKYOKU": {
-        globalGame.users.forEach(async (e) => {
-          await globalGame.input(MahjongInput.SKIP, {
-            user: e,
-            params: {},
-          });
-        });
-
         const { score, owari, type } = params.ryukyoku!;
+
+        if (type === "ron3") {
+          for (const e of globalGame.actions) {
+            if (e.type !== MahjongActionType.RON) {
+              continue;
+            }
+            await globalGame.input(MahjongInput.AGARI, {
+              user: e.user,
+              params: {
+                agari: {
+                  paiAgari: globalGame.turnUser().paiKawa[0],
+                  fromUser: globalGame.turnUser(),
+                },
+              },
+            });
+          }
+        } else {
+          for (const e of globalGame.users) {
+            await globalGame.input(MahjongInput.SKIP, {
+              user: e,
+              params: {},
+            });
+          }
+        }
         let isNagashi = false;
-        if (
-          type === "kaze4" || type === "yao9" || type === "reach4" ||
-          type === "ron3" || type === "kan4"
-        ) {
+        if (type === "yao9") {
           isNagashi = true;
         }
-        await globalGame.input(MahjongInput.OWARI, {
-          user: globalGame.turnUser(),
-          params: {
-            owari: { nagashi: isNagashi },
-          },
-        });
+        if (type === "" || type === "yao9" || type === "nm") {
+          await globalGame.input(MahjongInput.OWARI, {
+            user: globalGame.turnUser(),
+            params: {
+              owari: { nagashi: isNagashi },
+            },
+          });
+        }
+
         expect(globalGame.users.map((e) => e.point)).toEqual(score);
         if (owari !== undefined) {
           globalGame = new Mahjong(userIds, async (_) => {});
         }
-        break;
-      }
-      case "DORA": {
-        // const { hai } = params.dora!;
-        // await globalGame.input(MahjongInput.DORA, {
-        //   user: globalGame.turnUser(),
-        //   params: {},
-        // });
-        // expect(globalGame.paiDora[globalGame.paiDora.length - 1].id).toEqual(
-        //   hai.id,
-        // );
         break;
       }
     }
@@ -252,6 +258,9 @@ Deno.test("mahjong all", async () => {
 
 async function _done(
   globalGame: Mahjong,
+  state: {
+    isRon3: boolean;
+  },
   checker: {
     yakus: { str: string; val: number; yakuman: boolean }[];
     score: number[];
@@ -263,15 +272,18 @@ async function _done(
     return;
   }
 
-  const actionUndefined = globalGame.actions.filter((e) =>
-    e.enable === undefined && e.type === MahjongActionType.RON
-  );
-  for (const action of actionUndefined) {
-    await globalGame.input(MahjongInput.SKIP, {
-      user: action.user,
-      params: {},
-    });
+  if (!state.isRon3) {
+    const actionUndefined = globalGame.actions.filter((e) =>
+      e.enable === undefined && e.type === MahjongActionType.RON
+    );
+    for (const action of actionUndefined) {
+      await globalGame.input(MahjongInput.SKIP, {
+        user: action.user,
+        params: {},
+      });
+    }
   }
+
   checker.forEach(
     ({ yakus, score, paiDora, paiDoraUra }, idx) => {
       const actYakus = globalGame.result[idx].yakus

@@ -2,7 +2,7 @@ import { Mahjong } from "../models/mahjong.ts";
 import { Pai } from "@k-jun/mahjong";
 import { Box, Text } from "npm:ink";
 import React, { JSX } from "npm:react";
-import { EmptyTSX, PaiTSX } from "./pai.tsx";
+import { PaiTSX } from "./pai.tsx";
 // import { v4 as uuidv4 } from 'uuid';
 
 export const CenterTSX = (
