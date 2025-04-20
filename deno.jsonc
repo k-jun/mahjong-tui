@@ -8,5 +8,9 @@
       "tags": ["recommended"],
       "include": ["explicit-function-return-type"]
     }
+  },
+  "fmt": {
+    "lineWidth": 120,
+    "indentWidth": 2
   }
 }
