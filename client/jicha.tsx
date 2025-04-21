@@ -15,7 +15,7 @@ export const JichaTSX = (
 ): JSX.Element => {
   const paiSets = jicha.paiSets.map((e) => e.pais).reverse().flat();
   const [selected, setSelected] = React.useState<number>(0);
-  const rest = jicha?.paiRest ?? [];
+  const rest = jicha?.paiRest.sort((a, b) => a.id - b.id) ?? [];
 
   useInput((_, key) => {
     if (key.leftArrow) {
@@ -25,9 +25,10 @@ export const JichaTSX = (
       setSelected(Math.max(0, selected - 1));
     }
     if (key.return) {
+      const pai = selected === 0 ? jicha.paiTsumo : rest[rest.length - selected];
       socket.emit("input", name, "dahai", {
         dahai: {
-          paiDahai: rest[selected],
+          paiDahai: pai,
         },
       });
     }
@@ -41,7 +42,7 @@ export const JichaTSX = (
       height={height}
       width={width}
     >
-      {rest.sort((a, b) => a.id - b.id).map((e) => new Pai(e.id))
+      {rest.map((e) => new Pai(e.id))
         .map((e, idx) => (
           <PaiTSX
             text={e.dsp}

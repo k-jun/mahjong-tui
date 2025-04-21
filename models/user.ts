@@ -99,6 +99,9 @@ export class User {
         });
         break;
       }
+      case PaiSetType.MINKAN: {
+        break;
+      }
     }
     const filterIds = new Set(set.pais.map((e) => e.id));
     this.paiRest = this.paiRest.filter((e) => !filterIds.has(e.id));
