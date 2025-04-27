@@ -98,7 +98,7 @@ export const fixtures = async (
       continue;
     }
     for await (const f of Deno.readDir(`./fixtures/${d.name}`)) {
-      if (!f.name.endsWith(".xml")) {
+      if (!f.name.endsWith("2023101608gm-00a9-0000-3f201484.xml")) {
         continue;
       }
       const text = await Deno.readTextFile(
@@ -215,9 +215,7 @@ const _init = async (
         kyotk: Number(seeds[2]),
         dora: Number(seeds[5]),
         oya: Number(e.attributes.getNamedItem("oya")!.value),
-        score: e.attributes.getNamedItem("ten")!.value.split(",").map((e) =>
-          Number(e) * 100
-        ),
+        score: e.attributes.getNamedItem("ten")!.value.split(",").map((e) => Number(e) * 100),
         hai0: e.attributes.getNamedItem("hai0")!.value.split(",").map(Number)
           .map((e) => new Pai(e)),
         hai1: e.attributes.getNamedItem("hai1")!.value.split(",").map(Number)
@@ -328,10 +326,7 @@ const _richi = async (
 ) => {
   const who = Number(e.attributes.getNamedItem("who")!.value);
   const step = Number(e.attributes.getNamedItem("step")!.value);
-  const ten =
-    e.attributes.getNamedItem("ten")?.value.split(",").map((e) =>
-      Number(e) * 100
-    ) ?? [];
+  const ten = e.attributes.getNamedItem("ten")?.value.split(",").map((e) => Number(e) * 100) ?? [];
   await input({
     name: "RICHI",
     params: {
@@ -364,8 +359,7 @@ const _agari = async (
   // const paiDora =
   //   attrs.get("doraHai")?.split(",").map((e) => new Pai(Number(e)).next()) ??
   //     [];
-  const paiDora =
-    attrs.get("doraHai")?.split(",").map((e) => new Pai(Number(e))) ?? [];
+  const paiDora = attrs.get("doraHai")?.split(",").map((e) => new Pai(Number(e))) ?? [];
 
   const paiDoraUra: Pai[] = [];
   if (attrs.get("doraHaiUra")) {
@@ -436,8 +430,7 @@ const _agari = async (
     });
   }
   const paiLast = new Pai(Number(attrs.get("machi")));
-  const paiRest =
-    attrs.get("hai")?.split(",").map((e: string) => new Pai(Number(e))) ?? [];
+  const paiRest = attrs.get("hai")?.split(",").map((e: string) => new Pai(Number(e))) ?? [];
   paiRest.splice(paiRest.findIndex((e) => e.id == paiLast.id), 1)[0];
 
   await input({
@@ -537,7 +530,7 @@ const _parseM = (m: number): PaiSet => {
       // 加槓
       h.unshift(t + extra);
       const pais = h.map((e) => new Pai(e));
-      const paiCall = pais.splice(nakiIdx, 1);
+      const paiCall = pais.splice(nakiIdx + 1, 1);
       const paiRest = pais;
       return new PaiSet({ type: PaiSetType.KAKAN, paiRest, paiCall, fromWho });
     }

@@ -1,27 +1,16 @@
 import { Mahjong, MahjongActionType, MahjongInput } from "./new_mahjong.ts";
 import { expect } from "jsr:@std/expect";
 import { fixtures } from "../utils/utils.ts";
-import { Pai, PaiSet, PaiSetType } from "@k-jun/mahjong";
-import { stringify } from "node:querystring";
+import { Pai, PaiSetType } from "@k-jun/mahjong";
 
 Deno.test("mahjong new", async () => {
   const userIds = ["0", "1", "2", "3"];
 
   let globalGame: Mahjong = new Mahjong(userIds, async (_) => {});
-  let resultChecker: {
-    yakus: {
-      str: string;
-      val: number;
-      yakuman: boolean;
-    }[];
-    score: number[];
-    paiDora: Pai[];
-    paiDoraUra: Pai[];
-  }[] = [];
   const state = {
-    isAfterRichi: false,
     isRon3: false,
-    checkAterRichi: () => {},
+    checkAfterAgari: [(_: number) => {}],
+    checkAfterRichi: [(_: number) => {}],
   };
   await fixtures(async ({ name, params }): Promise<void> => {
     console.log(
@@ -33,10 +22,14 @@ Deno.test("mahjong new", async () => {
     );
     switch (name) {
       case "INIT": {
-        state.isAfterRichi = false;
+        for (let idx = 0; idx < state.checkAfterAgari.length; idx++) {
+          await state.checkAfterAgari[idx](idx);
+        }
+
+        state.checkAfterRichi = [];
+        state.checkAfterAgari = [];
         state.isRon3 = false;
         const { hai0, hai1, hai2, hai3, yama, score, kyoku, honba, kyotk } = params.init!;
-        resultChecker = [];
         globalGame.enableDebug = true;
         globalGame.sleep = 0;
         globalGame.gameReset();
@@ -91,6 +84,9 @@ Deno.test("mahjong new", async () => {
         break;
       }
       case "DAHAI": {
+        state.checkAfterRichi.forEach((check, idx) => check(idx - 1));
+        state.checkAfterRichi = [];
+
         const { who, hai } = params.dahai!;
         expect(globalGame.turnUserIdx).toEqual(who);
         await globalGame.input(MahjongInput.DAHAI, {
@@ -98,28 +94,33 @@ Deno.test("mahjong new", async () => {
           state: globalGame.state,
           dahai: { paiId: hai.id },
         });
+
         expect(globalGame.users[who].paiTsumo).toEqual(undefined);
         break;
       }
       case "RICHI": {
-        console.log(globalGame.actions.map((e) => ({
-          type: e.type,
-          user: e.user.id,
-          enable: e.enable,
-        })));
         const { who, step, ten } = params.richi!;
-        expect(globalGame.turnUserIdx).toEqual(who);
         if (step === 1) {
+          expect(globalGame.turnUserIdx).toEqual(who);
           await globalGame.input(MahjongInput.RICHI, {
             usrId: globalGame.turnUser().id,
             state: globalGame.state,
           });
         }
         if (step == 2) {
-          state.isAfterRichi = true;
-          state.checkAterRichi = () => {
+          for (let i = 0; i < globalGame.actions.length; i++) {
+            if (globalGame.actions[i].type !== MahjongActionType.RON) {
+              continue;
+            }
+            await globalGame.input(MahjongInput.SKIP, {
+              usrId: globalGame.actions[i].user.id,
+              state: globalGame.state,
+            });
+          }
+
+          state.checkAfterRichi.push((_: number) => {
             expect(globalGame.users.map((e) => e.point)).toEqual(ten);
-          };
+          });
         }
         break;
       }
@@ -127,7 +128,19 @@ Deno.test("mahjong new", async () => {
         const { score, owari, type } = params.ryukyoku!;
 
         if (type === "ron3") {
-          // TODO
+          for (let i = 0; i < globalGame.actions.length; i++) {
+            if (globalGame.actions[i].type !== MahjongActionType.RON) {
+              continue;
+            }
+            const paiKawa = globalGame.turnUser().paiKawa
+            await globalGame.input(MahjongInput.AGARI, {
+              usrId: globalGame.actions[i].user.id,
+              state: globalGame.state,
+              agari: {
+                paiId: paiKawa[paiKawa.length - 1].id,
+              },
+            });
+          }
         } else {
           for (let i = 0; i < globalGame.actions.length; i++) {
             await globalGame.input(MahjongInput.SKIP, {
@@ -159,7 +172,7 @@ Deno.test("mahjong new", async () => {
           await globalGame.input(MahjongInput.SKIP, {
             usrId: a.user.id,
             state: globalGame.state,
-          });
+          })
         }
 
         const convertMap: Record<number, "pon" | "chi" | "minkan" | "kakan" | "ankan"> = {
@@ -181,6 +194,57 @@ Deno.test("mahjong new", async () => {
         });
         break;
       }
+      case "AGARI": {
+        const {
+          who,
+          score,
+          owari,
+          yakus,
+          paiDora,
+          paiDoraUra,
+          paiLast,
+        } = params.agari!;
+        const isChnkn = yakus.map((e) => e.str).includes("槍槓");
+
+        await globalGame.input(MahjongInput.AGARI, {
+          usrId: globalGame.users[who].id,
+          state: globalGame.state,
+          agari: { isChnkn, paiId: paiLast.id },
+        });
+        state.checkAfterAgari.push(async (idx: number) => {
+          for (const action of globalGame.actions) {
+            if (action.enable !== undefined || action.type !== MahjongActionType.RON) {
+              continue;
+            }
+            await globalGame.input(MahjongInput.SKIP, {
+              usrId: action.user.id,
+              state: globalGame.state,
+            });
+          }
+
+          expect(globalGame.paiDora).toEqual(paiDora.map((e) => new Pai(e.id)));
+          if (paiDoraUra.length > 0) {
+            expect(globalGame.paiDoraUra).toEqual(paiDoraUra.map((e) => new Pai(e.id)));
+          }
+
+          const tokuten = globalGame.tokutens[idx];
+          const actYakus = tokuten.yakus.filter((e) => e.val > 0);
+          const actYakuVal = actYakus.map((e) => ({ ...e })).sort((a, b) => a.str.localeCompare(b.str));
+          const expYakuVal = yakus.filter((e) => e.val > 0).sort((a, b) => a.str.localeCompare(b.str));
+          expect(actYakuVal).toEqual(expYakuVal);
+          if (idx === state.checkAfterAgari.length - 1) {
+            expect(globalGame.users.map((e) => e.point)).toEqual(score);
+          }
+        });
+        if (owari) {
+          for (let idx = 0; idx < state.checkAfterAgari.length; idx++) {
+            await state.checkAfterAgari[idx](idx);
+          }
+          state.checkAfterAgari = [];
+          state.checkAfterRichi = [];
+          globalGame = new Mahjong(userIds, async (_) => {});
+        }
+      }
     }
-  }, 3);
+  });
 });

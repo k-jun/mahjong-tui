@@ -107,7 +107,6 @@ Deno.test("MahjongUser validate naki ankan2", () => {
   ];
   user.isRichi = true;
   user.paiTsumo = new Pai("p2");
-  user.paiRest = [new Pai("p2"), new Pai("p2"), new Pai("p2"), new Pai("p3")];
   const results = user.canAnkan();
   expect(results.length).toBe(0);
 });
@@ -123,6 +122,7 @@ Deno.test("MahjongUser validate naki kakan", () => {
     type: PaiSetType.MINKO,
     paiRest: [new Pai(0), new Pai(1)],
     paiCall: [new Pai(2)],
+    fromWho: Player.TOIMEN,
   });
   user.paiSets.push(minkoSet);
   user.paiTsumo = new Pai(3);
@@ -131,6 +131,7 @@ Deno.test("MahjongUser validate naki kakan", () => {
     type: PaiSetType.KAKAN,
     paiRest: [new Pai(0), new Pai(1)],
     paiCall: [new Pai(2), new Pai(3)],
+    fromWho: Player.TOIMEN,
   });
   expect(user.validate("naki", { set })).toBe(true);
 
@@ -139,6 +140,7 @@ Deno.test("MahjongUser validate naki kakan", () => {
     type: PaiSetType.KAKAN,
     paiRest: [new Pai(0), new Pai(1)],
     paiCall: [new Pai(3), new Pai(2)],
+    fromWho: Player.TOIMEN,
   });
   expect(user.validate("naki", { set: set2 })).toBe(false);
 });
@@ -179,6 +181,7 @@ Deno.test("MahjongUser validate naki minshun", () => {
     type: PaiSetType.MINSHUN,
     paiRest: [new Pai(0), new Pai(4)],
     paiCall: [new Pai(8)], // 3m
+    fromWho: Player.KAMICHA,
   });
   expect(user.validate("naki", { set })).toBe(true);
 
@@ -407,8 +410,8 @@ Deno.test("MahjongUser canKakan", () => {
   ];
   const results1 = user.canKakan();
   expect(results1.length).toBe(1);
-  expect(results1[0].paiRest.map((p) => p.id)).toEqual([1, 2]);
-  expect(results1[0].paiCall.map((p) => p.id)).toEqual([0, 3]);
+  expect(results1[0].paiRest.map((p) => p.id)).toEqual([3, 1, 2]);
+  expect(results1[0].paiCall.map((p) => p.id)).toEqual([0]);
   expect(results1[0].fromWho).toBe(Player.JICHA);
 
   // Test case 2: No valid kakan with insufficient tiles

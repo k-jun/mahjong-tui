@@ -64,9 +64,6 @@ export class MahjongUser {
         if (this.isRichi && tedashi) {
           return false;
         }
-        if (this.paiTsumo === undefined) {
-          return false;
-        }
         return this.pais.includes(params.pai);
       }
       case "naki": {
@@ -81,7 +78,6 @@ export class MahjongUser {
           }
           case PaiSetType.KAKAN: {
             candidate = this.canKakan();
-            console.log(candidate);
             break;
           }
           case PaiSetType.MINKAN: {
@@ -97,10 +93,17 @@ export class MahjongUser {
             break;
           }
         }
-        if (candidate.every((e) => !e.equals(params.set!))) {
-          return false;
-        }
-        return true;
+
+        const isEqual = (e: PaiSet): boolean => {
+          if (e.type !== params.set!.type) {
+            return false;
+          }
+          if (e.fromWho !== params.set!.fromWho) {
+            return false;
+          } 
+          return e.pais.map((e) => e.fmt).join(",") === params.set!.pais.map((e) => e.fmt).join(",");
+        };
+        return candidate.some((e) => isEqual(e));
       }
     }
   }
@@ -110,7 +113,9 @@ export class MahjongUser {
       return false;
     }
 
-    this.paiRest.push(this.paiTsumo!);
+    if (this.paiTsumo !== undefined) {
+      this.paiRest.push(this.paiTsumo);
+    }
     this.paiTsumo = undefined;
     const idx = this.paiRest.findIndex((e) => e.id === pai.id);
     this.paiKawa.push(...this.paiRest.splice(idx, 1));
@@ -338,9 +343,10 @@ export class MahjongUser {
         }
         result.push(
           new PaiSet({
-            paiCall: [...set.paiCall, pai],
-            paiRest: set.paiRest,
+            paiCall: set.paiCall,
+            paiRest: [pai, ...set.paiRest],
             type: PaiSetType.KAKAN,
+            fromWho: set.fromWho,
           }),
         );
       }
@@ -403,7 +409,6 @@ export class MahjongUser {
   }
 
   isNagashimangan(): boolean {
-    return this.paiKawa.every((p) => p.isYaochuHai()) &&
-      this.isCalled === false;
+    return this.paiKawa.every((p) => p.isYaochuHai()) && this.isCalled === false;
   }
 }
