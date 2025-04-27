@@ -13,13 +13,13 @@ Deno.test("mahjong new", async () => {
     checkAfterRichi: [(_: number) => {}],
   };
   await fixtures(async ({ name, params }): Promise<void> => {
-    console.log(
-      name,
-      globalGame.kyoku,
-      globalGame.honba,
-      globalGame.turnUserIdx,
-      globalGame.turnRest(),
-    );
+    // console.log(
+    //   name,
+    //   globalGame.kyoku,
+    //   globalGame.honba,
+    //   globalGame.turnUserIdx,
+    //   globalGame.turnRest(),
+    // );
     switch (name) {
       case "INIT": {
         for (let idx = 0; idx < state.checkAfterAgari.length; idx++) {
@@ -83,6 +83,18 @@ Deno.test("mahjong new", async () => {
         expect(globalGame.turnUserIdx).toEqual(who);
         break;
       }
+      case "RNSHN": {
+        for (let i = 0; i < globalGame.actions.length; i++) {
+          if (globalGame.actions[i].type !== MahjongActionType.RON) {
+            continue;
+          }
+          await globalGame.input(MahjongInput.SKIP, {
+            usrId: globalGame.actions[i].user.id,
+            state: globalGame.state,
+          });
+        }
+        break;
+      }
       case "DAHAI": {
         state.checkAfterRichi.forEach((check, idx) => check(idx - 1));
         state.checkAfterRichi = [];
@@ -108,16 +120,6 @@ Deno.test("mahjong new", async () => {
           });
         }
         if (step == 2) {
-          for (let i = 0; i < globalGame.actions.length; i++) {
-            if (globalGame.actions[i].type !== MahjongActionType.RON) {
-              continue;
-            }
-            await globalGame.input(MahjongInput.SKIP, {
-              usrId: globalGame.actions[i].user.id,
-              state: globalGame.state,
-            });
-          }
-
           state.checkAfterRichi.push((_: number) => {
             expect(globalGame.users.map((e) => e.point)).toEqual(ten);
           });
@@ -132,7 +134,7 @@ Deno.test("mahjong new", async () => {
             if (globalGame.actions[i].type !== MahjongActionType.RON) {
               continue;
             }
-            const paiKawa = globalGame.turnUser().paiKawa
+            const paiKawa = globalGame.turnUser().paiKawa;
             await globalGame.input(MahjongInput.AGARI, {
               usrId: globalGame.actions[i].user.id,
               state: globalGame.state,
@@ -172,7 +174,7 @@ Deno.test("mahjong new", async () => {
           await globalGame.input(MahjongInput.SKIP, {
             usrId: a.user.id,
             state: globalGame.state,
-          })
+          });
         }
 
         const convertMap: Record<number, "pon" | "chi" | "minkan" | "kakan" | "ankan"> = {

@@ -575,10 +575,13 @@ export class Mahjong {
     if (isAllFalse) {
       this.actions = [];
       if (this.turnUser().isAfterKakan) {
-        return [MahjongInput.RNSHN, params];
+        return [MahjongInput.RNSHN, { usrId: this.turnUser().id }];
       }
       if (isAfterDahai) {
         this.richiAfter({ user: this.turnUser() });
+        if (this.users.every((e) => e.isRichi || e.isDabururichi)) {
+          return [MahjongInput.OWARI, { usrId: user.id, owari: { type: "richi4" } }];
+        }
         return this.turnNext();
       }
     }
@@ -949,6 +952,7 @@ export class Mahjong {
 
     await this.mutex.acquire();
 
+    
     const isRefresh = true;
     outer: while (true) {
       switch (input) {
@@ -990,6 +994,8 @@ export class Mahjong {
         await new Promise((resolve) => setTimeout(resolve, this.sleep));
       }
     }
+
+    // console.log(this.actions.map((e) => ({ type: e.type, enable: e.enable, user: e.user.id })))
 
     if (isRefresh) {
       this.state = crypto.randomUUID();
