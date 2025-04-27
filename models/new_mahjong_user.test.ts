@@ -6,7 +6,6 @@ Deno.test("MahjongUser initialization", () => {
   const user = new MahjongUser({
     id: "test-user",
     point: 25000,
-    paiJikaze: new Pai("z1"),
   });
   expect(user.id).toBe("test-user");
   expect(user.paiRest).toEqual([]);
@@ -29,7 +28,6 @@ Deno.test("MahjongUser get pais", () => {
   const user = new MahjongUser({
     id: "test-user",
     point: 25000,
-    paiJikaze: new Pai("z1"),
   });
   const pai1 = new Pai(0);
   const pai2 = new Pai(1);
@@ -45,7 +43,6 @@ Deno.test("MahjongUser validate dahai", () => {
   const user = new MahjongUser({
     id: "test-user",
     point: 25000,
-    paiJikaze: new Pai("z1"),
   });
   const pai1 = new Pai(0);
   const pai2 = new Pai(1);
@@ -71,7 +68,6 @@ Deno.test("MahjongUser validate naki ankan", () => {
   const user = new MahjongUser({
     id: "test-user",
     point: 25000,
-    paiJikaze: new Pai("z1"),
   });
   user.paiRest = [new Pai(1), new Pai(2), new Pai(3)];
   user.paiTsumo = new Pai(0);
@@ -93,7 +89,6 @@ Deno.test("MahjongUser validate naki ankan2", () => {
   const user = new MahjongUser({
     id: "test-user",
     point: 25000,
-    paiJikaze: new Pai("z1"),
   });
   user.paiRest = [
     new Pai("p2"),
@@ -112,7 +107,7 @@ Deno.test("MahjongUser validate naki ankan2", () => {
   ];
   user.isRichi = true;
   user.paiTsumo = new Pai("p2");
-  
+  user.paiRest = [new Pai("p2"), new Pai("p2"), new Pai("p2"), new Pai("p3")];
   const results = user.canAnkan();
   expect(results.length).toBe(0);
 });
@@ -121,7 +116,6 @@ Deno.test("MahjongUser validate naki kakan", () => {
   const user = new MahjongUser({
     id: "test-user",
     point: 25000,
-    paiJikaze: new Pai("z1"),
   });
 
   // Add a minko set that can be kakan
@@ -153,7 +147,6 @@ Deno.test("MahjongUser validate naki minkan", () => {
   const user = new MahjongUser({
     id: "test-user",
     point: 25000,
-    paiJikaze: new Pai("z1"),
   });
 
   // Add a minko set that can be minkan
@@ -178,7 +171,6 @@ Deno.test("MahjongUser validate naki minshun", () => {
   const user = new MahjongUser({
     id: "test-user",
     point: 25000,
-    paiJikaze: new Pai("z1"),
   });
 
   // Add pais that can form a minshun
@@ -203,7 +195,6 @@ Deno.test("MahjongUser validate naki minko", () => {
   const user = new MahjongUser({
     id: "test-user",
     point: 25000,
-    paiJikaze: new Pai("z1"),
   });
 
   // Add pais that can form a minko
@@ -228,7 +219,6 @@ Deno.test("MahjongUser canChi", () => {
   const user = new MahjongUser({
     id: "test-user",
     point: 25000,
-    paiJikaze: new Pai("z1"),
   });
 
   // Test case 1: Valid chi combinations with manzu
@@ -270,7 +260,6 @@ Deno.test("MahjongUser canPon", () => {
   const user = new MahjongUser({
     id: "test-user",
     point: 25000,
-    paiJikaze: new Pai("z1"),
   });
 
   // Test case 1: Valid pon with manzu
@@ -311,7 +300,6 @@ Deno.test("MahjongUser canMinkan", () => {
   const user = new MahjongUser({
     id: "test-user",
     point: 25000,
-    paiJikaze: new Pai("z1"),
   });
 
   // Test case 1: Valid minkan with manzu
@@ -352,7 +340,6 @@ Deno.test("MahjongUser canAnkan", () => {
   const user = new MahjongUser({
     id: "test-user",
     point: 25000,
-    paiJikaze: new Pai("z1"),
   });
 
   // Test case 1: Valid ankan with manzu
@@ -406,7 +393,6 @@ Deno.test("MahjongUser canKakan", () => {
   const user = new MahjongUser({
     id: "test-user",
     point: 25000,
-    paiJikaze: new Pai("z1"),
   });
 
   // Test case 1: Valid kakan with manzu
@@ -443,7 +429,6 @@ Deno.test("should return valid richi candidates", async (t) => {
     const user = new MahjongUser({
       id: "test-user",
       point: 25000,
-      paiJikaze: new Pai("z1"),
     });
     user.paiRest = [
       new Pai("m1"),
@@ -468,7 +453,6 @@ Deno.test("should return valid richi candidates", async (t) => {
     const user = new MahjongUser({
       id: "test-user",
       point: 25000,
-      paiJikaze: new Pai("z1"),
     });
     user.paiRest = [
       new Pai("m1"),
@@ -501,7 +485,6 @@ Deno.test("should return valid richi candidates", async (t) => {
     const user = new MahjongUser({
       id: "test-user",
       point: 500,
-      paiJikaze: new Pai("z1"),
     });
     user.paiRest = [
       new Pai("m1"),
@@ -527,7 +510,6 @@ Deno.test("should return valid richi candidates", async (t) => {
     const user = new MahjongUser({
       id: "test-user",
       point: 25000,
-      paiJikaze: new Pai("z1"),
     });
     user.paiRest = [
       new Pai("m1"),
@@ -556,7 +538,6 @@ Deno.test("should return valid richi candidates", async (t) => {
       const user = new MahjongUser({
         id: "test-user",
         point: 25000,
-        paiJikaze: new Pai("z1"),
       });
       user.paiRest = [
         new Pai("s4"),
@@ -586,7 +567,6 @@ Deno.test("should return valid machi candidates", async (t) => {
     const user = new MahjongUser({
       id: "test-user",
       point: 25000,
-      paiJikaze: new Pai("z1"),
     });
     user.paiRest = [
       new Pai("m1"),
@@ -612,7 +592,6 @@ Deno.test("should return valid machi candidates", async (t) => {
     const user = new MahjongUser({
       id: "test-user",
       point: 25000,
-      paiJikaze: new Pai("z1"),
     });
     user.paiRest = [
       new Pai("m1"),
@@ -639,7 +618,6 @@ Deno.test("should return valid machi candidates", async (t) => {
     const user = new MahjongUser({
       id: "test-user",
       point: 25000,
-      paiJikaze: new Pai("z1"),
     });
     user.paiRest = [
       new Pai("m1"),
@@ -666,7 +644,6 @@ Deno.test("should return valid machi candidates", async (t) => {
     const user = new MahjongUser({
       id: "test-user",
       point: 25000,
-      paiJikaze: new Pai("z1"),
     });
     user.paiRest = [
       new Pai("m1"),
@@ -692,7 +669,6 @@ Deno.test("should return valid machi candidates", async (t) => {
     const user = new MahjongUser({
       id: "test-user",
       point: 25000,
-      paiJikaze: new Pai("z1"),
     });
     user.paiRest = [
       new Pai("m1"),
@@ -719,7 +695,6 @@ Deno.test("should return valid machi candidates", async (t) => {
     const user = new MahjongUser({
       id: "test-user",
       point: 25000,
-      paiJikaze: new Pai("z1"),
     });
     user.paiRest = [
       new Pai("m1"),
@@ -739,5 +714,79 @@ Deno.test("should return valid machi candidates", async (t) => {
     const results = user.machi();
     expect(results.length).toBe(1);
     expect(results[0].fmt).toBe("p7");
+  });
+});
+
+Deno.test("MahjongUser isNagashimangan", async (t) => {
+  await t.step("should return true when all discarded tiles are yaochu and no calls", () => {
+    const user = new MahjongUser({
+      id: "test-user",
+      point: 25000,
+    });
+    user.paiKawa = [
+      new Pai("m1"),
+      new Pai("m9"),
+      new Pai("s1"),
+      new Pai("s9"),
+      new Pai("p1"),
+      new Pai("p9"),
+      new Pai("z1"),
+      new Pai("z2"),
+      new Pai("z3"),
+      new Pai("z4"),
+      new Pai("z5"),
+      new Pai("z6"),
+      new Pai("z7"),
+    ];
+    user.isCalled = false;
+    expect(user.isNagashimangan()).toBe(true);
+  });
+
+  await t.step("should return false when there are non-yaochu tiles in discard", () => {
+    const user = new MahjongUser({
+      id: "test-user",
+      point: 25000,
+    });
+    user.paiKawa = [
+      new Pai("m1"),
+      new Pai("m2"), // non-yaochu tile
+      new Pai("s1"),
+      new Pai("s9"),
+      new Pai("p1"),
+      new Pai("p9"),
+      new Pai("z1"),
+      new Pai("z2"),
+      new Pai("z3"),
+      new Pai("z4"),
+      new Pai("z5"),
+      new Pai("z6"),
+      new Pai("z7"),
+    ];
+    user.isCalled = false;
+    expect(user.isNagashimangan()).toBe(false);
+  });
+
+  await t.step("should return false when player has made calls", () => {
+    const user = new MahjongUser({
+      id: "test-user",
+      point: 25000,
+    });
+    user.paiKawa = [
+      new Pai("m1"),
+      new Pai("m9"),
+      new Pai("s1"),
+      new Pai("s9"),
+      new Pai("p1"),
+      new Pai("p9"),
+      new Pai("z1"),
+      new Pai("z2"),
+      new Pai("z3"),
+      new Pai("z4"),
+      new Pai("z5"),
+      new Pai("z6"),
+      new Pai("z7"),
+    ];
+    user.isCalled = true;
+    expect(user.isNagashimangan()).toBe(false);
   });
 });

@@ -20,14 +20,14 @@ export class MahjongUser {
   isFuriten: boolean = false;
   isCalled: boolean = false;
   constructor(
-    { id, point, paiJikaze }: { id: string; point: number; paiJikaze: Pai },
+    { id, point }: { id: string; point: number },
   ) {
     this.id = id;
     this.paiRest = [];
     this.paiSets = [];
     this.paiKawa = [];
     this.paiCalled = [];
-    this.paiJikaze = paiJikaze;
+    this.paiJikaze = new Pai("z1");
     this.point = point;
   }
 
@@ -400,5 +400,10 @@ export class MahjongUser {
     }
 
     return true;
+  }
+
+  isNagashimangan(): boolean {
+    return this.paiKawa.every((p) => p.isYaochuHai()) &&
+      this.isCalled === false;
   }
 }

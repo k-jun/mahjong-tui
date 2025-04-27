@@ -161,6 +161,7 @@ export class Mahjong {
         this.users[(j + this.kyoku) % 4].setPaiRest({
           pais: this.paiYama.splice(-4).reverse(),
         });
+        console.log(this.users[(j + this.kyoku) % 4].paiRest.map((e) => e.fmt));
       }
     }
     for (let i = 0; i < 4; i++) {

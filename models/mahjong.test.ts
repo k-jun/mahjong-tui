@@ -252,7 +252,7 @@ Deno.test("mahjong all", async () => {
         break;
       }
     }
-  });
+  }, 2);
 });
 
 async function _done(
