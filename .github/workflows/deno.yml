@@ -10,6 +10,7 @@ name: Deno
 
 on:
   pull_request:
+    branches: ["main"]
 
 permissions:
   contents: read
