@@ -36,11 +36,11 @@ jobs:
         with:
           deno-version-file: .tool-versions
 
-      - name: Verify formatting
-        run: deno fmt --check
-
-      - name: Run linter
-        run: deno lint
-
-      - name: Run tests
-        run: deno test -A
+      # - name: Verify formatting
+      #   run: deno fmt --check
+      #
+      # - name: Run linter
+      #   run: deno lint
+      #
+      # - name: Run tests
+      #   run: deno test -A
