@@ -25,14 +25,19 @@ jobs:
       - name: Setup repo
         uses: actions/checkout@v4
 
+      - name: gcloud caching
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.tool_cache }}/deno
+          key: ${{ runner.os }}-deno
+
       - name: Setup Deno
         uses: denoland/setup-deno@v2
         with:
           deno-version-file: .tool-versions
 
-      # Uncomment this step to verify the use of 'deno fmt' on each commit.
-      # - name: Verify formatting
-      #   run: deno fmt --check
+      - name: Verify formatting
+        run: deno fmt --check
 
       - name: Run linter
         run: deno lint
