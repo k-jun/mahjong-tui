@@ -1,10 +1,10 @@
-import { User } from "../models/user.ts";
+import { MahjongUser } from "../models/mahjong_user.ts";
 import { Box } from "npm:ink";
 import { Pai } from "@k-jun/mahjong";
 import { EmptyTSX, PaiTSX } from "./pai.tsx";
 import React, { JSX } from "npm:react";
 
-export const KamichaTSX = ({ kamicha }: { kamicha: User }): JSX.Element => {
+export const KamichaTSX = ({ kamicha }: { kamicha: MahjongUser }): JSX.Element => {
   const paiSets = kamicha.paiSets.map((e) => e.pais).flat();
 
   return (
@@ -45,7 +45,7 @@ export const KamichaTSX = ({ kamicha }: { kamicha: User }): JSX.Element => {
 };
 
 export const KamichaKawaTSX = (
-  { kamicha, height, width }: { kamicha: User; height: number; width: number },
+  { kamicha, height, width }: { kamicha: MahjongUser; height: number; width: number },
 ): JSX.Element => {
   const row1 = kamicha.paiKawa.slice(0, 6);
   const row2 = kamicha.paiKawa.slice(6, 12);

@@ -794,3 +794,75 @@ Deno.test("MahjongUser isNagashimangan", async (t) => {
   });
 });
 
+Deno.test("MahjongUser isKyushukyuhai", async (t) => {
+  await t.step("should return false", () => {
+    const user = new MahjongUser({
+      id: "test-user",
+      point: 25000,
+    });
+    user.paiRest = [
+      new Pai("m1"),
+      new Pai("m2"),
+      new Pai("m3"),
+      new Pai("m4"),
+      new Pai("m5"),
+      new Pai("m6"),
+      new Pai("m7"),
+      new Pai("m8"),
+      new Pai("m9"),
+      new Pai("p1"),
+      new Pai("p2"),
+      new Pai("p3"),
+      new Pai("p4"),
+    ];
+    user.paiTsumo = new Pai("m1");
+    expect(user.isKyushukyuhai()).toBe(false);
+  });
+
+  await t.step("should return false2", () => {
+    const user = new MahjongUser({
+      id: "test-user",
+      point: 25000,
+    });
+    user.paiRest = [
+      new Pai("m1"),
+      new Pai("m1"),
+      new Pai("m1"),
+      new Pai("m1"),
+      new Pai("m1"),
+      new Pai("m1"),
+      new Pai("m1"),
+      new Pai("m1"),
+      new Pai("m1"),
+      new Pai("p1"),
+      new Pai("p2"),
+      new Pai("p3"),
+      new Pai("p4"),
+    ];
+    user.paiTsumo = new Pai("m1");
+    expect(user.isKyushukyuhai()).toBe(false);
+  });
+
+  await t.step("should return true", () => {
+    const user = new MahjongUser({
+      id: "test-user",
+      point: 25000,
+    });
+    user.paiRest = [
+      new Pai("m1"),
+      new Pai("m9"),
+      new Pai("s1"),
+      new Pai("s9"),
+      new Pai("p1"),
+      new Pai("p9"),
+      new Pai("z1"),
+      new Pai("z2"),
+      new Pai("z3"),
+      new Pai("z4"),
+      new Pai("z5"),
+      new Pai("z6"),
+    ];
+    user.paiTsumo = new Pai("m1");
+    expect(user.isKyushukyuhai()).toBe(true);
+  });
+});

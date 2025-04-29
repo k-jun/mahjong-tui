@@ -1,11 +1,11 @@
 import { Box } from "npm:ink";
 import { EmptyTSX, PaiTSX } from "./pai.tsx";
-import { User } from "../models/user.ts";
+import { MahjongUser } from "../models/mahjong_user.ts";
 import { Pai } from "@k-jun/mahjong";
 import React, { JSX } from "npm:react";
 
 export const ToimenTSX = (
-  { toimen, height, width }: { toimen: User; height: number; width: number },
+  { toimen, height, width }: { toimen: MahjongUser; height: number; width: number },
 ): JSX.Element => {
   const paiSets = toimen.paiSets.map((e) => e.pais).flat();
   return (
@@ -30,7 +30,7 @@ export const ToimenTSX = (
 };
 
 export const ToimenKawaTSX = (
-  { toimen, height, width }: { toimen: User; height: number; width: number },
+  { toimen, height, width }: { toimen: MahjongUser; height: number; width: number },
 ): JSX.Element => {
   const columns: number[][] = [[], [], [], [], [], []];
   toimen.paiKawa.slice(0, 18).forEach((e, idx) => {

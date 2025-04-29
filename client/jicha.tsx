@@ -1,4 +1,4 @@
-import { User } from "../models/user.ts";
+import { MahjongUser } from "../models/mahjong_user.ts";
 import { Box, useInput } from "npm:ink";
 import { Pai } from "@k-jun/mahjong";
 import { EmptyTSX, PaiTSX } from "./pai.tsx";
@@ -6,7 +6,7 @@ import React, { JSX } from "npm:react";
 import { Socket } from "npm:socket.io-client";
 export const JichaTSX = (
   { jicha, height, width, socket, name }: {
-    jicha: User;
+    jicha: MahjongUser;
     height: number;
     width: number;
     socket: Socket;
@@ -67,7 +67,7 @@ export const JichaTSX = (
 };
 
 export const JichaKawaTSX = (
-  { jicha, height, width }: { jicha: User; height: number; width: number },
+  { jicha, height, width }: { jicha: MahjongUser; height: number; width: number },
 ): JSX.Element => {
   const columns: number[][] = [[], [], [], [], [], []];
   jicha.paiKawa.slice(0, 18).forEach((e, idx) => {

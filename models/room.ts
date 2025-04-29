@@ -16,6 +16,8 @@ export class User {
   }
 }
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 export class Room {
   users: User[];
   mahjong?: Mahjong;
@@ -45,11 +47,13 @@ export class Room {
   start(): void {
     this.mahjong = new Mahjong(
       this.users.map((user) => user.id),
-      // deno-lint-ignore require-await
       async (mjg: Mahjong): Promise<void> => {
-        this.users.forEach((user) =>
-          ActionDefault(mjg, user.id, user.isCPU ? 500 : 100000, user.state)
-        );
+        this.users.forEach((user) => ActionDefault(mjg, user.id));
+        if (mjg.isEnded) {
+          mjg.gameReset();
+          await mjg.gameStart(mjg.generate());
+          return;
+        }
         this.output(mjg);
       },
     );

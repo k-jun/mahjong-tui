@@ -73,6 +73,9 @@ Deno.test("mahjong new", async () => {
           if (globalGame.actions[i].type === MahjongActionType.DAHAI) {
             continue;
           }
+          if (globalGame.actions[i].type === MahjongActionType.OWARI) {
+            continue;
+          }
           await globalGame.input(MahjongInput.SKIP, {
             usrId: globalGame.actions[i].user.id,
             state: globalGame.state,
@@ -145,6 +148,12 @@ Deno.test("mahjong new", async () => {
           }
         } else {
           for (let i = 0; i < globalGame.actions.length; i++) {
+            if (globalGame.actions[i].type === MahjongActionType.OWARI) {
+              continue;
+            }
+            if (globalGame.actions[i].type === MahjongActionType.DAHAI) {
+              continue;
+            }
             await globalGame.input(MahjongInput.SKIP, {
               usrId: globalGame.actions[i].user.id,
               state: globalGame.state,
@@ -167,13 +176,14 @@ Deno.test("mahjong new", async () => {
       }
       case "NAKI": {
         const { who, set } = params.naki!;
+        const state = globalGame.state;
         for (const a of globalGame.actions) {
           if (a.user.id === globalGame.users[who].id) {
             continue;
           }
           await globalGame.input(MahjongInput.SKIP, {
             usrId: a.user.id,
-            state: globalGame.state,
+            state,
           });
         }
 
@@ -186,7 +196,7 @@ Deno.test("mahjong new", async () => {
         };
         await globalGame.input(MahjongInput.NAKI, {
           usrId: globalGame.users[who].id,
-          state: globalGame.state,
+          state: state,
           naki: {
             type: convertMap[set.type],
             usrId: globalGame.users[(who + set.fromWho) % 4].id,

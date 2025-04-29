@@ -1,10 +1,10 @@
-import { User } from "../models/user.ts";
+import { MahjongUser } from "../models/mahjong_user.ts";
 import { Box } from "npm:ink";
 import { Pai } from "@k-jun/mahjong";
 import { EmptyTSX, PaiTSX } from "./pai.tsx";
 import React, { JSX } from "npm:react";
 
-export const ShimochaTSX = ({ shimocha }: { shimocha: User }): JSX.Element => {
+export const ShimochaTSX = ({ shimocha }: { shimocha: MahjongUser }): JSX.Element => {
   const paiSets = shimocha.paiSets.map((e) => e.pais).reverse().flat();
   return (
     <Box flexDirection="column" justifyContent="center" alignItems="center">
@@ -45,7 +45,7 @@ export const ShimochaTSX = ({ shimocha }: { shimocha: User }): JSX.Element => {
 
 export const ShimochaKawaTSX = (
   { shimocha, height, width }: {
-    shimocha: User;
+    shimocha: MahjongUser;
     height: number;
     width: number;
   },

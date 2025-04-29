@@ -61,11 +61,13 @@ export class MahjongUser {
         if (params.pai === undefined) {
           return false;
         }
-        const tedashi = this.paiRest.some((e) => e.id === params.pai?.id);
+
+        const target = params.pai;
+        const tedashi = this.paiRest.some((e) => e.id === target.id);
         if (this.isRichi && tedashi) {
           return false;
         }
-        return this.pais.includes(params.pai);
+        return this.pais.map((e) => e.id).includes(target.id);
       }
       case "naki": {
         if (params.set === undefined) {
@@ -411,5 +413,16 @@ export class MahjongUser {
 
   isNagashimangan(): boolean {
     return this.paiKawa.every((p) => p.isYaochuHai()) && this.isCalled === false;
+  }
+
+  isKyushukyuhai(): boolean {
+    const set = new Set<string>();
+    const paiAll = [...this.paiRest, ...(this.paiTsumo ? [this.paiTsumo] : [])];
+    for (const pai of paiAll) {
+      if (pai.isYaochuHai()) {
+        set.add(pai.fmt);
+      }
+    }
+    return set.size >= 9;
   }
 }
