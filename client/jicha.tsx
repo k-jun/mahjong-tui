@@ -98,3 +98,14 @@ export const JichaKawaTSX = (
     </Box>
   );
 };
+
+export const JichaKawaExtraTSX = (
+  { jicha, height, width }: { jicha: MahjongUser; height: number; width: number },
+): JSX.Element => {
+  const pais = jicha.paiKawa.slice(18, 24);
+  return (
+    <Box flexDirection="row" alignItems="flex-end" width={width} height={height}>
+      {pais.map((e) => <PaiTSX text={new Pai(e.id).dsp} key={e.id} />)}
+    </Box>
+  );
+};

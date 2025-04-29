@@ -17,9 +17,7 @@ export const ToimenTSX = (
     >
       {paiSets.map((e) => <PaiTSX text={new Pai(e.id).dsp} key={e.id} />)}
       <EmptyTSX />
-      {toimen.paiTsumo
-        ? <PaiTSX text={new Pai(toimen.paiTsumo.id).dsp} key={0} />
-        : <EmptyTSX />}
+      {toimen.paiTsumo ? <PaiTSX text={new Pai(toimen.paiTsumo.id).dsp} key={0} /> : <EmptyTSX />}
       <EmptyTSX />
       {toimen?.paiRest.sort((a, b) => a.id - b.id).map((e) => new Pai(e.id))
         .map((
@@ -59,6 +57,17 @@ export const ToimenKawaTSX = (
           ))}
         </Box>
       ))}
+    </Box>
+  );
+};
+
+export const ToimenKawaExtraTSX = (
+  { toimen, height, width }: { toimen: MahjongUser; height: number; width: number },
+): JSX.Element => {
+  const column = toimen.paiKawa.slice(18, 24);
+  return (
+    <Box flexDirection="row" justifyContent="flex-end" alignItems="flex-start" height={height} width={width}>
+      {column.reverse().map((e) => <PaiTSX text={new Pai(e.id).dsp} key={e.id} />)}
     </Box>
   );
 };
