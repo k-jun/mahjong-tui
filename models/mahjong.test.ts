@@ -79,7 +79,6 @@ Deno.test("mahjong new", async () => {
           });
         }
         const { who, hai } = params.tsumo!;
-
         expect(globalGame.turnUser().paiTsumo).toEqual(new Pai(hai.id));
         expect(globalGame.turnUserIdx).toEqual(who);
         break;

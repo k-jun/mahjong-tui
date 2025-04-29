@@ -793,3 +793,4 @@ Deno.test("MahjongUser isNagashimangan", async (t) => {
     expect(user.isNagashimangan()).toBe(false);
   });
 });
+
