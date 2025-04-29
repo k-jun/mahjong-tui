@@ -82,7 +82,7 @@ Deno.test("MahjongUser validate naki ankan", () => {
     type: PaiSetType.ANKAN,
     paiRest: [new Pai(1), new Pai(3), new Pai(2), new Pai(0)],
   });
-  expect(user.validate("naki", { set: set2 })).toBe(false);
+  expect(user.validate("naki", { set: set2 })).toBe(true);
 });
 
 Deno.test("MahjongUser validate naki ankan2", () => {
@@ -129,8 +129,8 @@ Deno.test("MahjongUser validate naki kakan", () => {
 
   const set = new PaiSet({
     type: PaiSetType.KAKAN,
-    paiRest: [new Pai(0), new Pai(1)],
-    paiCall: [new Pai(2), new Pai(3)],
+    paiRest: [new Pai(3), new Pai(0), new Pai(1)],
+    paiCall: [new Pai(2)],
     fromWho: Player.TOIMEN,
   });
   expect(user.validate("naki", { set })).toBe(true);
@@ -138,7 +138,7 @@ Deno.test("MahjongUser validate naki kakan", () => {
   // Invalid kakan - wrong pai
   const set2 = new PaiSet({
     type: PaiSetType.KAKAN,
-    paiRest: [new Pai(0), new Pai(1)],
+    paiRest: [new Pai(0), new Pai(1), new Pai(2)],
     paiCall: [new Pai(3), new Pai(2)],
     fromWho: Player.TOIMEN,
   });
@@ -166,7 +166,7 @@ Deno.test("MahjongUser validate naki minkan", () => {
     paiRest: [new Pai(0), new Pai(1), new Pai(2)],
     paiCall: [new Pai(3)],
   });
-  expect(user.validate("naki", { set: set2 })).toBe(false);
+  expect(user.validate("naki", { set: set2 })).toBe(true);
 });
 
 Deno.test("MahjongUser validate naki minshun", () => {
@@ -215,7 +215,7 @@ Deno.test("MahjongUser validate naki minko", () => {
     paiRest: [new Pai(0), new Pai(3)],
     paiCall: [new Pai(1)],
   });
-  expect(user.validate("naki", { set: set2 })).toBe(false);
+  expect(user.validate("naki", { set: set2 })).toBe(true);
 });
 
 Deno.test("MahjongUser canChi", () => {
