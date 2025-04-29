@@ -16,9 +16,10 @@ export class MahjongUser {
   isRinshankaiho: boolean = false;
   isAfterKakan: boolean = false;
   isAfterRichi: boolean = false;
-  countMinkanKakan: number = 0;
   isFuriten: boolean = false;
   isCalled: boolean = false;
+
+  countKans: number[] = [];
   constructor(
     { id, point }: { id: string; point: number },
   ) {
@@ -43,7 +44,7 @@ export class MahjongUser {
     this.isCalled = false;
     this.isAfterKakan = false;
     this.isAfterRichi = false;
-    this.countMinkanKakan = 0;
+    this.countKans = [];
   }
 
   get pais(): Pai[] {
@@ -100,7 +101,7 @@ export class MahjongUser {
           }
           if (e.fromWho !== params.set!.fromWho) {
             return false;
-          } 
+          }
           return e.pais.map((e) => e.fmt).join(",") === params.set!.pais.map((e) => e.fmt).join(",");
         };
         return candidate.some((e) => isEqual(e));

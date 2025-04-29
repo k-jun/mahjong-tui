@@ -1,4 +1,4 @@
-import { Mahjong, MahjongActionType, MahjongInput } from "./new_mahjong.ts";
+import { Mahjong, MahjongActionType, MahjongInput } from "./mahjong.ts";
 import { expect } from "jsr:@std/expect";
 import { fixtures } from "../utils/utils.ts";
 import { Pai, PaiSetType } from "@k-jun/mahjong";

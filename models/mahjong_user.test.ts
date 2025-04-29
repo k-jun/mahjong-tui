@@ -20,7 +20,7 @@ Deno.test("MahjongUser initialization", () => {
   expect(user.isRinshankaiho).toBe(false);
   expect(user.isAfterKakan).toBe(false);
   expect(user.isAfterRichi).toBe(false);
-  expect(user.countMinkanKakan).toBe(0);
+  expect(user.countKans).toEqual([]);
   expect(user.isFuriten).toBe(false);
 });
 

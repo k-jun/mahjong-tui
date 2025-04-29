@@ -1,5 +1,5 @@
 // import { CPU } from "./cpu.ts";
-import { Mahjong, MahjongInput, MahjongInputParams } from "./mahjong.ts";
+import { Mahjong, MahjongInput, MahjongParams } from "./mahjong.ts";
 import { ActionDefault } from "./cpu.ts";
 
 const defaultRoomSize = 4;
@@ -56,7 +56,7 @@ export class Room {
     this.mahjong.gameStart(this.mahjong.generate());
   }
 
-  input(userId: string, input: MahjongInput, params: MahjongInputParams): void {
+  input(userId: string, input: MahjongInput, params: MahjongParams): void {
     if (!this.mahjong) {
       throw new Error("Mahjong is undefined");
     }
@@ -64,6 +64,6 @@ export class Room {
     if (!user) {
       throw new Error("User not found");
     }
-    this.mahjong.input(input, { user, params });
+    this.mahjong.input(input, params);
   }
 }
