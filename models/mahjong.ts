@@ -18,24 +18,36 @@ export type MahjongParams = {
   state?: string;
   usrId: string;
   tsumo?: Record<never, never>;
-  dahai?: {
-    paiId: number;
-  };
-  agari?: {
-    isChnkn?: boolean;
-    paiId: number;
-  };
-  richi?: Record<never, never>;
-  owari?: {
-    type?: "yao9" | "kaze4" | "richi4" | "ron3" | "kan4";
-  };
-  naki?: {
-    type: "pon" | "chi" | "minkan" | "kakan" | "ankan";
-    usrId: string;
-    pmyId: number[]; // paiRest
-    purId: number[]; // paiCall
-  };
   skip?: Record<never, never>;
+  richi?: MahjongParamsRichi;
+  dahai?: MahjongParamsDahai;
+  agari?: MahjongParamsAgari;
+  owari?: MahjongParamsOwari;
+  naki?: MahjongParamsNaki;
+};
+
+export type MahjongParamsRichi = {
+  paiId: number;
+};
+
+export type MahjongParamsDahai = {
+  paiId: number;
+};
+
+export type MahjongParamsNaki = {
+  type: "pon" | "chi" | "minkan" | "kakan" | "ankan";
+  usrId: string;
+  pmyId: number[]; // paiRest
+  purId: number[]; // paiCall
+};
+
+export type MahjongParamsAgari = {
+  isChnkn?: boolean;
+  paiId: number;
+};
+
+export type MahjongParamsOwari = {
+  type?: "yao9" | "kaze4" | "richi4" | "ron3" | "kan4";
 };
 
 export enum MahjongActionType {
@@ -55,15 +67,12 @@ export type MahjongAction = {
   user: MahjongUser;
   type: MahjongActionType;
   enable?: boolean;
-  naki?: {
-    type: "pon" | "chi" | "minkan" | "kakan" | "ankan";
-    usrId: string;
-    pmyId: number[]; // paiRest
-    purId: number[]; // paiCall
-  };
-  agari?: {
-    isChnkn?: boolean;
-    paiId: number;
+  naki?: MahjongParamsNaki;
+  agari?: MahjongParamsAgari;
+  options?: {
+    naki?: MahjongParamsNaki[];
+    agari?: MahjongParamsAgari[];
+    richi?: MahjongParamsRichi[];
   };
 };
 
@@ -91,7 +100,7 @@ export class Mahjong {
 
   state: string = "";
   enableDebug: boolean = false;
-  sleep: number = 1000;
+  sleep: number = 500;
 
   output: (mjg: Mahjong) => Promise<void>;
 
@@ -585,13 +594,31 @@ export class Mahjong {
     if (
       setAnkan.length > 0 && this.paiRinshan.length > 0 && this.turnRest() > 0
     ) {
-      actions.push({ user, type: MahjongActionType.ANKAN });
+      const naki: MahjongParamsNaki[] = [];
+      for (const s of setAnkan) {
+        naki.push({
+          type: "ankan",
+          usrId: this.turnUser().id,
+          pmyId: s.paiRest.map((e) => e.id),
+          purId: s.paiCall.map((e) => e.id),
+        });
+      }
+      actions.push({ user, type: MahjongActionType.ANKAN, options: { naki } });
     }
     // kakan
     const setKakan = user.canKakan();
     if (
       setKakan.length > 0 && this.paiRinshan.length > 0 && this.turnRest() > 0
     ) {
+      const naki: MahjongParamsNaki[] = [];
+      for (const s of setKakan) {
+        naki.push({
+          type: "kakan",
+          usrId: this.turnUser().id,
+          pmyId: s.paiRest.map((e) => e.id),
+          purId: s.paiCall.map((e) => e.id),
+        });
+      }
       actions.push({ user, type: MahjongActionType.KAKAN });
     }
 
@@ -644,7 +671,16 @@ export class Mahjong {
       const fromWho = this.fromWho(userIdx, fromIdx);
       const set = user.canMinkan({ pai, fromWho });
       if (set.length > 0) {
-        actions.push({ user, type: MahjongActionType.MINKAN });
+        const naki: MahjongParamsNaki[] = [];
+        for (const s of set) {
+          naki.push({
+            type: "minkan",
+            usrId: this.turnUser().id,
+            pmyId: s.paiRest.map((e) => e.id),
+            purId: s.paiCall.map((e) => e.id),
+          });
+        }
+        actions.push({ user, type: MahjongActionType.MINKAN, options: { naki } });
       }
     }
     // pon
@@ -653,17 +689,35 @@ export class Mahjong {
       const userIdx = this.users.findIndex((e) => e.id === user.id);
       const fromWho = this.fromWho(userIdx, fromIdx);
       const set = user.canPon({ pai, fromWho });
+
       if (set.length > 0) {
-        actions.push({ user, type: MahjongActionType.PON });
+        const naki: MahjongParamsNaki[] = [];
+        for (const s of set) {
+          naki.push({
+            type: "pon",
+            usrId: this.turnUser().id,
+            pmyId: s.paiRest.map((e) => e.id),
+            purId: s.paiCall.map((e) => e.id),
+          });
+        }
+        actions.push({ user, type: MahjongActionType.PON, options: { naki } });
       }
     }
     // chi
     for (let i = 1; i < 2; i++) {
       const user = this.users[(fromIdx + i) % 4];
       const set = user.canChi({ pai });
-
+      const naki: MahjongParamsNaki[] = [];
+      for (const s of set) {
+        naki.push({
+          type: "chi",
+          usrId: this.turnUser().id,
+          pmyId: s.paiRest.map((e) => e.id),
+          purId: s.paiCall.map((e) => e.id),
+        });
+      }
       if (set.length > 0) {
-        actions.push({ user, type: MahjongActionType.CHI });
+        actions.push({ user, type: MahjongActionType.CHI, options: { naki } });
       }
     }
     return actions;
@@ -891,7 +945,11 @@ export class Mahjong {
   }
 
   findAction(user: MahjongUser, input: MahjongInput, params: MahjongParams): MahjongAction | undefined {
-    if (![MahjongInput.DAHAI, MahjongInput.RICHI, MahjongInput.NAKI, MahjongInput.AGARI, MahjongInput.OWARI].includes(input)) {
+    if (
+      ![MahjongInput.DAHAI, MahjongInput.RICHI, MahjongInput.NAKI, MahjongInput.AGARI, MahjongInput.OWARI].includes(
+        input,
+      )
+    ) {
       return undefined;
     }
     if (input === MahjongInput.NAKI) {
@@ -994,14 +1052,11 @@ export class Mahjong {
       this.mutex.release();
       return;
     }
-
-    console.log("input", params); 
     if (!this.validate(input, params)) {
       this.debug(`Invalid input: ${input}`);
       return;
     }
-
-    console.log(`before input: ${input}, user: ${params["usrId"]}, turn: ${this.turnUser().id}`); 
+    
     let isRefresh = true;
     outer: while (true) {
       switch (input) {
@@ -1060,12 +1115,10 @@ export class Mahjong {
       }
     }
 
-    console.log(`after input: ${input}, user: ${params["usrId"]}, turn: ${this.turnUser().id}`); 
     if (isRefresh) {
       this.state = crypto.randomUUID();
       this.output(this);
     }
-
     this.mutex.release();
   }
 }

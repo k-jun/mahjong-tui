@@ -25,6 +25,13 @@ const OnInput = (socket: Socket, rooms: { [key: string]: Room }) => {
   );
 };
 
+const OnPong = (socket: Socket, rooms: { [key: string]: Room }) => {
+  socket.on("pong", (name: string, userId: string) => {
+    const room = rooms[name];
+    room.pong(userId);
+  });
+};
+
 const OnJoin = (socket: Socket, rooms: { [key: string]: Room }) => {
   socket.on("join", async () => {
     let name = "";
@@ -76,9 +83,6 @@ export const OnServerJoinRoom = (
         });
         rooms[name.toString()] = room;
       }
-      room.join(new User("1", true));
-      room.join(new User("2", true));
-      room.join(new User("3", true));
       room.join(new User(id, false));
 
       if (room.size() == 4) {
