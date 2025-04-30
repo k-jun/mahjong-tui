@@ -14,22 +14,11 @@ const OnInput = (socket: Socket, rooms: { [key: string]: Room }) => {
   socket.on(
     "input",
     (name: string, input: MahjongInput, params: MahjongParams) => {
-      // if (params.dahai?.paiId) {
-      //   params.dahai.paiId = new Pai(params.dahai.paiId);
-      // }
-
-      // console.log(name, input, params);
       const room = rooms[name];
+      params.usrId = socket.id;
       room.input(socket.id, input, params);
     },
   );
-};
-
-const OnPong = (socket: Socket, rooms: { [key: string]: Room }) => {
-  socket.on("pong", (name: string, userId: string) => {
-    const room = rooms[name];
-    room.pong(userId);
-  });
 };
 
 const OnJoin = (socket: Socket, rooms: { [key: string]: Room }) => {
@@ -82,9 +71,12 @@ export const OnServerJoinRoom = (
           await io.to(name.toString()).emit("output", name, mjg);
         });
         rooms[name.toString()] = room;
+        room.join(new User("1", true));
+        room.join(new User("2", true));
+        room.join(new User("3", true));
       }
-      room.join(new User(id, false));
 
+      room.join(new User(id, false));
       if (room.size() == 4) {
         room.start();
       }
@@ -100,10 +92,9 @@ export const OnServerLeaveRoom = (
     if (name != id && name in rooms) {
       const room = rooms[name];
       room.leave(id);
-      delete rooms[name];
-      // if (room.size() == 0) {
-      //   delete rooms[name];
-      // }
+      if (room.size() == 0) {
+        delete rooms[name];
+      }
     }
   });
 };

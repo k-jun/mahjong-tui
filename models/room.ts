@@ -54,7 +54,7 @@ export class Room {
             ActionDefault({ mahjong: mjg, userId: user.id, state });
             return;
           }
-          // await sleep(1 * 1000);
+          await sleep(20 * 1000);
           ActionDefault({ mahjong: mjg, userId: user.id, state });
         });
         if (mjg.isEnded) {

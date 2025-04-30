@@ -17,12 +17,9 @@ export const ToimenTSX = (
     >
       {paiSets.map((e) => <PaiTSX text={new Pai(e.id).dsp} key={e.id} />)}
       <EmptyTSX />
-      {toimen.paiTsumo ? <PaiTSX text={new Pai(toimen.paiTsumo.id).dsp} key={0} /> : <EmptyTSX />}
+      {toimen.paiTsumo ? <PaiTSX key={0} /> : <EmptyTSX />}
       <EmptyTSX />
-      {toimen?.paiRest.sort((a, b) => a.id - b.id).map((e) => new Pai(e.id))
-        .map((
-          e,
-        ) => <PaiTSX text={e.dsp} key={e.id} />)}
+      {toimen?.paiRest.sort((a, b) => a.id - b.id).map((e) => new Pai(e.id)).map((e) => <PaiTSX key={e.id} />)}
     </Box>
   );
 };

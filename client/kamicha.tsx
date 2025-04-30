@@ -11,21 +11,13 @@ export const KamichaTSX = ({ kamicha }: { kamicha: MahjongUser }): JSX.Element =
       {kamicha?.paiRest.sort((a, b) => a.id - b.id).map((e) => new Pai(e.id))
         .map((e, idx) => (
           <PaiTSX
-            text={e.dsp}
             key={e.id}
             enableTop={idx === 0}
             enableSide={idx === kamicha.paiRest.length - 1}
           />
         ))}
       <EmptyTSX enableSide={false} />
-      {kamicha?.paiTsumo
-        ? (
-          <PaiTSX
-            text={new Pai(kamicha.paiTsumo.id).dsp}
-            key={kamicha.paiTsumo.id}
-          />
-        )
-        : <EmptyTSX />}
+      {kamicha?.paiTsumo ? <PaiTSX key={kamicha.paiTsumo.id} /> : <EmptyTSX />}
       <EmptyTSX />
       {paiSets.map((e, idx) => (
         <PaiTSX

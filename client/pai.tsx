@@ -15,6 +15,7 @@ export const PaiTSX = (
     enableBottom?: boolean;
     enableSide?: boolean;
     forceHeight?: number;
+    isInverse?: boolean;
   },
 ) => {
   let height = 3 - Number(!enableTop) - Number(!enableBottom) +

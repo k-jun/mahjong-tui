@@ -31,6 +31,7 @@ const App = (
   const shimocha = mahjong?.users[(userIndex + 1) % 4];
   const toimen = mahjong?.users[(userIndex + 2) % 4];
   const kamicha = mahjong?.users[(userIndex + 3) % 4];
+  const actions = mahjong?.actions;
   return (
     <Box flexDirection="column" justifyContent="center" alignItems="center">
       <Box
@@ -86,10 +87,12 @@ const App = (
           </Box>
           <JichaTSX
             jicha={jicha}
-            height={5}
+            actions={actions}
+            height={10}
             width={100}
             socket={socket}
             name={name}
+            state={mahjong.state}
           />
         </Box>
         <Box height={60} width={4}>

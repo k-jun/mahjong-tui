@@ -61,6 +61,7 @@ export enum MahjongActionType {
   CHI = "chi",
   OWARI = "owari",
   RICHI = "richi",
+  SKIP = "skip",
 }
 
 export type MahjongAction = {

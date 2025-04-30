@@ -20,13 +20,15 @@ export const ActionDefault = (
     return;
   }
 
+  const action = userActions.find((e) => e.type === MahjongActionType.DAHAI);
+  if (action !== undefined) {
+    const pai = user.paiTsumo ?? user.paiRest.sort((a, b) => b.id - a.id)[0];
+    mahjong.input(MahjongInput.DAHAI, { usrId: action.user.id, state, dahai: { paiId: pai.id } });
+    return;
+  }
+
   for (const action of userActions) {
     if (action.type === MahjongActionType.OWARI) {
-      continue;
-    }
-    if (action.type === MahjongActionType.DAHAI) {
-      const pai = user.paiTsumo ?? user.paiRest.sort((a, b) => b.id - a.id)[0];
-      mahjong.input(MahjongInput.DAHAI, { usrId: action.user.id, state, dahai: { paiId: pai.id } });
       continue;
     }
     // if (
