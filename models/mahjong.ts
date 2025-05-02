@@ -1055,9 +1055,10 @@ export class Mahjong {
     }
     if (!this.validate(input, params)) {
       this.debug(`Invalid input: ${input}`);
+      this.mutex.release();
       return;
     }
-    
+
     let isRefresh = true;
     outer: while (true) {
       switch (input) {
