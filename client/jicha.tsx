@@ -10,6 +10,7 @@ enum Mode {
   PAI = 1,
   ACT = 2,
   OPT = 3,
+  RCH = 4,
 }
 
 const sortOrder: Record<MahjongActionType, number> = {
@@ -59,11 +60,22 @@ export const JichaTSX = (
         case Mode.PAI:
           setPaiPointer(Math.min(paiRest.length, paiPointer + 1));
           break;
+        case Mode.RCH: {
+          const richi = validActions[actPointer].options?.richi ?? [];
+          const paiAll = [jicha.paiTsumo, ...paiRest];
+          const idx = paiAll.slice(paiPointer + 1, paiAll.length).findIndex((e) =>
+            richi.map((e) => e.paiId).includes(e?.id ?? -1)
+          );
+          if (idx !== -1) {
+            setPaiPointer(Math.min(paiAll.length, paiPointer + idx + 1));
+          }
+          break;
+        }
         case Mode.ACT:
           setActPointer(Math.min(validActions.length - 1, actPointer + 1));
           break;
         case Mode.OPT:
-          setOptPointer(Math.min(options.length - 1, optPointer + 1));
+          setOptPointer(Math.min(nakis.length - 1, optPointer + 1));
           break;
       }
     }
@@ -72,6 +84,15 @@ export const JichaTSX = (
         case Mode.PAI:
           setPaiPointer(Math.max(jicha.paiTsumo ? 0 : 1, paiPointer - 1));
           break;
+        case Mode.RCH: {
+          const richi = validActions[actPointer].options?.richi ?? [];
+          const paiAll = [jicha.paiTsumo, ...paiRest];
+          const idx = paiAll.slice(0, paiPointer).findLastIndex((e) => richi.map((e) => e.paiId).includes(e?.id ?? -1));
+          if (idx !== -1) {
+            setPaiPointer(Math.max(jicha.paiTsumo ? 0 : 1, idx));
+          }
+          break;
+        }
         case Mode.ACT:
           setActPointer(Math.max(0, actPointer - 1));
           break;
@@ -114,25 +135,39 @@ export const JichaTSX = (
           if (action.type === MahjongActionType.SKIP) {
             socket.emit("input", name, MahjongInput.SKIP, { state, usrId: socket.id });
           }
-          if (
-            [
-              MahjongActionType.CHI,
-              MahjongActionType.PON,
-              MahjongActionType.ANKAN,
-              MahjongActionType.MINKAN,
-              MahjongActionType.KAKAN,
-            ].includes(action.type)
-          ) {
-            if (action.options?.naki?.length === 1) {
-              socket.emit("input", name, MahjongInput.NAKI, {
+          switch (action.type) {
+            case MahjongActionType.CHI:
+            case MahjongActionType.PON:
+            case MahjongActionType.ANKAN:
+            case MahjongActionType.MINKAN:
+            case MahjongActionType.KAKAN:
+              if (action.options?.naki?.length === 1) {
+                socket.emit("input", name, MahjongInput.NAKI, {
+                  state,
+                  usrId: socket.id,
+                  naki: action.options?.naki?.[0],
+                });
+                setMode(Mode.PAI);
+                setPaiPointer(1);
+              } else {
+                setMode(Mode.OPT);
+              }
+              break;
+            case MahjongActionType.RON:
+              socket.emit("input", name, MahjongInput.AGARI, {
                 state,
                 usrId: socket.id,
-                naki: action.options?.naki?.[0],
+                agari: action.options?.agari?.[0],
               });
-              setMode(Mode.PAI);
-              setPaiPointer(1);
-            } else {
-              setMode(Mode.OPT);
+              break;
+            case MahjongActionType.RICHI: {
+              const richi = action.options?.richi ?? [];
+              const idx = paiRest.findIndex((e) => richi.map((e) => e.paiId).includes(e.id));
+              if (idx !== -1) {
+                setPaiPointer(idx + 1);
+              }
+              setMode(Mode.RCH);
+              break;
             }
           }
           break;
@@ -148,14 +183,29 @@ export const JichaTSX = (
           setPaiPointer(1);
           break;
         }
+        case Mode.RCH: {
+          socket.emit("input", name, MahjongInput.RICHI, {
+            state,
+            usrId: socket.id,
+            richi: validActions[actPointer].options?.richi?.[optPointer],
+          });
+          socket.emit("input", name, MahjongInput.DAHAI, {
+            state,
+            usrId: socket.id,
+            dahai: { paiId: paiRest[paiPointer].id },
+          });
+          setMode(Mode.PAI);
+          setPaiPointer(1);
+          break;
+        }
       }
     }
   });
 
-  const cmdIdx = mode === Mode.ACT ? actPointer : -1;
-  const paiIdx = mode === Mode.PAI ? paiPointer : -1;
-  const optIdx = mode === Mode.OPT ? optPointer : -1;
-  const options = mode === Mode.OPT ? validActions[actPointer]?.options?.naki ?? [] : [];
+  const paiIdx = [Mode.PAI, Mode.RCH].includes(mode) ? paiPointer : -1;
+  const cmdIdx = [Mode.ACT].includes(mode) ? actPointer : -1;
+  const optIdx = [Mode.OPT].includes(mode) ? optPointer : -1;
+  const nakis = [Mode.OPT].includes(mode) ? validActions[actPointer]?.options?.naki ?? [] : [];
 
   return (
     <Box
@@ -166,13 +216,13 @@ export const JichaTSX = (
       justifyContent="flex-end"
     >
       <Box flexDirection="row" alignItems="center" justifyContent="space-around" width={width}>
-        {mode === Mode.OPT && [...options].reverse().map((e, idx) => (
+        {mode === Mode.OPT && [...nakis].reverse().map((e, idx) => (
           <Box key={`options-${idx}`}>
             {e.pmyId.map((e) => (
               <PaiTSX
                 text={new Pai(e).dsp}
                 key={e}
-                forceHeight={optIdx === options.length - 1 - idx ? 5 : 4}
+                forceHeight={optIdx === nakis.length - 1 - idx ? 5 : 4}
               />
             ))}
           </Box>
@@ -182,6 +232,7 @@ export const JichaTSX = (
             <Text inverse={cmdIdx === validActions.length - 1 - idx}>{e.type}</Text>
           </Box>
         ))}
+        <Text>{`paiIdx:${paiIdx}, cmdIdx:${cmdIdx}, optIdx:${optIdx}`}</Text>
       </Box>
       <Box
         flexDirection="row"

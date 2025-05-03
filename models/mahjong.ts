@@ -626,7 +626,11 @@ export class Mahjong {
     // richi
     const pais = user.canRichi();
     if (pais.length > 0 && this.paiRinshan.length > 0 && this.turnRest() > 0) {
-      actions.push({ user, type: MahjongActionType.RICHI });
+      const richi: MahjongParamsRichi[] = [];
+      for (const p of pais) {
+        richi.push({ paiId: p.id });
+      }
+      actions.push({ user, type: MahjongActionType.RICHI, options: { richi } });
     }
 
     // owari
@@ -657,7 +661,7 @@ export class Mahjong {
       if (!user.canRon()) {
         continue;
       }
-      actions.push({ user, type: MahjongActionType.RON });
+      actions.push({ user, type: MahjongActionType.RON, options: { agari: [{ paiId: pai.id }] } });
     }
 
     // 海底牌 は鳴くことが出来ない

@@ -89,14 +89,6 @@ export const CenterTSX = (
           <Text>{mahjong.kyotaku} 供託</Text>
         </Box>
       </Box>
-      {
-        /* <Box flexDirection="row" justifyContent="center" alignItems="center">
-        {paiDoraList}
-      </Box>
-      <Box flexDirection="row" justifyContent="center" alignItems="center">
-        {paiDoraList}
-      </Box> */
-      }
     </Box>
   );
 };

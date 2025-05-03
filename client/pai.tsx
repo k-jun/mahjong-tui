@@ -8,6 +8,7 @@ export const PaiTSX = (
     enableBottom = true,
     enableSide = true,
     forceHeight,
+    isInverse = false,
   }: {
     text?: string;
     key: number;
@@ -30,10 +31,10 @@ export const PaiTSX = (
       flexDirection="column"
       justifyContent="flex-start"
     >
-      {enableTop && <Text>┌──┐</Text>}
-      <Text>│{text}│</Text>
-      {enableBottom && <Text>└──┘</Text>}
-      {enableSide && <Text>└──┘</Text>}
+      {enableTop && <Text inverse={isInverse}>┌──┐</Text>}
+      <Text inverse={isInverse}>│{text}│</Text>
+      {enableBottom && <Text inverse={isInverse}>└──┘</Text>}
+      {enableSide && <Text inverse={isInverse}>└──┘</Text>}
     </Box>
   );
 };
