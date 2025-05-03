@@ -20,8 +20,7 @@ export const CenterTSX = (
   const shimocha = mahjong?.users[(userIndex + 3) % 4];
   const turnRest = mahjong.paiYama.length + mahjong.paiRinshan.length - 4;
 
-  const kyoku =
-    ["東", "南", "西", "北"][Math.floor(mahjong.kyoku / 4)].toString() +
+  const kyoku = ["東", "南", "西", "北"][Math.floor(mahjong.kyoku / 4) % 4].toString() +
     (mahjong.kyoku % 4 + 1).toString();
 
   const paiDora = mahjong.paiDora;
