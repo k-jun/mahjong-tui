@@ -1,5 +1,5 @@
 {
-  "version": "4",
+  "version": "5",
   "specifiers": {
     "jsr:@117/mutex@^1.0.8": "1.0.8",
     "jsr:@std/assert@^1.0.10": "1.0.11",
@@ -16,6 +16,7 @@
     "npm:ink@*": "5.1.0_react@18.3.1",
     "npm:ink@5": "5.1.0_react@18.3.1",
     "npm:jsdom@26.0.0": "26.0.0",
+    "npm:lodash@*": "4.17.21",
     "npm:react@*": "18.3.1",
     "npm:react@18": "18.3.1",
     "npm:seedrandom@*": "3.0.5",
@@ -202,7 +203,8 @@
       "integrity": "sha512-rcQ1bsQO9799wq24uE5AM2tAILy4gXGIK/njFWcVQkGNZ96edlpY+A7bjwvzjYvLDyzmG1MmMLZhpcsb+klNMQ=="
     },
     "core-js@1.2.7": {
-      "integrity": "sha512-ZiPp9pZlgxpWRu0M+YWbm6+aQ84XEfH1JRXvfOc/fILWI0VKhLC2LX13X1NYq4fULzLMq7Hfh43CSo2/aIaUPA=="
+      "integrity": "sha512-ZiPp9pZlgxpWRu0M+YWbm6+aQ84XEfH1JRXvfOc/fILWI0VKhLC2LX13X1NYq4fULzLMq7Hfh43CSo2/aIaUPA==",
+      "deprecated": true
     },
     "cssstyle@4.2.1": {
       "integrity": "sha512-9+vem03dMXG7gDmZ62uqmRiMRNtinIZ9ZyuF6BdxzfOD+FdN5hretzynkn0ReS2DO2GSw76RWHs0UmJPI2zUjw==",
@@ -321,8 +323,8 @@
         "indent-string",
         "is-in-ci",
         "patch-console",
-        "react-reconciler",
         "react@18.3.1",
+        "react-reconciler",
         "scheduler",
         "signal-exit",
         "slice-ansi@7.1.0",
@@ -351,8 +353,8 @@
         "indent-string",
         "is-in-ci",
         "patch-console",
-        "react-reconciler",
         "react@19.0.0",
+        "react-reconciler",
         "scheduler",
         "signal-exit",
         "slice-ansi@7.1.0",
@@ -363,6 +365,10 @@
         "wrap-ansi",
         "ws@8.18.0",
         "yoga-wasm-web"
+      ],
+      "optionalPeers": [
+        "@types/react@>=18.0.0",
+        "react-devtools-core@^4.19.1"
       ]
     },
     "is-fullwidth-code-point@4.0.0": {
@@ -375,7 +381,8 @@
       ]
     },
     "is-in-ci@1.0.0": {
-      "integrity": "sha512-eUuAjybVTHMYWm/U+vBO1sY/JOCgoPCXRxzdju0K+K0BiGW0SChEL1MLC0PoCIR1OlPo5YAp8HuQoUlsWEICwg=="
+      "integrity": "sha512-eUuAjybVTHMYWm/U+vBO1sY/JOCgoPCXRxzdju0K+K0BiGW0SChEL1MLC0PoCIR1OlPo5YAp8HuQoUlsWEICwg==",
+      "bin": true
     },
     "is-potential-custom-element-name@1.0.1": {
       "integrity": "sha512-bCYeRA2rVibKZd+s2625gGnGF/t7DSqDs4dP7CrLA1m7jKWz6pps0LpYLJN8Q64HtmPKJ1hrN3nzPNKFEKOUiQ=="
@@ -409,11 +416,15 @@
         "xml-name-validator"
       ]
     },
+    "lodash@4.17.21": {
+      "integrity": "sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg=="
+    },
     "loose-envify@1.4.0": {
       "integrity": "sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==",
       "dependencies": [
         "js-tokens"
-      ]
+      ],
+      "bin": true
     },
     "lru-cache@11.0.2": {
       "integrity": "sha512-123qHRfJBmo2jXDbo/a5YOQrJoHF/GNQTLzQ5+IdK5pWpceK17yRc6ozlWd25FxvGKQbIUs91fDFkXmDHTKcyA=="
@@ -562,7 +573,8 @@
       "integrity": "sha512-LQIHmHnuzfZgZWAf2HzL83TIIrD8NhhI0DVxqo9/FdOd4ilec+NTNZOlDZf7EwrTNoutccbsHjvWHYXLAtvxjw==",
       "dependencies": [
         "tldts-core"
-      ]
+      ],
+      "bin": true
     },
     "tough-cookie@5.1.0": {
       "integrity": "sha512-rvZUv+7MoBYTiDmFPBrhL7Ujx9Sk+q9wwm22x8c8T5IJaR+Wsyc7TNxbVxo84kZoRJZZMazowFLqpankBEQrGg==",

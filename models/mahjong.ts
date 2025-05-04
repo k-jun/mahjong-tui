@@ -92,11 +92,12 @@ export class Mahjong {
 
   kyotaku: number = 0;
   honba: number = 0;
-  kyoku: number = 0;
+  kyoku: number = 8;
 
   isAgari: boolean = false;
   isRenchan: boolean = false;
   isEnded: boolean = false;
+  EndedType?: "yao9" | "kaze4" | "richi4" | "ron3" | "kan4";
   isHonbaTaken: boolean = false;
 
   state: string = "";
@@ -152,7 +153,146 @@ export class Mahjong {
   }
 
   generate(): Pai[] {
-    return [...PaiAll];
+    // const org = [...PaiAll];
+    // return org
+    return [
+      19,
+      111,
+      82,
+      131,
+      62,
+      81,
+      47,
+      4,
+      85,
+      92,
+      107,
+      114,
+      129,
+      126,
+      49,
+      46,
+      80,
+      34,
+      14,
+      84,
+      61,
+      5,
+      39,
+      21,
+      60,
+      94,
+      68,
+      132,
+      69,
+      130,
+      119,
+      43,
+      71,
+      78,
+      0,
+      50,
+      90,
+      32,
+      7,
+      115,
+      125,
+      73,
+      48,
+      93,
+      3,
+      57,
+      26,
+      112,
+      64,
+      51,
+      56,
+      18,
+      36,
+      123,
+      38,
+      104,
+      20,
+      42,
+      98,
+      127,
+      9,
+      133,
+      113,
+      17,
+      100,
+      89,
+      103,
+      86,
+      101,
+      27,
+      23,
+      6,
+      109,
+      44,
+      58,
+      74,
+      72,
+      88,
+      77,
+      28,
+      120,
+      118,
+      117,
+      10,
+      121,
+      67,
+      70,
+      66,
+      8,
+      33,
+      59,
+      31,
+      12,
+      110,
+      30,
+      37,
+      124,
+      24,
+      83,
+      35,
+      76,
+      40,
+      55,
+      25,
+      116,
+      99,
+      45,
+      16,
+      96,
+      2,
+      91,
+      95,
+      65,
+      122,
+      1,
+      108,
+      75,
+      97,
+      54,
+      53,
+      52,
+      134,
+      13,
+      106,
+      11,
+      29,
+      41,
+      87,
+      15,
+      128,
+      135,
+      102,
+      63,
+      22,
+      105,
+      79,
+    ].map((e) => new Pai(e));
   }
 
   gameStart(pais: Pai[]): void {
@@ -199,6 +339,7 @@ export class Mahjong {
     if (this.isEnded) {
       this.updateBakyo();
       this.isEnded = false;
+      this.EndedType = undefined
       this.isAgari = false;
       this.isRenchan = false;
     }
@@ -267,6 +408,7 @@ export class Mahjong {
 
     if (!user.dahai({ pai })) {
       this.debug(`dahai failed: ${user.id}, ${pai.fmt}`);
+      return [MahjongInput.BREAK, params];
     }
 
     user.isIppatsu = false;
@@ -314,6 +456,7 @@ export class Mahjong {
 
     action.enable = true;
     action.agari = params.agari!;
+    user.isOpen = true;
 
     if (isTsumo) {
       this.calcPoint({
@@ -350,10 +493,15 @@ export class Mahjong {
   owari(params: MahjongParams): [MahjongInput, MahjongParams] {
     const { type } = params["owari"]!;
     if (type != undefined) {
+      if (type === "yao9") {
+        this.turnUser().isOpen = true;
+      }
+      this.EndedType = type;
       this.gameEnded({ isAgari: false, isRenchan: true });
       return [MahjongInput.BREAK, params];
     }
-
+    
+    // 流局
     const isTenpai = this.users.map((e) => e.machi().length > 0);
     const pointsNagashimangan = this.owariNagashimangan();
     const points = this.owariNormal({ isTenpai });
@@ -377,7 +525,7 @@ export class Mahjong {
     const user = this.users.find((e) => e.id === params["usrId"]!)!;
     this.actions = [{ user, type: MahjongActionType.DAHAI }];
     user.isAfterRichi = true;
-    return [MahjongInput.BREAK, params];
+    return [MahjongInput.DAHAI, { usrId: user.id, dahai: { paiId: params.richi!.paiId } }];
   }
 
   richiAfter({ user }: { user: MahjongUser }): void {
@@ -435,6 +583,7 @@ export class Mahjong {
     this.richiAfter({ user: this.turnUser() });
     if (!user.naki({ set })) {
       this.debug(`naki failed: ${user.id}, ${set.pais.map((e) => e.fmt).join(",")}`);
+      return [MahjongInput.BREAK, params];
     }
 
     if (user.id !== tacha.id) {
@@ -672,6 +821,9 @@ export class Mahjong {
     // minkan
     for (let i = 1; i < 4; i++) {
       const user = this.users[(fromIdx + i) % 4];
+      if (user.isRichi || user.isDabururichi) {
+        continue;
+      }
       const userIdx = this.users.findIndex((e) => e.id === user.id);
       const fromWho = this.fromWho(userIdx, fromIdx);
       const set = user.canMinkan({ pai, fromWho });
@@ -691,6 +843,9 @@ export class Mahjong {
     // pon
     for (let i = 1; i < 4; i++) {
       const user = this.users[(fromIdx + i) % 4];
+      if (user.isRichi || user.isDabururichi) {
+        continue;
+      }
       const userIdx = this.users.findIndex((e) => e.id === user.id);
       const fromWho = this.fromWho(userIdx, fromIdx);
       const set = user.canPon({ pai, fromWho });
@@ -711,6 +866,9 @@ export class Mahjong {
     // chi
     for (let i = 1; i < 2; i++) {
       const user = this.users[(fromIdx + i) % 4];
+      if (user.isRichi || user.isDabururichi) {
+        continue;
+      }
       const set = user.canChi({ pai });
       const naki: MahjongParamsNaki[] = [];
       for (const s of set) {
@@ -990,6 +1148,7 @@ export class Mahjong {
           return false;
         }
         if (params["dahai"] === undefined) {
+          this.debug(`dahai not found: ${input}`);
           return false;
         }
         const action = this.findAction(user, input, params);
@@ -1001,6 +1160,7 @@ export class Mahjong {
       }
       case MahjongInput.AGARI: {
         if (params["agari"] === undefined) {
+          this.debug(`agari not found: ${input}`);
           return false;
         }
         const action = this.findAction(user, input, params);
@@ -1020,6 +1180,7 @@ export class Mahjong {
       }
       case MahjongInput.NAKI: {
         if (params["naki"] === undefined) {
+          this.debug(`naki not found: ${input}`);
           return false;
         }
         const action = this.findAction(user, input, params);
@@ -1034,6 +1195,7 @@ export class Mahjong {
       }
       case MahjongInput.OWARI: {
         if (params["owari"] === undefined) {
+          this.debug(`owari not found: ${input}`);
           return false;
         }
         const action = this.findAction(user, input, params);

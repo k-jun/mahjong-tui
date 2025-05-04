@@ -9,6 +9,7 @@ Deno.test("mahjong new", async () => {
   let globalGame: Mahjong = new Mahjong(userIds, async (_) => {});
   const state = {
     isRon3: false,
+    isAfterRichi: [false, false, false, false],
     checkAfterAgari: [(_: number) => {}],
     checkAfterRichi: [(_: number) => {}],
   };
@@ -28,8 +29,12 @@ Deno.test("mahjong new", async () => {
 
         state.checkAfterRichi = [];
         state.checkAfterAgari = [];
+        state.isAfterRichi = [false, false, false, false];
         state.isRon3 = false;
         const { hai0, hai1, hai2, hai3, yama, score, kyoku, honba, kyotk } = params.init!;
+
+        // console.debug(yama.map((e) => e.id));
+        console.log(Deno.inspect(yama.map((e) => e.id), { iterableLimit: Infinity }))
         globalGame.enableDebug = true;
         globalGame.sleep = 0;
         globalGame.gameReset();
@@ -104,11 +109,20 @@ Deno.test("mahjong new", async () => {
 
         const { who, hai } = params.dahai!;
         expect(globalGame.turnUserIdx).toEqual(who);
-        await globalGame.input(MahjongInput.DAHAI, {
-          usrId: globalGame.turnUser().id,
-          state: globalGame.state,
-          dahai: { paiId: hai.id },
-        });
+
+        if (state.isAfterRichi[who] && (!globalGame.users[who].isRichi && !globalGame.users[who].isDabururichi)) {
+          await globalGame.input(MahjongInput.RICHI, {
+            usrId: globalGame.turnUser().id,
+            state: globalGame.state,
+            richi: { paiId: hai.id },
+          });
+        } else {
+          await globalGame.input(MahjongInput.DAHAI, {
+            usrId: globalGame.turnUser().id,
+            state: globalGame.state,
+            dahai: { paiId: hai.id },
+          });
+        }
 
         expect(globalGame.users[who].paiTsumo).toEqual(undefined);
         break;
@@ -117,10 +131,7 @@ Deno.test("mahjong new", async () => {
         const { who, step, ten } = params.richi!;
         if (step === 1) {
           expect(globalGame.turnUserIdx).toEqual(who);
-          await globalGame.input(MahjongInput.RICHI, {
-            usrId: globalGame.turnUser().id,
-            state: globalGame.state,
-          });
+          state.isAfterRichi[who] = true;
         }
         if (step == 2) {
           state.checkAfterRichi.push((_: number) => {
@@ -161,6 +172,7 @@ Deno.test("mahjong new", async () => {
           }
         }
         if (type === "yao9") {
+          throw new Error("yao9");
           await globalGame.input(MahjongInput.OWARI, {
             usrId: globalGame.turnUser().id,
             state: globalGame.state,

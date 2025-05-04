@@ -54,6 +54,10 @@ export const JichaTSX = (
   }
   validActions.sort((a, b) => sortOrder[a.type] - sortOrder[b.type]);
 
+  if (userActions.length === 0 && mode !== Mode.PAI) {
+    setMode(Mode.PAI);
+  }
+
   useInput((_, key) => {
     if (key.leftArrow) {
       switch (mode) {
@@ -160,6 +164,14 @@ export const JichaTSX = (
                 agari: action.options?.agari?.[0],
               });
               break;
+            case MahjongActionType.TSUMO: {
+              socket.emit("input", name, MahjongInput.AGARI, {
+                state,
+                usrId: socket.id,
+                agari: { paiId: jicha.paiTsumo?.id! },
+              });
+              break;
+            }
             case MahjongActionType.RICHI: {
               const richi = action.options?.richi ?? [];
               const idx = paiRest.findIndex((e) => richi.map((e) => e.paiId).includes(e.id));
@@ -167,6 +179,14 @@ export const JichaTSX = (
                 setPaiPointer(idx + 1);
               }
               setMode(Mode.RCH);
+              break;
+            }
+            case MahjongActionType.OWARI: {
+              socket.emit("input", name, MahjongInput.OWARI, {
+                state,
+                usrId: socket.id,
+                owari: { type: "yao9" },
+              });
               break;
             }
           }
@@ -188,11 +208,6 @@ export const JichaTSX = (
             state,
             usrId: socket.id,
             richi: validActions[actPointer].options?.richi?.[optPointer],
-          });
-          socket.emit("input", name, MahjongInput.DAHAI, {
-            state,
-            usrId: socket.id,
-            dahai: { paiId: paiRest[paiPointer].id },
           });
           setMode(Mode.PAI);
           setPaiPointer(1);
@@ -232,7 +247,6 @@ export const JichaTSX = (
             <Text inverse={cmdIdx === validActions.length - 1 - idx}>{e.type}</Text>
           </Box>
         ))}
-        <Text>{`paiIdx:${paiIdx}, cmdIdx:${cmdIdx}, optIdx:${optIdx}`}</Text>
       </Box>
       <Box
         flexDirection="row"

@@ -58,6 +58,7 @@ export class Room {
           ActionDefault({ mahjong: mjg, userId: user.id, state });
         });
         if (mjg.isEnded) {
+          await sleep(10 * 1000);
           mjg.gameReset();
           await mjg.gameStart(mjg.generate());
           return;

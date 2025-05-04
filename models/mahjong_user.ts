@@ -18,6 +18,7 @@ export class MahjongUser {
   isAfterRichi: boolean = false;
   isFuriten: boolean = false;
   isCalled: boolean = false;
+  isOpen: boolean = false;
 
   countKans: number[] = [];
   constructor(
@@ -44,6 +45,7 @@ export class MahjongUser {
     this.isCalled = false;
     this.isAfterKakan = false;
     this.isAfterRichi = false;
+    this.isOpen = false;
     this.countKans = [];
   }
 
@@ -64,7 +66,7 @@ export class MahjongUser {
 
         const target = params.pai;
         const tedashi = this.paiRest.some((e) => e.id === target.id);
-        if (this.isRichi && tedashi) {
+        if ((this.isRichi || this.isDabururichi) && tedashi) {
           return false;
         }
         return this.pais.map((e) => e.id).includes(target.id);
@@ -123,7 +125,7 @@ export class MahjongUser {
     const idx = this.paiRest.findIndex((e) => e.id === pai.id);
     this.paiKawa.push(...this.paiRest.splice(idx, 1));
 
-    if (!this.isRichi && this.isFuriten) {
+    if (!this.isRichi && !this.isDabururichi && this.isFuriten) {
       this.isFuriten = false;
     }
 
@@ -310,7 +312,7 @@ export class MahjongUser {
           paiRest: value.slice(0, 4),
           type: PaiSetType.ANKAN,
         });
-        if (this.isRichi) {
+        if (this.isRichi || this.isDabururichi) {
           const before = this.machi().map((e) => e.fmt).join(",");
           const copyUser = new MahjongUser({ ...this });
           copyUser.paiRest = paiAll.filter((e) => e.fmt !== key);
@@ -368,7 +370,7 @@ export class MahjongUser {
     if (this.point < 1000) {
       return [];
     }
-    if (this.isRichi) {
+    if (this.isRichi || this.isDabururichi) {
       return [];
     }
 
