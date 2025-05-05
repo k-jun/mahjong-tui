@@ -57,13 +57,13 @@ export class Room {
           await sleep(20 * 1000);
           ActionDefault({ mahjong: mjg, userId: user.id, state });
         });
-        if (mjg.isEnded) {
+        this.output(mjg);
+        if (mjg.isEnded && !mjg.isOshimai) {
           await sleep(10 * 1000);
           mjg.gameReset();
           await mjg.gameStart(mjg.generate());
           return;
         }
-        this.output(mjg);
       },
     );
     this.mahjong.gameStart(this.mahjong.generate());

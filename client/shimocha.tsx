@@ -22,12 +22,15 @@ export const ShimochaTSX = ({ shimocha }: { shimocha: MahjongUser }): JSX.Elemen
         />
       ))}
       <EmptyTSX enableTop={false} enableSide={false} />
-      {shimocha?.paiTsumo ? <PaiTSX key={0} /> : <EmptyTSX />}
+      {shimocha?.paiTsumo
+        ? <PaiTSX key={0} text={shimocha.isOpen ? new Pai(shimocha?.paiTsumo.id).dsp : "  "} />
+        : <EmptyTSX />}
       <EmptyTSX enableSide={false} />
       {shimocha?.paiRest.sort((a, b) => a.id - b.id).map((e) => new Pai(e.id))
         .map((e, idx) => (
           <PaiTSX
             key={e.id}
+            text={shimocha.isOpen ? new Pai(e.id).dsp : "  "}
             enableTop={idx === 0}
             enableSide={idx === shimocha.paiRest.length - 1}
           />

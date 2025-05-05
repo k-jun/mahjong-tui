@@ -11,7 +11,7 @@ export const PaiTSX = (
     isInverse = false,
   }: {
     text?: string;
-    key: number;
+    key: number | string;
     enableTop?: boolean;
     enableBottom?: boolean;
     enableSide?: boolean;

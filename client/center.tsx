@@ -3,7 +3,6 @@ import { Pai } from "@k-jun/mahjong";
 import { Box, Text } from "npm:ink";
 import React, { JSX } from "npm:react";
 import { PaiTSX } from "./pai.tsx";
-// import { v4 as uuidv4 } from 'uuid';
 
 export const CenterTSX = (
   { mahjong, height, width, socketId }: {
@@ -13,16 +12,6 @@ export const CenterTSX = (
     socketId: string;
   },
 ): JSX.Element => {
-  const userIndex = mahjong?.users.findIndex((user) => user.id === socketId);
-  const jicha = mahjong?.users[userIndex];
-  const kamicha = mahjong?.users[(userIndex + 1) % 4];
-  const toimen = mahjong?.users[(userIndex + 2) % 4];
-  const shimocha = mahjong?.users[(userIndex + 3) % 4];
-  const turnRest = mahjong.paiYama.length + mahjong.paiRinshan.length - 4;
-
-  const kyoku = ["東", "南", "西", "北"][Math.floor(mahjong.kyoku / 4) % 4].toString() +
-    (mahjong.kyoku % 4 + 1).toString();
-
   const paiDora = mahjong.paiDora;
   const paiDoraList = [];
   for (let i = 0; i < 5; i++) {
@@ -32,6 +21,7 @@ export const CenterTSX = (
     }
     paiDoraList.push(<PaiTSX key={200 + i} />);
   }
+
   return (
     <Box
       flexDirection="column"
@@ -46,15 +36,42 @@ export const CenterTSX = (
         flexDirection="row"
         justifyContent="center"
         alignItems="center"
-        height={4}
+        height={5}
       >
         {paiDoraList}
       </Box>
+      <BakyokuTSX mahjong={mahjong} height={height - 5} width={width} socketId={socketId} />
+    </Box>
+  );
+};
+
+const BakyokuTSX = ({ mahjong, height, width, socketId }: {
+  mahjong: Mahjong;
+  height: number;
+  width: number;
+  socketId: string;
+}): JSX.Element => {
+  const userIndex = mahjong?.users.findIndex((user) => user.id === socketId);
+  const jicha = mahjong?.users[userIndex];
+  const shimocha = mahjong?.users[(userIndex + 1) % 4];
+  const toimen = mahjong?.users[(userIndex + 2) % 4];
+  const kamicha = mahjong?.users[(userIndex + 3) % 4];
+  
+  const turnRest = mahjong.paiYama.length + mahjong.paiRinshan.length - 4;
+  const kyoku = ["東", "南", "西", "北"][Math.floor(mahjong.kyoku / 4) % 4].toString() +
+    (mahjong.kyoku % 4 + 1).toString();
+  return (
+    <Box
+      flexDirection="column"
+      justifyContent="space-between"
+      height={height}
+      width={width}
+    >
       <Box
         flexDirection="column"
-        justifyContent="center"
+        justifyContent="flex-end"
         alignItems="center"
-        height={3}
+        height={5}
       >
         <Text>{new Pai(toimen.paiJikaze?.id ?? 0).dsp}{toimen.point}</Text>
         <Text>
@@ -66,7 +83,7 @@ export const CenterTSX = (
       </Box>
       <Box
         flexDirection="row"
-        height={5}
+        height={4}
         justifyContent="center"
         alignItems="center"
       >

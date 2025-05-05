@@ -12,12 +12,15 @@ export const KamichaTSX = ({ kamicha }: { kamicha: MahjongUser }): JSX.Element =
         .map((e, idx) => (
           <PaiTSX
             key={e.id}
+            text={kamicha.isOpen ? new Pai(e.id).dsp : "  "}
             enableTop={idx === 0}
             enableSide={idx === kamicha.paiRest.length - 1}
           />
         ))}
       <EmptyTSX enableSide={false} />
-      {kamicha?.paiTsumo ? <PaiTSX key={kamicha.paiTsumo.id} /> : <EmptyTSX />}
+      {kamicha?.paiTsumo
+        ? <PaiTSX key={kamicha.paiTsumo.id} text={kamicha.isOpen ? new Pai(kamicha.paiTsumo.id).dsp : "  "} />
+        : <EmptyTSX />}
       <EmptyTSX />
       {paiSets.map((e, idx) => (
         <PaiTSX

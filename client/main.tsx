@@ -8,6 +8,7 @@ import { ShimochaKawaExtraTSX, ShimochaKawaTSX, ShimochaTSX } from "./shimocha.t
 import { JichaKawaExtraTSX, JichaKawaTSX, JichaTSX } from "./jicha.tsx";
 import { CenterTSX } from "./center.tsx";
 import { render } from "npm:ink";
+import { ResultTSX } from "./result.tsx";
 // import { withFullScreen } from "npm:fullscreen-ink";
 
 const socket = io("http://localhost:8080");
@@ -55,36 +56,11 @@ const App = (
           height={60}
         >
           <ToimenTSX toimen={toimen} height={4} width={100} />
-          <Box flexDirection="row" alignItems="center">
-            <Box flexDirection="column">
-              <Box height={14} width={24} flexDirection="column" justifyContent="flex-end">
-                <ToimenKawaExtraTSX toimen={toimen} height={8} width={24} />
-              </Box>
-              <KamichaKawaTSX kamicha={kamicha} height={14} width={24} />
-              <Box height={14} width={24} flexDirection="row" justifyContent="flex-end">
-                <KamichaKawaExtraTSX kamicha={kamicha} height={14} width={12} />
-              </Box>
-            </Box>
-            <Box flexDirection="column">
-              <ToimenKawaTSX toimen={toimen} height={8} width={24} />
-              <CenterTSX
-                mahjong={mahjong}
-                height={14}
-                width={24}
-                socketId={socket.id ?? ""}
-              />
-              <JichaKawaTSX jicha={jicha} height={8} width={24} />
-            </Box>
-            <Box flexDirection="column">
-              <Box height={14} width={24}>
-                <ShimochaKawaExtraTSX shimocha={shimocha} height={14} width={12} />
-              </Box>
-              <ShimochaKawaTSX shimocha={shimocha} height={14} width={24} />
-              <Box height={14} width={24}>
-                <JichaKawaExtraTSX jicha={jicha} height={8} width={24} />
-              </Box>
-            </Box>
-          </Box>
+          {mahjong.isEnded ? (
+            <ResultTSX mahjong={mahjong} socketId={socket.id ?? ""} />
+          ) : (
+            <MainTSX mahjong={mahjong} socket={socket} height={14 * 3} width={24 * 3} />
+          )}
           <JichaTSX
             jicha={jicha}
             actions={actions}
@@ -97,6 +73,52 @@ const App = (
         </Box>
         <Box height={60} width={4}>
           <ShimochaTSX shimocha={shimocha} />
+        </Box>
+      </Box>
+    </Box>
+  );
+};
+
+const MainTSX = ({ mahjong, socket }: {
+  mahjong: Mahjong;
+  socket: Socket;
+  height: number;
+  width: number;
+}): JSX.Element => {
+  const userIndex = mahjong?.users.findIndex((user) => user.id === socket.id);
+  const jicha = mahjong?.users[userIndex];
+  const shimocha = mahjong?.users[(userIndex + 1) % 4];
+  const toimen = mahjong?.users[(userIndex + 2) % 4];
+  const kamicha = mahjong?.users[(userIndex + 3) % 4];
+
+  return (
+    <Box flexDirection="row" alignItems="center" width={24 * 3} height={14 * 3}>
+      <Box flexDirection="column">
+        <Box height={14} width={24} flexDirection="column" justifyContent="flex-end">
+          <ToimenKawaExtraTSX toimen={toimen} height={8} width={24} />
+        </Box>
+        <KamichaKawaTSX kamicha={kamicha} height={14} width={24} />
+        <Box height={14} width={24} flexDirection="row" justifyContent="flex-end">
+          <KamichaKawaExtraTSX kamicha={kamicha} height={14} width={12} />
+        </Box>
+      </Box>
+      <Box flexDirection="column">
+        <ToimenKawaTSX toimen={toimen} height={8} width={24} />
+        <CenterTSX
+          mahjong={mahjong}
+          height={14}
+          width={24}
+          socketId={socket.id ?? ""}
+        />
+        <JichaKawaTSX jicha={jicha} height={8} width={24} />
+      </Box>
+      <Box flexDirection="column">
+        <Box height={14} width={24}>
+          <ShimochaKawaExtraTSX shimocha={shimocha} height={14} width={12} />
+        </Box>
+        <ShimochaKawaTSX shimocha={shimocha} height={14} width={24} />
+        <Box height={14} width={24} flexDirection="column">
+          <JichaKawaExtraTSX jicha={jicha} height={8} width={24} />
         </Box>
       </Box>
     </Box>

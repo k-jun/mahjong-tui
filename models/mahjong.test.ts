@@ -32,9 +32,7 @@ Deno.test("mahjong new", async () => {
         state.isAfterRichi = [false, false, false, false];
         state.isRon3 = false;
         const { hai0, hai1, hai2, hai3, yama, score, kyoku, honba, kyotk } = params.init!;
-
-        // console.debug(yama.map((e) => e.id));
-        console.log(Deno.inspect(yama.map((e) => e.id), { iterableLimit: Infinity }))
+        // console.log(Deno.inspect(yama.map((e) => e.id), { iterableLimit: Infinity }));
         globalGame.enableDebug = true;
         globalGame.sleep = 0;
         globalGame.gameReset();
@@ -172,7 +170,6 @@ Deno.test("mahjong new", async () => {
           }
         }
         if (type === "yao9") {
-          throw new Error("yao9");
           await globalGame.input(MahjongInput.OWARI, {
             usrId: globalGame.turnUser().id,
             state: globalGame.state,
@@ -252,7 +249,7 @@ Deno.test("mahjong new", async () => {
           }
 
           const tokuten = globalGame.tokutens[idx];
-          const actYakus = tokuten.yakus.filter((e) => e.val > 0);
+          const actYakus = tokuten.output.yakus.filter((e) => e.val > 0);
           const actYakuVal = actYakus.map((e) => ({ ...e })).sort((a, b) => a.str.localeCompare(b.str));
           const expYakuVal = yakus.filter((e) => e.val > 0).sort((a, b) => a.str.localeCompare(b.str));
           expect(actYakuVal).toEqual(expYakuVal);

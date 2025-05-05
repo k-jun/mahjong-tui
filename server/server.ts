@@ -70,15 +70,15 @@ export const OnServerJoinRoom = (
         room = new Room(async (mjg) => {
           await io.to(name.toString()).emit("output", name, mjg);
         });
+        room.join(new User("1", true));
+        room.join(new User("2", true));
         rooms[name.toString()] = room;
       }
-
-      room.join(new User("1", true));
       room.join(new User(id, false));
-      room.join(new User("2", true));
-      room.join(new User("3", true));
+      // room.join(new User("3", true));
       if (room.size() == 4) {
         room.start();
+        room.mahjong!.sleep = 100;
       }
     }
   });

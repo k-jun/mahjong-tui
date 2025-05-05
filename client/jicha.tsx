@@ -204,10 +204,11 @@ export const JichaTSX = (
           break;
         }
         case Mode.RCH: {
+          const pai = paiPointer === 0 ? jicha.paiTsumo : paiRest[paiPointer - 1];
           socket.emit("input", name, MahjongInput.RICHI, {
             state,
             usrId: socket.id,
-            richi: validActions[actPointer].options?.richi?.[optPointer],
+            richi: { paiId: pai?.id ?? -1 },
           });
           setMode(Mode.PAI);
           setPaiPointer(1);
