@@ -98,7 +98,7 @@ export class MahjongUser {
             break;
           }
         }
-
+        
         const isEqual = (e: PaiSet): boolean => {
           if (e.type !== params.set!.type) {
             return false;

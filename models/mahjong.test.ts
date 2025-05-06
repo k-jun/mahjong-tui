@@ -35,9 +35,13 @@ Deno.test("mahjong new", async () => {
         // console.log(Deno.inspect(yama.map((e) => e.id), { iterableLimit: Infinity }));
         globalGame.enableDebug = true;
         globalGame.sleep = 0;
-        globalGame.gameReset();
-        globalGame.gameStart(yama.map((e) => new Pai(e.id)));
+        await globalGame.gameReset();
+        await globalGame.gameStart(yama.map((e) => new Pai(e.id)));
 
+        expect(globalGame.users.map((e) => e.point)).toEqual(score);
+        expect(globalGame.kyoku).toEqual(kyoku);
+        expect(globalGame.honba).toEqual(honba);
+        expect(globalGame.kyotaku).toEqual(kyotk);
         expect(globalGame.users.map((e) => e.paiRest.length)).toEqual(
           new Array(4).fill(13),
         );
@@ -53,10 +57,6 @@ Deno.test("mahjong new", async () => {
         expect(globalGame.users[3].paiRest).toEqual(
           hai3.map((e) => new Pai(e.id)),
         );
-        expect(globalGame.users.map((e) => e.point)).toEqual(score);
-        expect(globalGame.kyoku).toEqual(kyoku);
-        expect(globalGame.honba).toEqual(honba);
-        expect(globalGame.kyotaku).toEqual(kyotk);
         break;
       }
       case "TSUMO": {

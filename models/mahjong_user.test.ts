@@ -866,3 +866,36 @@ Deno.test("MahjongUser isKyushukyuhai", async (t) => {
     expect(user.isKyushukyuhai()).toBe(true);
   });
 });
+
+Deno.test("should return valid machi candidates for complex hand", async (t) => {
+  await t.step("should return valid machi candidates for mixed wait", () => {
+    const user = new MahjongUser({
+      id: "test-user",
+      point: 25000,
+    });
+    user.paiRest = [
+      new Pai("m1"),
+      new Pai("m2"),
+      new Pai("m3"),
+      new Pai("mr"),
+      new Pai("p4"),
+      new Pai("p4"),
+      new Pai("p5"),
+      new Pai("pr"),
+      new Pai("p6"),
+      new Pai("p6"),
+    ];
+
+    user.paiSets = [
+      new PaiSet({
+        type: PaiSetType.MINKO,
+        paiRest: [new Pai("m8"), new Pai("m8")],
+        paiCall: [new Pai("m8")],
+      }),
+    ];
+    // user.paiTsumo = new Pai("m1");
+    const results = user.machi();
+    expect(results.length).toBe(1);
+    expect(results.map((p) => p.fmt)).toEqual(["m5"]);
+  });
+});

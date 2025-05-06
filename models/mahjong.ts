@@ -91,8 +91,9 @@ export class Mahjong {
     user: MahjongUser;
     input: TokutenInput;
     output: TokutenOutput;
-    before: number[];
-    after: number[];
+  }[] = [];
+  scrdiffs: {
+    base: number[];
     diff: number[];
   }[] = [];
   mutex: Mutex = createMutex();
@@ -103,9 +104,8 @@ export class Mahjong {
 
   isAgari: boolean = false;
   isRenchan: boolean = false;
-  isEnded: boolean = false;
+  status: "playing" | "ended" | "completed" = "playing";
   EndedType?: "yao9" | "kaze4" | "richi4" | "ron3" | "kan4";
-  isOshimai: boolean = false;
   isHonbaTaken: boolean = false;
 
   state: string = "";
@@ -162,10 +162,33 @@ export class Mahjong {
 
   generate(): Pai[] {
     const org = [...PaiAll];
+
+    // for (let i = 0; i < org.length; i++) {
+    //   switch (org[i].id) {
+    //     case new Pai("s3").id:
+    //       org[i] = new Pai("s7");
+    //       break;
+    //     case new Pai("s7").id:
+    //       org[i] = new Pai("s3");
+    //       break;
+    //     default:
+    //       break;
+    //   }
+    // }
+    for (let i = org.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [org[i], org[j]] = [org[j], org[i]];
+    }
     return org;
   }
 
   gameStart(pais: Pai[]): void {
+    console.log("gameStart called", this.status);
+    if (this.status !== "playing") {
+      this.debug(`gameStart called while status is: ${this.status}`);
+      return;
+    }
+
     this.paiYama = pais;
     for (let i = 0; i < 4; i++) {
       this.users[(i + this.kyoku) % 4].paiJikaze = PaiKaze[i];
@@ -195,34 +218,34 @@ export class Mahjong {
   gameEnded(
     { isRenchan, isAgari }: { isRenchan: boolean; isAgari: boolean },
   ): void {
+    console.log("gameEnded called", this.status);
     if (isAgari) {
       this.kyotaku = 0;
     }
-    this.isEnded = true;
+    this.status = "ended";
     this.isAgari = isAgari;
     this.isRenchan = isRenchan || this.isRenchan;
     this.isHonbaTaken = true;
-
-    if (this.users.some((e) => e.point < 0)) {
-      this.isOshimai = true;
-    }
-    if (this.kyoku >= 7 && this.users.some((e) => e.point >= 30000)) {
-      this.isOshimai = true;
-    }
-    if (this.kyoku >= 11) {
-      this.isOshimai = true;
-    }
     this.output(this);
   }
 
   gameReset(): void {
-    if (this.isEnded) {
-      this.updateBakyo();
-      this.isEnded = false;
-      this.EndedType = undefined;
-      this.isAgari = false;
-      this.isRenchan = false;
+    console.log("gameReset called", this.status);
+    if (this.status === "ended") {
+      if (this.updateStatus()) {
+        this.output(this);
+        return;
+      }
     }
+    if (this.status === "completed") {
+      return;
+    }
+
+    this.EndedType = undefined;
+    this.status = "playing";
+    this.isAgari = false;
+    this.isRenchan = false;
+
     this.tokutens = [];
     this.paiWanpai = [];
     this.paiDora = [];
@@ -234,7 +257,7 @@ export class Mahjong {
     this.output(this);
   }
 
-  updateBakyo(): void {
+  updateStatus(): boolean {
     if (this.isAgari && this.isRenchan) {
       this.honba += 1;
     }
@@ -249,6 +272,24 @@ export class Mahjong {
       this.kyoku += 1;
       this.honba += 1;
     }
+
+    let isCompleted = false;
+    if (this.users.some((e) => e.point < 0)) {
+      isCompleted = true;
+    }
+    if (this.kyoku >= 8 && !this.isRenchan && this.users.some((e) => e.point >= 30000)) {
+      isCompleted = true;
+    }
+    if (this.kyoku >= 12) {
+      isCompleted = true;
+    }
+    if (isCompleted) {
+      this.status = "completed";
+      // 終了時の供託はトップ取り
+      const topIdx = this.users.reduce((maxIdx, user, idx) => user.point > this.users[maxIdx].point ? idx : maxIdx, 0);
+      this.users[topIdx].point += this.kyotaku * 1000;
+    }
+    return isCompleted;
   }
 
   dora(): void {
@@ -382,21 +423,33 @@ export class Mahjong {
     }
 
     // 流局
+    const base = this.users.map((e) => e.point);
+    this.users.forEach((e) => {
+      if (e.id.length > 1) {
+        console.log(e);
+        console.log("machi", e.machi());
+      }
+    });
+
     const isTenpai = this.users.map((e) => e.machi().length > 0);
     isTenpai.forEach((e, idx) => this.users[idx].isOpen = e);
     const pointsNagashimangan = this.owariNagashimangan();
     const points = this.owariNormal({ isTenpai });
 
+    let diff: number[] = [];
     if (pointsNagashimangan.some((e) => e !== 0)) {
+      diff = pointsNagashimangan;
       this.users.forEach((e, idx) => {
         e.point += pointsNagashimangan[idx];
       });
     } else {
+      diff = points;
       this.users.forEach((e, idx) => {
         e.point += points[idx];
       });
     }
 
+    this.scrdiffs.push({ base, diff });
     const isOyaTempai = isTenpai[this.kyoku % 4];
     this.gameEnded({ isAgari: false, isRenchan: isOyaTempai });
     return [MahjongInput.BREAK, params];
@@ -491,6 +544,7 @@ export class Mahjong {
       }
       if (this.actions.length === 0) {
         this.users.forEach((e) => e.isIppatsu = false);
+        this.actions.push({ user: this.turnUser(), type: MahjongActionType.DAHAI });
         return [MahjongInput.RNSHN, params];
       }
     }
@@ -508,7 +562,6 @@ export class Mahjong {
 
     user.isRinshankaiho = true;
     user.countKans = user.countKans.map((e) => Math.max(0, e - 1));
-    // console.log("user.countKans", user.countKans);
     if (user.countKans.some((e) => e === 0)) {
       this.dora();
     }
@@ -597,7 +650,7 @@ export class Mahjong {
       if (result.pointSum === 0) {
         continue;
       }
-      actions.push({ user, type: MahjongActionType.RON });
+      actions.push({ user, type: MahjongActionType.RON, options: { agari: [{ paiId: pai.id }] } });
     }
     return actions;
   }
@@ -645,12 +698,12 @@ export class Mahjong {
       for (const s of setKakan) {
         naki.push({
           type: "kakan",
-          usrId: this.turnUser().id,
+          usrId: this.users[(userIdx + s.fromWho) % 4].id,
           pmyId: s.paiRest.map((e) => e.id),
           purId: s.paiCall.map((e) => e.id),
         });
       }
-      actions.push({ user, type: MahjongActionType.KAKAN });
+      actions.push({ user, type: MahjongActionType.KAKAN, options: { naki } });
     }
 
     // richi
@@ -965,7 +1018,7 @@ export class Mahjong {
       yakus: output.yakus.map((e) => e.str),
     });
 
-    const before = this.users.map((e) => e.point);
+    const base = this.users.map((e) => e.point);
     user.point += output.pointSum + (this.kyotaku * 1000) + (honba * 300);
     let pointMinus = [];
     if (isTsumo) {
@@ -976,14 +1029,15 @@ export class Mahjong {
     for (const [idx, user] of this.users.entries()) {
       user.point -= pointMinus[idx];
     }
-
-    const after = this.users.map((e) => e.point);
     // build diff
     const diff = pointMinus.map((e) => e * -1);
     const userIdx = this.users.findIndex((e) => e.id === user.id);
     diff[userIdx] = output.pointSum + (this.kyotaku * 1000) + (honba * 300);
 
-    this.tokutens.push({ user, input: params, output, before, after, diff });
+    this.tokutens.push({ user, input: params, output });
+    this.scrdiffs.push({ base, diff });
+    console.log(this.tokutens);
+    console.log(this.scrdiffs);
 
     const isOya = user.id === this.users[this.kyoku % 4].id;
     this.gameEnded({ isAgari: true, isRenchan: isOya });
@@ -1031,8 +1085,8 @@ export class Mahjong {
       return false;
     }
 
-    if (this.isEnded) {
-      this.debug(`game ended: ${input}`);
+    if (this.status !== "playing") {
+      this.debug(`status not playing: ${this.status}, input ${input}`);
       return false;
     }
 

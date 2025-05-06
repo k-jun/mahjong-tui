@@ -56,7 +56,7 @@ const App = (
           height={60}
         >
           <ToimenTSX toimen={toimen} height={4} width={100} />
-          {mahjong.isEnded ? (
+          {mahjong.status !== "playing" ? (
             <ResultTSX mahjong={mahjong} socketId={socket.id ?? ""} />
           ) : (
             <MainTSX mahjong={mahjong} socket={socket} height={14 * 3} width={24 * 3} />

@@ -49,7 +49,7 @@ export class Room {
       this.users.map((user) => user.id),
       async (mjg: Mahjong): Promise<void> => {
         const state = mjg.state;
-        this.users.forEach(async (user) => {
+        this.users.forEach(async (user, idx) => {
           if (user.isCPU) {
             ActionDefault({ mahjong: mjg, userId: user.id, state });
             return;
@@ -58,11 +58,10 @@ export class Room {
           ActionDefault({ mahjong: mjg, userId: user.id, state });
         });
         this.output(mjg);
-        if (mjg.isEnded && !mjg.isOshimai) {
-          await sleep(10 * 1000);
-          mjg.gameReset();
+        if (mjg.status !== "playing") {
+          await sleep(7 * 1000);
+          await mjg.gameReset();
           await mjg.gameStart(mjg.generate());
-          return;
         }
       },
     );
