@@ -23,17 +23,22 @@ const OnInput = (socket: Socket, rooms: { [key: string]: Room }) => {
 
 const OnJoin = (socket: Socket, rooms: { [key: string]: Room }) => {
   socket.on("join", async () => {
-    let name = "";
+    let found = false;
     for (const [key, room] of Object.entries(rooms)) {
-      if (room.isOpen()) {
-        name = key;
+      await room.mutex.acquire();
+      if (room.size() < room.defaultRoomSize) {
+        await socket.join(key);
+        found = true;
+      }
+      await room.mutex.release();
+      if (found) {
         break;
       }
     }
-    if (name == "") {
-      name = randomUUID();
+    if (!found) {
+      await socket.join(randomUUID());
+      console.log(`joined, id: ${socket.id}`);
     }
-    await socket.join(name);
   });
 };
 
@@ -70,19 +75,31 @@ export const OnServerJoinRoom = (
         room = new Room(async (mjg) => {
           await io.to(name.toString()).emit("output", name, mjg);
         });
-        room.join(new User("1", true));
-        room.join(new User(id, false));
-        room.join(new User("2", true));
-        
         rooms[name.toString()] = room;
       }
-      
-      room.join(new User("3", true));
-      
-      if (room.size() == 4) {
-        room.start();
-        room.mahjong!.sleep = 300;
+      if (!room.join(new User(id, false))) {
+        console.log(`failed to join, room: ${name}, id: ${id}`);
+        return;
       }
+
+      setTimeout(async () => {
+        await room.mutex.acquire();
+        if (rooms[name.toString()] == undefined) {
+          await room.mutex.release();
+          return;
+        }
+        const sizeNonCPU = room.sizeNonCPU();
+        if (sizeNonCPU === 0) {
+          await room.mutex.release();
+          return;
+        }
+        while (true) {
+          if (!room.join(new User(`cpu-${randomUUID()}`, true))) {
+            break;
+          }
+        }
+        await room.mutex.release();
+      }, 30 * 1000);
     }
   });
 };
@@ -95,7 +112,7 @@ export const OnServerLeaveRoom = (
     if (name != id && name in rooms) {
       const room = rooms[name];
       room.leave(id);
-      if (room.size() == 0) {
+      if (room.sizeNonCPU() == 0) {
         delete rooms[name];
       }
     }

@@ -1,8 +1,8 @@
 // import { CPU } from "./cpu.ts";
 import { Mahjong, MahjongInput, MahjongParams } from "./mahjong.ts";
 import { ActionDefault } from "./cpu.ts";
+import { createMutex, Mutex } from "@117/mutex";
 
-const defaultRoomSize = 4;
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export class User {
@@ -18,6 +18,8 @@ export class User {
 export class Room {
   users: User[];
   mahjong?: Mahjong;
+  mutex: Mutex = createMutex();
+  defaultRoomSize: number = 4;
   output: (mjg: Mahjong) => Promise<void>;
 
   constructor(output: (mjg: Mahjong) => Promise<void>) {
@@ -25,12 +27,27 @@ export class Room {
     this.output = output;
   }
 
-  isOpen(): boolean {
-    return this.users.length < defaultRoomSize;
+  sizeNonCPU(): number {
+    return this.users.filter((user) => !user.isCPU).length;
   }
 
-  join(user: User): void {
+  size(): number {
+    return this.users.length;
+  }
+
+  sizeIncludeCPU(): number {
+    return this.users.length;
+  }
+
+  join(user: User): boolean {
+    if (this.users.length === this.defaultRoomSize) {
+      return false;
+    }
     this.users.push(user);
+    if (this.users.length === this.defaultRoomSize) {
+      this.start();
+    }
+    return true;
   }
 
   leave(userId: string): void {
@@ -38,10 +55,7 @@ export class Room {
     if (user) {
       user.isCPU = true;
     }
-  }
-
-  size(): number {
-    return this.users.length;
+    this.mutex.release();
   }
 
   start(): void {
@@ -49,7 +63,7 @@ export class Room {
       this.users.map((user) => user.id),
       async (mjg: Mahjong): Promise<void> => {
         const state = mjg.state;
-        this.users.forEach(async (user, idx) => {
+        this.users.forEach(async (user) => {
           if (user.isCPU) {
             ActionDefault({ mahjong: mjg, userId: user.id, state });
             return;
