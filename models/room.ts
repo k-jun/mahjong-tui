@@ -65,8 +65,14 @@ export class Room {
   }
 
   start(): void {
+    const userIds = this.users.map((user) => user.id);
+    // shuffle
+    for (let i = userIds.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [userIds[i], userIds[j]] = [userIds[j], userIds[i]];
+    }
     this.mahjong = new Mahjong(
-      this.users.map((user) => user.id),
+      userIds,
       async (mjg: Mahjong): Promise<void> => {
         const state = mjg.state;
         this.users.forEach(async (user) => {

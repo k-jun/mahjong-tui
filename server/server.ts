@@ -82,7 +82,7 @@ export const OnServerJoinRoom = (
       }
       setTimeout(async () => {
         await JoinCPU(rooms, room);
-      }, 1 * 1000);
+      }, 20 * 1000);
     }
   });
 };

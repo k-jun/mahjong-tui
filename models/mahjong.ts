@@ -162,10 +162,10 @@ export class Mahjong {
 
   generate(): Pai[] {
     const org = [...PaiAll];
-    // for (let i = org.length - 1; i > 0; i--) {
-    //   const j = Math.floor(Math.random() * (i + 1));
-    //   [org[i], org[j]] = [org[j], org[i]];
-    // }
+    for (let i = org.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [org[i], org[j]] = [org[j], org[i]];
+    }
     return org;
   }
 

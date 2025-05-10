@@ -68,7 +68,7 @@ export const JichaTSX = (
   }
   useEffect(() => {
     const timerId = setInterval(() => {
-      setCountdown((prev) => Math.max(0, prev - 1));
+      setCountdown((prev: number) => Math.max(0, prev - 1));
     }, 1000);
     return () => clearInterval(timerId);
   }, [countdown]);

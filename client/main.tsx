@@ -1,4 +1,4 @@
-import React, { JSX, useState } from "npm:react";
+import React, { JSX, useEffect, useState } from "npm:react";
 import { Box, Text } from "npm:ink";
 import { io, Socket } from "npm:socket.io-client";
 import { Mahjong } from "../models/mahjong.ts";
@@ -8,14 +8,17 @@ import { ShimochaKawaExtraTSX, ShimochaKawaTSX, ShimochaTSX } from "./shimocha.t
 import { JichaKawaExtraTSX, JichaKawaTSX, JichaTSX } from "./jicha.tsx";
 import { CenterTSX } from "./center.tsx";
 import { ResultTSX } from "./result.tsx";
-// import { withFullScreen } from "npm:fullscreen-ink";
 import { render } from "npm:ink";
 
 const CountDownTSX = ({ timeout, height, width }: { timeout: number; height: number; width: number }): JSX.Element => {
-  const [count, setCount] = useState(timeout);
-  setTimeout(() => {
-    setCount(Math.max(0, count - 1));
-  }, 1000);
+  const [countdown, setCountdown] = useState(timeout);
+  useEffect(() => {
+    const timerId = setInterval(() => {
+      setCountdown((prev: number) => Math.max(0, prev - 1));
+    }, 1000);
+    return () => clearInterval(timerId);
+  }, [countdown]);
+
   return (
     <Box
       flexDirection="column"
@@ -24,12 +27,11 @@ const CountDownTSX = ({ timeout, height, width }: { timeout: number; height: num
       height={height}
       width={width}
     >
-      <Text>Waiting for game to start... {count}</Text>
+      <Text>Waiting for game to start... {countdown}</Text>
     </Box>
   );
 };
 
-const socket = io("http://localhost:8080");
 const App = (
   { mahjong, name, socket }: {
     mahjong?: Mahjong;
@@ -143,13 +145,21 @@ const MainTSX = ({ mahjong, socket }: {
   );
 };
 
+const attempts = 3;
+const socket = await io("http://localhost:8080", { reconnectionAttempts: attempts - 1 });
+
 socket.on("connect", async () => {
+  const ink = render(<App mahjong={undefined} name="" socket={socket} />);
+  socket.on("output", (name: string, data: Mahjong) => {
+    ink.rerender(<App mahjong={data} name={name} socket={socket} />);
+  });
   await socket.emit("join");
 });
 
-let main: JSX.Element;
-socket.on("output", (name: string, data: Mahjong) => {
-  ink.rerender(<App mahjong={data} name={name} socket={socket} />);
+let cnt = 0;
+socket.on("connect_error", (_) => {
+  cnt++;
+  if (cnt >= attempts) {
+    console.log(`failed to connect to ${attempts} times`);
+  }
 });
-
-const ink = render(<App mahjong={undefined} name="" socket={socket} />);
