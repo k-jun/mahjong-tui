@@ -37,7 +37,6 @@ const OnJoin = (socket: Socket, rooms: { [key: string]: Room }) => {
     }
     if (!found) {
       await socket.join(randomUUID());
-      console.log(`joined, id: ${socket.id}`);
     }
   });
 };
@@ -72,7 +71,7 @@ export const OnServerJoinRoom = (
     if (name != id) {
       let room = rooms[name.toString()];
       if (room == undefined) {
-        room = new Room(async (mjg) => {
+        room = new Room(name.toString(), async (mjg) => {
           await io.to(name.toString()).emit("output", name, mjg);
         });
         rooms[name.toString()] = room;
@@ -81,27 +80,32 @@ export const OnServerJoinRoom = (
         console.log(`failed to join, room: ${name}, id: ${id}`);
         return;
       }
-
       setTimeout(async () => {
-        await room.mutex.acquire();
-        if (rooms[name.toString()] == undefined) {
-          await room.mutex.release();
-          return;
-        }
-        const sizeNonCPU = room.sizeNonCPU();
-        if (sizeNonCPU === 0) {
-          await room.mutex.release();
-          return;
-        }
-        while (true) {
-          if (!room.join(new User(`cpu-${randomUUID()}`, true))) {
-            break;
-          }
-        }
-        await room.mutex.release();
-      }, 30 * 1000);
+        await JoinCPU(rooms, room);
+      }, 1 * 1000);
     }
   });
+};
+
+const JoinCPU = async (rooms: { [key: string]: Room }, room: Room) => {
+  await room.mutex.acquire();
+  if (rooms[room.name] == undefined) {
+    await room.mutex.release();
+    return;
+  }
+  const sizeNonCPU = room.sizeNonCPU();
+  if (sizeNonCPU === 0) {
+    await room.mutex.release();
+    return;
+  }
+  let cnt = 1;
+  while (true) {
+    if (!room.join(new User(`cpu-${cnt}`, true))) {
+      break;
+    }
+    cnt++;
+  }
+  await room.mutex.release();
 };
 
 export const OnServerLeaveRoom = (

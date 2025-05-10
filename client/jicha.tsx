@@ -1,9 +1,9 @@
 import { MahjongUser } from "../models/mahjong_user.ts";
 import { Box, Text, useInput } from "npm:ink";
 import { Pai } from "@k-jun/mahjong";
-import { MahjongAction, MahjongActionType, MahjongInput } from "../models/mahjong.ts";
+import { Mahjong, MahjongAction, MahjongActionType, MahjongInput } from "../models/mahjong.ts";
 import { EmptyTSX, PaiTSX } from "./pai.tsx";
-import React, { JSX } from "npm:react";
+import React, { JSX, useEffect, useState } from "npm:react";
 import { Socket } from "npm:socket.io-client";
 
 enum Mode {
@@ -38,10 +38,10 @@ export const JichaTSX = (
     state: string;
   },
 ): JSX.Element => {
-  const [paiPointer, setPaiPointer] = React.useState<number>(0);
-  const [actPointer, setActPointer] = React.useState<number>(0);
-  const [optPointer, setOptPointer] = React.useState<number>(0);
-  const [mode, setMode] = React.useState<Mode>(Mode.PAI);
+  const [paiPointer, setPaiPointer] = useState<number>(0);
+  const [actPointer, setActPointer] = useState<number>(0);
+  const [optPointer, setOptPointer] = useState<number>(0);
+  const [mode, setMode] = useState<Mode>(Mode.PAI);
 
   const paiSets = jicha.paiSets.map((e) => e.pais).reverse().flat();
   const paiRest = jicha?.paiRest.sort((a, b) => b.id - a.id) ?? [];
@@ -57,6 +57,21 @@ export const JichaTSX = (
   if (userActions.length === 0 && mode !== Mode.PAI) {
     setMode(Mode.PAI);
   }
+
+  const [userActionExist, setUserActionExist] = useState<boolean>(userActions.length > 0);
+  const [countdown, setCountdown] = useState<number>(20);
+  if (userActionExist !== (userActions.length > 0)) {
+    if (!userActionExist && (userActions.length > 0)) {
+      setCountdown(20);
+    }
+    setUserActionExist(userActions.length > 0);
+  }
+  useEffect(() => {
+    const timerId = setInterval(() => {
+      setCountdown((prev) => Math.max(0, prev - 1));
+    }, 1000);
+    return () => clearInterval(timerId);
+  }, [countdown]);
 
   useInput((_, key) => {
     if (key.leftArrow) {
@@ -274,6 +289,10 @@ export const JichaTSX = (
             />
           )
           : <EmptyTSX />}
+        <EmptyTSX />
+        <Box height={4} width={4} flexDirection="column" justifyContent="center" alignItems="center">
+          {userActionExist && <Text>{countdown}</Text>}
+        </Box>
         <EmptyTSX />
         {paiSets.map((e) => <PaiTSX text={new Pai(e.id).dsp} key={e.id} />)}
       </Box>

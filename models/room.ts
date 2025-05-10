@@ -16,27 +16,33 @@ export class User {
 }
 
 export class Room {
+  name: string;
   users: User[];
   mahjong?: Mahjong;
   mutex: Mutex = createMutex();
   defaultRoomSize: number = 4;
   output: (mjg: Mahjong) => Promise<void>;
 
-  constructor(output: (mjg: Mahjong) => Promise<void>) {
+  constructor(name: string, output: (mjg: Mahjong) => Promise<void>) {
+    this.name = name;
     this.users = [];
     this.output = output;
   }
 
-  sizeNonCPU(): number {
-    return this.users.filter((user) => !user.isCPU).length;
+  isOpen(): boolean {
+    return this.size() < this.defaultRoomSize;
+  }
+
+  isOpenNonCPU(): boolean {
+    return this.sizeNonCPU() < this.defaultRoomSize;
   }
 
   size(): number {
     return this.users.length;
   }
 
-  sizeIncludeCPU(): number {
-    return this.users.length;
+  sizeNonCPU(): number {
+    return this.users.filter((user) => !user.isCPU).length;
   }
 
   join(user: User): boolean {

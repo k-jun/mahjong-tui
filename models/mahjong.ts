@@ -162,28 +162,14 @@ export class Mahjong {
 
   generate(): Pai[] {
     const org = [...PaiAll];
-
-    // for (let i = 0; i < org.length; i++) {
-    //   switch (org[i].id) {
-    //     case new Pai("s3").id:
-    //       org[i] = new Pai("s7");
-    //       break;
-    //     case new Pai("s7").id:
-    //       org[i] = new Pai("s3");
-    //       break;
-    //     default:
-    //       break;
-    //   }
+    // for (let i = org.length - 1; i > 0; i--) {
+    //   const j = Math.floor(Math.random() * (i + 1));
+    //   [org[i], org[j]] = [org[j], org[i]];
     // }
-    for (let i = org.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [org[i], org[j]] = [org[j], org[i]];
-    }
     return org;
   }
 
   gameStart(pais: Pai[]): void {
-    console.log("gameStart called", this.status);
     if (this.status !== "playing") {
       this.debug(`gameStart called while status is: ${this.status}`);
       return;
@@ -218,7 +204,6 @@ export class Mahjong {
   gameEnded(
     { isRenchan, isAgari }: { isRenchan: boolean; isAgari: boolean },
   ): void {
-    console.log("gameEnded called", this.status);
     if (isAgari) {
       this.kyotaku = 0;
     }
@@ -230,7 +215,6 @@ export class Mahjong {
   }
 
   gameReset(): void {
-    console.log("gameReset called", this.status);
     if (this.status === "ended") {
       if (this.updateStatus()) {
         this.output(this);
@@ -425,10 +409,10 @@ export class Mahjong {
     // 流局
     const base = this.users.map((e) => e.point);
     this.users.forEach((e) => {
-      if (e.id.length > 1) {
-        console.log(e);
-        console.log("machi", e.machi());
-      }
+      // if (e.id.length > 1) {
+      //   console.log(e);
+      //   console.log("machi", e.machi());
+      // }
     });
 
     const isTenpai = this.users.map((e) => e.machi().length > 0);
@@ -1036,8 +1020,6 @@ export class Mahjong {
 
     this.tokutens.push({ user, input: params, output });
     this.scrdiffs.push({ base, diff });
-    console.log(this.tokutens);
-    console.log(this.scrdiffs);
 
     const isOya = user.id === this.users[this.kyoku % 4].id;
     this.gameEnded({ isAgari: true, isRenchan: isOya });

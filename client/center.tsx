@@ -30,7 +30,6 @@ export const CenterTSX = (
       height={height}
       width={width}
       borderStyle="round"
-      borderColor="green"
     >
       <Box
         flexDirection="row"

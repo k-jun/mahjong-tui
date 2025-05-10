@@ -1,4 +1,4 @@
-import React, { JSX } from "npm:react";
+import React, { JSX, useState } from "npm:react";
 import { Box, Text } from "npm:ink";
 import { io, Socket } from "npm:socket.io-client";
 import { Mahjong } from "../models/mahjong.ts";
@@ -7,9 +7,27 @@ import { KamichaKawaExtraTSX, KamichaKawaTSX, KamichaTSX } from "./kamicha.tsx";
 import { ShimochaKawaExtraTSX, ShimochaKawaTSX, ShimochaTSX } from "./shimocha.tsx";
 import { JichaKawaExtraTSX, JichaKawaTSX, JichaTSX } from "./jicha.tsx";
 import { CenterTSX } from "./center.tsx";
-import { render } from "npm:ink";
 import { ResultTSX } from "./result.tsx";
 // import { withFullScreen } from "npm:fullscreen-ink";
+import { render } from "npm:ink";
+
+const CountDownTSX = ({ timeout, height, width }: { timeout: number; height: number; width: number }): JSX.Element => {
+  const [count, setCount] = useState(timeout);
+  setTimeout(() => {
+    setCount(Math.max(0, count - 1));
+  }, 1000);
+  return (
+    <Box
+      flexDirection="column"
+      justifyContent="center"
+      alignItems="center"
+      height={height}
+      width={width}
+    >
+      <Text>Waiting for game to start... {count}</Text>
+    </Box>
+  );
+};
 
 const socket = io("http://localhost:8080");
 const App = (
@@ -19,12 +37,9 @@ const App = (
     socket: Socket;
   },
 ): JSX.Element => {
+  const { columns, rows } = Deno.consoleSize();
   if (mahjong === undefined) {
-    return (
-      <Box>
-        <Text>Waiting for game to start...</Text>
-      </Box>
-    );
+    return <CountDownTSX timeout={20} height={rows} width={columns} />;
   }
 
   const userIndex = mahjong?.users.findIndex((user) => user.id === socket.id);
@@ -34,7 +49,13 @@ const App = (
   const kamicha = mahjong?.users[(userIndex + 3) % 4];
   const actions = mahjong?.actions;
   return (
-    <Box flexDirection="column" justifyContent="center" alignItems="center">
+    <Box
+      flexDirection="column"
+      justifyContent="center"
+      height={rows}
+      width={columns}
+      alignItems="center"
+    >
       <Box
         flexDirection="row"
         justifyContent="space-between"
@@ -43,7 +64,6 @@ const App = (
         height={60}
         width={110}
         borderStyle="round"
-        borderColor="green"
       >
         <Box height={60} width={4}>
           <KamichaTSX kamicha={kamicha} />
@@ -56,11 +76,9 @@ const App = (
           height={60}
         >
           <ToimenTSX toimen={toimen} height={4} width={100} />
-          {mahjong.status !== "playing" ? (
-            <ResultTSX mahjong={mahjong} socketId={socket.id ?? ""} />
-          ) : (
-            <MainTSX mahjong={mahjong} socket={socket} height={14 * 3} width={24 * 3} />
-          )}
+          {mahjong.status !== "playing"
+            ? <ResultTSX mahjong={mahjong} socketId={socket.id ?? ""} />
+            : <MainTSX mahjong={mahjong} socket={socket} height={14 * 3} width={24 * 3} />}
           <JichaTSX
             jicha={jicha}
             actions={actions}
@@ -125,16 +143,13 @@ const MainTSX = ({ mahjong, socket }: {
   );
 };
 
-socket.on("connect", () => {
-  socket.emit("join");
+socket.on("connect", async () => {
+  await socket.emit("join");
 });
 
+let main: JSX.Element;
 socket.on("output", (name: string, data: Mahjong) => {
-  // ink.instance.rerender(<App mahjong={data} socketId={socket.id ?? ""} />);
   ink.rerender(<App mahjong={data} name={name} socket={socket} />);
 });
-
-// const ink = withFullScreen(<App mahjong={undefined} socketId="" />);
-// ink.start();
 
 const ink = render(<App mahjong={undefined} name="" socket={socket} />);

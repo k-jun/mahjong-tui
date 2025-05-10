@@ -39,7 +39,7 @@ describe("Socket.IO Server", () => {
   });
 
   it("join-room && leave-room", async () => {
-    rooms["test-room"] = new Room(async (mjg) => {
+    rooms["test-room"] = new Room("test-room", async (mjg) => {
       await io.to("test-room").emit("output", mjg);
     });
     clientSocket.emit("join");
