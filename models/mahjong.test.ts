@@ -31,7 +31,8 @@ Deno.test("mahjong new", async () => {
         state.checkAfterAgari = [];
         state.isAfterRichi = [false, false, false, false];
         state.isRon3 = false;
-        const { hai0, hai1, hai2, hai3, yama, score, kyoku, honba, kyotk } = params.init!;
+        const { hai0, hai1, hai2, hai3, yama, score, kyoku, honba, kyotk } =
+          params.init!;
         // console.log(Deno.inspect(yama.map((e) => e.id), { iterableLimit: Infinity }));
         globalGame.enableDebug = true;
         globalGame.sleep = 0;
@@ -108,7 +109,11 @@ Deno.test("mahjong new", async () => {
         const { who, hai } = params.dahai!;
         expect(globalGame.turnUserIdx).toEqual(who);
 
-        if (state.isAfterRichi[who] && (!globalGame.users[who].isRichi && !globalGame.users[who].isDabururichi)) {
+        if (
+          state.isAfterRichi[who] &&
+          (!globalGame.users[who].isRichi &&
+            !globalGame.users[who].isDabururichi)
+        ) {
           await globalGame.input(MahjongInput.RICHI, {
             usrId: globalGame.turnUser().id,
             state: globalGame.state,
@@ -196,7 +201,10 @@ Deno.test("mahjong new", async () => {
           });
         }
 
-        const convertMap: Record<number, "pon" | "chi" | "minkan" | "kakan" | "ankan"> = {
+        const convertMap: Record<
+          number,
+          "pon" | "chi" | "minkan" | "kakan" | "ankan"
+        > = {
           [PaiSetType.MINSHUN]: "chi",
           [PaiSetType.MINKO]: "pon",
           [PaiSetType.MINKAN]: "minkan",
@@ -234,7 +242,10 @@ Deno.test("mahjong new", async () => {
         });
         state.checkAfterAgari.push(async (idx: number) => {
           for (const action of globalGame.actions) {
-            if (action.enable !== undefined || action.type !== MahjongActionType.RON) {
+            if (
+              action.enable !== undefined ||
+              action.type !== MahjongActionType.RON
+            ) {
               continue;
             }
             await globalGame.input(MahjongInput.SKIP, {
@@ -245,13 +256,19 @@ Deno.test("mahjong new", async () => {
 
           expect(globalGame.paiDora).toEqual(paiDora.map((e) => new Pai(e.id)));
           if (paiDoraUra.length > 0) {
-            expect(globalGame.paiDoraUra).toEqual(paiDoraUra.map((e) => new Pai(e.id)));
+            expect(globalGame.paiDoraUra).toEqual(
+              paiDoraUra.map((e) => new Pai(e.id)),
+            );
           }
 
           const tokuten = globalGame.tokutens[idx];
           const actYakus = tokuten.output.yakus.filter((e) => e.val > 0);
-          const actYakuVal = actYakus.map((e) => ({ ...e })).sort((a, b) => a.str.localeCompare(b.str));
-          const expYakuVal = yakus.filter((e) => e.val > 0).sort((a, b) => a.str.localeCompare(b.str));
+          const actYakuVal = actYakus.map((e) => ({ ...e })).sort((a, b) =>
+            a.str.localeCompare(b.str)
+          );
+          const expYakuVal = yakus.filter((e) => e.val > 0).sort((a, b) =>
+            a.str.localeCompare(b.str)
+          );
           expect(actYakuVal).toEqual(expYakuVal);
           if (idx === state.checkAfterAgari.length - 1) {
             expect(globalGame.users.map((e) => e.point)).toEqual(score);

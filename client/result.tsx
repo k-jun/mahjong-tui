@@ -1,37 +1,40 @@
-import React, { JSX } from "npm:react";
-import { Box, Text } from "npm:ink";
-import { Mahjong } from "../models/mahjong.ts";
+import React, { JSX } from "react";
+import { Box, Text } from "ink";
+import { Mahjong } from "./mahjong.ts";
 import { EmptyTSX, PaiTSX } from "./pai.tsx";
 import { Pai } from "@k-jun/mahjong";
 
-export const ResultTSX = ({ mahjong, socketId }: { mahjong: Mahjong; socketId: string }): JSX.Element => {
-  switch (mahjong.status) {
-    case "ended": {
-      switch (mahjong.tokutens.length > 0) {
-        case true:
-          return <ResultEndedAgariTSX mahjong={mahjong} socketId={socketId} />;
-        case false:
-          switch (mahjong.EndedType) {
-            case "yao9":
-            case "kaze4":
-            case "richi4":
-            case "kan4":
-              return <ResultEndedTochuRyukyokuTSX mahjong={mahjong} />;
-            default:
-              return <ResultEndedRyukyokuTSX mahjong={mahjong} socketId={socketId} />;
-          }
-      }
-      break;
+export const ResultTSX = (
+  { mahjong, socketId }: { mahjong: Mahjong; socketId: string },
+): JSX.Element => {
+  if (mahjong.status === "completed") {
+    return <ResultCompletedTSX mahjong={mahjong} socketId={socketId} />;
+  }
+  if (mahjong.status === "ended") {
+    if (mahjong.tokutens.length > 0) {
+      return <ResultEndedAgariTSX mahjong={mahjong} socketId={socketId} />;
     }
-    case "completed": {
-      return <ResultCompletedTSX mahjong={mahjong} socketId={socketId} />;
+    switch (mahjong.EndedType) {
+      /* falls through */
+      case "yao9":
+      case "kaze4":
+      case "richi4":
+      case "kan4":
+        return <ResultEndedTochuRyukyokuTSX mahjong={mahjong} />;
+      default:
+        return <ResultEndedRyukyokuTSX mahjong={mahjong} socketId={socketId} />;
     }
   }
+  return <Text>not defined</Text>;
 };
 
-const ResultEndedAgariTSX = ({ mahjong, socketId }: { mahjong: Mahjong; socketId: string }): JSX.Element => {
+const ResultEndedAgariTSX = (
+  { mahjong, socketId }: { mahjong: Mahjong; socketId: string },
+): JSX.Element => {
   const userIndex = mahjong?.users.findIndex((user) => user.id === socketId);
-  const kaze = [0, 1, 2, 3].map((e) => new Pai(mahjong?.users[(userIndex + e) % 4].paiJikaze?.id).dsp);
+  const kaze = [0, 1, 2, 3].map((e) =>
+    new Pai(mahjong?.users[(userIndex + e) % 4].paiJikaze?.id).dsp
+  );
   const tokuten = mahjong.tokutens[0];
   const paiRest = tokuten.user.paiRest;
   const paiLast = tokuten.input.paiLast;
@@ -39,11 +42,15 @@ const ResultEndedAgariTSX = ({ mahjong, socketId }: { mahjong: Mahjong; socketId
 
   const output = tokuten.output;
   const input = tokuten.input;
-  const pointText = output.pointPrt > 0 ? `${output.pointCdn}-${output.pointPrt}点` : `${output.pointCdn}点`;
-  const base = [0, 1, 2, 3].map((e) => mahjong.scrdiffs[0].base[(userIndex + e) % 4]);
-  const diff = [0, 1, 2, 3].map((e) => mahjong.scrdiffs[0].diff[(userIndex + e) % 4]).map((e) =>
-    e > 0 ? `+${e}` : e === 0 ? "" : `${e}`
+  const pointText = output.pointPrt > 0
+    ? `${output.pointCdn}-${output.pointPrt}点`
+    : `${output.pointCdn}点`;
+  const base = [0, 1, 2, 3].map((e) =>
+    mahjong.scrdiffs[0].base[(userIndex + e) % 4]
   );
+  const diff = [0, 1, 2, 3].map((e) =>
+    mahjong.scrdiffs[0].diff[(userIndex + e) % 4]
+  ).map((e) => e > 0 ? `+${e}` : e === 0 ? "" : `${e}`);
 
   return (
     <Box
@@ -60,11 +67,18 @@ const ResultEndedAgariTSX = ({ mahjong, socketId }: { mahjong: Mahjong; socketId
         justifyContent="center"
         key="result-agari"
       >
-        {paiRest.sort((a, b) => a.id - b.id).map((e) => new Pai(e.id)).map((e) => (
-          <PaiTSX key={`result-${e.id}`} text={e.dsp} />
-        ))}
+        {paiRest.sort((a, b) => a.id - b.id).map((e) => new Pai(e.id)).map((
+          e,
+        ) => <PaiTSX key={`result-${e.id}`} text={e.dsp} />)}
         <EmptyTSX />
-        {paiLast ? <PaiTSX key={`result-${paiLast.id}`} text={new Pai(paiLast.id).dsp} /> : <EmptyTSX />}
+        {paiLast
+          ? (
+            <PaiTSX
+              key={`result-${paiLast.id}`}
+              text={new Pai(paiLast.id).dsp}
+            />
+          )
+          : <EmptyTSX />}
         <EmptyTSX />
         {paiSets.map((e) => <PaiTSX text={new Pai(e.id).dsp} key={e.id} />)}
       </Box>
@@ -73,7 +87,12 @@ const ResultEndedAgariTSX = ({ mahjong, socketId }: { mahjong: Mahjong; socketId
         justifyContent="center"
         key={`result-${tokuten.user.id}`}
       >
-        <Box flexDirection="row" justifyContent="center" width={20} key={`result-yakus`}>
+        <Box
+          flexDirection="row"
+          justifyContent="center"
+          width={20}
+          key={`result-yakus`}
+        >
           <Text>{`${tokuten.output.fu}符`}</Text>
           <Text>{`${tokuten.output.han}翻`}</Text>
           <Text>{`${pointText}`}</Text>
@@ -81,7 +100,12 @@ const ResultEndedAgariTSX = ({ mahjong, socketId }: { mahjong: Mahjong; socketId
 
         {output.yakus.map((e, idx) => {
           return (
-            <Box flexDirection="row" justifyContent="space-between" width={20} key={`result-yakus-${idx}`}>
+            <Box
+              flexDirection="row"
+              justifyContent="space-between"
+              width={20}
+              key={`result-yakus-${idx}`}
+            >
               <Text>{`${e.str}`}</Text>
               <Text>{`${e.yakuman ? "役満" : `${e.val}翻`}`}</Text>
             </Box>
@@ -92,7 +116,9 @@ const ResultEndedAgariTSX = ({ mahjong, socketId }: { mahjong: Mahjong; socketId
         {[0, 1, 2, 3, 4].map((e) => (
           <PaiTSX
             key={`result-uradora-${e}`}
-            text={input.paiDoraUra[e]?.id ? new Pai(input.paiDoraUra[e].id).dsp : "  "}
+            text={input.paiDoraUra[e]?.id
+              ? new Pai(input.paiDoraUra[e].id).dsp
+              : "  "}
           />
         ))}
       </Box>
@@ -115,14 +141,18 @@ const ResultEndedAgariTSX = ({ mahjong, socketId }: { mahjong: Mahjong; socketId
   );
 };
 
-const ResultEndedRyukyokuTSX = ({ mahjong, socketId }: { mahjong: Mahjong; socketId: string }): JSX.Element => {
+const ResultEndedRyukyokuTSX = (
+  { mahjong, socketId }: { mahjong: Mahjong; socketId: string },
+): JSX.Element => {
   const userIndex = mahjong?.users.findIndex((user) => user.id === socketId);
-  const kaze = [0, 1, 2, 3].map((e) => new Pai(mahjong?.users[(userIndex + e) % 4].paiJikaze?.id).dsp);
+  const kaze = [0, 1, 2, 3].map((e) =>
+    new Pai(mahjong?.users[(userIndex + e) % 4].paiJikaze?.id).dsp
+  );
   const scrdiff = mahjong.scrdiffs[0];
   const base = [0, 1, 2, 3].map((e) => scrdiff.base[(userIndex + e) % 4]);
-  const diff = [0, 1, 2, 3].map((e) => scrdiff.diff[(userIndex + e) % 4]).map((e) =>
-    e > 0 ? `+${e}` : e === 0 ? "" : `${e}`
-  );
+  const diff = [0, 1, 2, 3].map((e) => scrdiff.diff[(userIndex + e) % 4]).map((
+    e,
+  ) => e > 0 ? `+${e}` : e === 0 ? "" : `${e}`);
   return (
     <Box
       borderColor="white"
@@ -160,7 +190,9 @@ const EndTypeConvertor: Record<string, string> = {
   "kan4": "四槓散了",
 };
 
-const ResultEndedTochuRyukyokuTSX = ({ mahjong }: { mahjong: Mahjong }): JSX.Element => {
+const ResultEndedTochuRyukyokuTSX = (
+  { mahjong }: { mahjong: Mahjong },
+): JSX.Element => {
   let reason = "ツモ流局";
   if (mahjong.EndedType !== undefined) {
     reason = EndTypeConvertor[mahjong.EndedType];
@@ -179,7 +211,9 @@ const ResultEndedTochuRyukyokuTSX = ({ mahjong }: { mahjong: Mahjong }): JSX.Ele
   );
 };
 
-const ResultCompletedTSX = ({ mahjong, socketId }: { mahjong: Mahjong; socketId: string }): JSX.Element => {
+const ResultCompletedTSX = (
+  { mahjong, socketId }: { mahjong: Mahjong; socketId: string },
+): JSX.Element => {
   const userIdx = mahjong.users.findIndex((user) => user.id === socketId);
   const jicha = mahjong.users[userIdx];
   const shimocha = mahjong.users[(userIdx + 1) % 4];
@@ -204,9 +238,19 @@ const ResultCompletedTSX = ({ mahjong, socketId }: { mahjong: Mahjong; socketId:
       key={`result-completed`}
     >
       <Text>終局</Text>
-      <Box flexDirection="column" justifyContent="center" width={20} key={`result-oshimai`}>
+      <Box
+        flexDirection="column"
+        justifyContent="center"
+        width={20}
+        key={`result-oshimai`}
+      >
         {info.map((e, idx) => (
-          <Box flexDirection="row" justifyContent="space-between" width={20} key={`result-oshimai-${e.name}`}>
+          <Box
+            flexDirection="row"
+            justifyContent="space-between"
+            width={20}
+            key={`result-oshimai-${e.name}`}
+          >
             <Text>{`${idx + 1}位 ${e.name}`}</Text>
             <Text>{`${e.point}点`}</Text>
           </Box>

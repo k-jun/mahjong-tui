@@ -1,10 +1,12 @@
-import { MahjongUser } from "../models/mahjong_user.ts";
-import { Box } from "npm:ink";
+import { MahjongUser } from "./mahjong_user.ts";
+import { Box } from "ink";
 import { Pai } from "@k-jun/mahjong";
 import { EmptyTSX, PaiTSX } from "./pai.tsx";
-import React, { JSX } from "npm:react";
+import React, { JSX } from "react";
 
-export const ShimochaTSX = ({ shimocha }: { shimocha: MahjongUser }): JSX.Element => {
+export const ShimochaTSX = (
+  { shimocha }: { shimocha: MahjongUser },
+): JSX.Element => {
   const paiSets = shimocha.paiSets.map((e) => e.pais).flat();
 
   return (
@@ -23,7 +25,12 @@ export const ShimochaTSX = ({ shimocha }: { shimocha: MahjongUser }): JSX.Elemen
       ))}
       <EmptyTSX enableTop={false} enableSide={false} />
       {shimocha?.paiTsumo
-        ? <PaiTSX key={0} text={shimocha.isOpen ? new Pai(shimocha?.paiTsumo.id).dsp : "  "} />
+        ? (
+          <PaiTSX
+            key={0}
+            text={shimocha.isOpen ? new Pai(shimocha?.paiTsumo.id).dsp : "  "}
+          />
+        )
         : <EmptyTSX />}
       <EmptyTSX enableSide={false} />
       {shimocha?.paiRest.sort((a, b) => a.id - b.id).map((e) => new Pai(e.id))
@@ -40,7 +47,11 @@ export const ShimochaTSX = ({ shimocha }: { shimocha: MahjongUser }): JSX.Elemen
 };
 
 export const ShimochaKawaTSX = (
-  { shimocha, height, width }: { shimocha: MahjongUser; height: number; width: number },
+  { shimocha, height, width }: {
+    shimocha: MahjongUser;
+    height: number;
+    width: number;
+  },
 ): JSX.Element => {
   const row1 = shimocha.paiKawa.slice(0, 6);
   const row2 = shimocha.paiKawa.slice(6, 12);
@@ -73,12 +84,21 @@ export const ShimochaKawaTSX = (
 };
 
 export const ShimochaKawaExtraTSX = (
-  { shimocha, height, width }: { shimocha: MahjongUser; height: number; width: number },
+  { shimocha, height, width }: {
+    shimocha: MahjongUser;
+    height: number;
+    width: number;
+  },
 ): JSX.Element => {
   const column = shimocha.paiKawa.slice(18, 24);
 
   return (
-    <Box flexDirection="row" justifyContent="flex-end" width={width} height={height}>
+    <Box
+      flexDirection="row"
+      justifyContent="flex-end"
+      width={width}
+      height={height}
+    >
       <Box flexDirection="column" justifyContent="flex-end" width={4}>
         {column.reverse().map((e, idx) => (
           <PaiTSX

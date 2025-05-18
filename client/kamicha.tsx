@@ -1,14 +1,20 @@
-import { MahjongUser } from "../models/mahjong_user.ts";
-import { Box } from "npm:ink";
+import { MahjongUser } from "./mahjong_user.ts";
+import { Box } from "ink";
 import { Pai } from "@k-jun/mahjong";
 import { EmptyTSX, PaiTSX } from "./pai.tsx";
-import React, { JSX } from "npm:react";
+import React, { JSX } from "react";
 
-export const KamichaTSX = ({ kamicha }: { kamicha: MahjongUser }): JSX.Element => {
+export const KamichaTSX = (
+  { kamicha }: { kamicha: MahjongUser },
+): JSX.Element => {
   const paiSets = kamicha.paiSets.map((e) => e.pais).reverse().flat();
   return (
     <Box flexDirection="column" justifyContent="center" alignItems="center">
-      {kamicha?.paiRest.sort((a, b) => a.id - b.id).map((e) => new Pai(e.id))
+      {kamicha?.paiRest.sort((a, b) =>
+        a.id - b.id
+      ).map((e) =>
+        new Pai(e.id)
+      )
         .map((e, idx) => (
           <PaiTSX
             key={e.id}
@@ -19,7 +25,12 @@ export const KamichaTSX = ({ kamicha }: { kamicha: MahjongUser }): JSX.Element =
         ))}
       <EmptyTSX enableSide={false} />
       {kamicha?.paiTsumo
-        ? <PaiTSX key={kamicha.paiTsumo.id} text={kamicha.isOpen ? new Pai(kamicha.paiTsumo.id).dsp : "  "} />
+        ? (
+          <PaiTSX
+            key={kamicha.paiTsumo.id}
+            text={kamicha.isOpen ? new Pai(kamicha.paiTsumo.id).dsp : "  "}
+          />
+        )
         : <EmptyTSX />}
       <EmptyTSX />
       {paiSets.map((e, idx) => (
@@ -73,14 +84,28 @@ export const KamichaKawaTSX = (
 };
 
 export const KamichaKawaExtraTSX = (
-  { kamicha, height, width }: { kamicha: MahjongUser; height: number; width: number },
+  { kamicha, height, width }: {
+    kamicha: MahjongUser;
+    height: number;
+    width: number;
+  },
 ): JSX.Element => {
   const column = kamicha.paiKawa.slice(18, 24);
   return (
-    <Box flexDirection="row" justifyContent="flex-start" width={width} height={height}>
+    <Box
+      flexDirection="row"
+      justifyContent="flex-start"
+      width={width}
+      height={height}
+    >
       <Box flexDirection="column" justifyContent="flex-start" width={4}>
         {column.map((e, idx) => (
-          <PaiTSX text={new Pai(e.id).dsp} key={e.id} enableTop={idx === 0} enableSide={idx === column.length - 1} />
+          <PaiTSX
+            text={new Pai(e.id).dsp}
+            key={e.id}
+            enableTop={idx === 0}
+            enableSide={idx === column.length - 1}
+          />
         ))}
       </Box>
     </Box>

@@ -1,16 +1,27 @@
 {
   "imports": {
     "@117/mutex": "jsr:@117/mutex@^1.0.8",
-    "@k-jun/mahjong": "jsr:@k-jun/mahjong@^0.4.11"
+    "@cliffy/command": "jsr:@cliffy/command@^1.0.0-rc.7",
+    "@cliffy/flags": "jsr:@cliffy/flags@^1.0.0-rc.7",
+    "@deno/dnt": "jsr:@deno/dnt@^0.42.1",
+    "@k-jun/mahjong": "jsr:@k-jun/mahjong@^0.4.11",
+    "socket.io": "npm:socket.io@^4.8.1",
+    "socket.io-client": "npm:socket.io-client@^4.8.1",
+    "ink": "npm:ink@^5.1.1",
+    "react": "npm:react@^18.0.0"
   },
-  "lint": {
-    "rules": {
-      "tags": ["recommended"],
-      "include": ["explicit-function-return-type"]
-    }
-  },
-  "fmt": {
-    "lineWidth": 120,
-    "indentWidth": 2
-  }
+  // "lint": {
+  //   "rules": {
+  //     "tags": [
+  //       "recommended"
+  //     ],
+  //     "include": [
+  //       "explicit-function-return-type"
+  //     ]
+  //   }
+  // },
+  // "fmt": {
+  //   "lineWidth": 120,
+  //   "indentWidth": 2
+  // }
 }

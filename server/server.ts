@@ -1,7 +1,12 @@
-import { Server, Socket } from "https://deno.land/x/socket_io@0.2.1/mod.ts";
+import { Server, Socket } from "npm:socket.io";
 import { Room, User } from "../models/room.ts";
 import { randomUUID } from "node:crypto";
 import { MahjongInput, MahjongParams } from "../models/mahjong.ts";
+
+let matchingTimeout: number = 20 * 1000;
+if (Deno.env.get("MATCHING_TIMEOUT")) {
+  matchingTimeout = parseInt(Deno.env.get("MATCHING_TIMEOUT")!) * 1000;
+}
 
 export const OnAll = (socket: Socket, rooms: { [key: string]: Room }) => {
   OnJoin(socket, rooms);
@@ -82,7 +87,7 @@ export const OnServerJoinRoom = (
       }
       setTimeout(async () => {
         await JoinCPU(rooms, room);
-      }, 20 * 1000);
+      }, matchingTimeout);
     }
   });
 };

@@ -1,0 +1,27 @@
+{
+  "name": "mahjong-tui",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "esbuild --bundle --outfile=dist/main.js --platform=node --format=esm --banner:js='#!/usr/bin/env node' --packages=external main.tsx"
+  },
+  "bin": {
+    "mahjong-tui": "dist/main.js"
+  },
+  "dependencies": {
+    "@117/mutex": "npm:@jsr/117__mutex@^1.0.8",
+    "@cliffy/command": "npm:@jsr/cliffy__command@^1.0.0-rc.7",
+    "@k-jun/mahjong": "npm:@jsr/k-jun__mahjong@^0.4.11",
+    "esbuild": "^0.25.4",
+    "esbuild-node-loader": "^0.8.0",
+    "ink": "^5.2.1",
+    "react": "^18.3.1",
+    "socket.io-client": "^4.8.1",
+    "terminal-size": "^4.0.0"
+  }
+}

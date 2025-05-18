@@ -1,7 +1,7 @@
-import { Mahjong } from "../models/mahjong.ts";
+import { Mahjong } from "./mahjong.ts";
 import { Pai } from "@k-jun/mahjong";
-import { Box, Text } from "npm:ink";
-import React, { JSX } from "npm:react";
+import { Box, Text } from "ink";
+import React, { JSX } from "react";
 import { PaiTSX } from "./pai.tsx";
 
 export const CenterTSX = (
@@ -39,7 +39,12 @@ export const CenterTSX = (
       >
         {paiDoraList}
       </Box>
-      <BakyokuTSX mahjong={mahjong} height={height - 5} width={width} socketId={socketId} />
+      <BakyokuTSX
+        mahjong={mahjong}
+        height={height - 5}
+        width={width}
+        socketId={socketId}
+      />
     </Box>
   );
 };
@@ -55,9 +60,10 @@ const BakyokuTSX = ({ mahjong, height, width, socketId }: {
   const shimocha = mahjong?.users[(userIndex + 1) % 4];
   const toimen = mahjong?.users[(userIndex + 2) % 4];
   const kamicha = mahjong?.users[(userIndex + 3) % 4];
-  
+
   const turnRest = mahjong.paiYama.length + mahjong.paiRinshan.length - 4;
-  const kyoku = ["東", "南", "西", "北"][Math.floor(mahjong.kyoku / 4) % 4].toString() +
+  const kyoku =
+    ["東", "南", "西", "北"][Math.floor(mahjong.kyoku / 4) % 4].toString() +
     (mahjong.kyoku % 4 + 1).toString();
   return (
     <Box

@@ -1,16 +1,27 @@
-import React, { JSX, useEffect, useState } from "npm:react";
-import { Box, Text } from "npm:ink";
-import { io, Socket } from "npm:socket.io-client";
-import { Mahjong } from "../models/mahjong.ts";
+import { Command } from "@cliffy/command";
+import React, { JSX, useEffect, useState } from "react";
+import { Box, render, Text } from "ink";
+import { io, Socket } from "socket.io-client";
+import { Mahjong } from "./mahjong.ts";
 import { ToimenKawaExtraTSX, ToimenKawaTSX, ToimenTSX } from "./toimen.tsx";
 import { KamichaKawaExtraTSX, KamichaKawaTSX, KamichaTSX } from "./kamicha.tsx";
-import { ShimochaKawaExtraTSX, ShimochaKawaTSX, ShimochaTSX } from "./shimocha.tsx";
+import {
+  ShimochaKawaExtraTSX,
+  ShimochaKawaTSX,
+  ShimochaTSX,
+} from "./shimocha.tsx";
 import { JichaKawaExtraTSX, JichaKawaTSX, JichaTSX } from "./jicha.tsx";
 import { CenterTSX } from "./center.tsx";
 import { ResultTSX } from "./result.tsx";
-import { render } from "npm:ink";
+import terminalSize from "terminal-size";
 
-const CountDownTSX = ({ timeout, height, width }: { timeout: number; height: number; width: number }): JSX.Element => {
+const CountDownTSX = (
+  { timeout, height, width }: {
+    timeout: number;
+    height: number;
+    width: number;
+  },
+): JSX.Element => {
   const [countdown, setCountdown] = useState(timeout);
   useEffect(() => {
     const timerId = setInterval(() => {
@@ -39,7 +50,7 @@ const App = (
     socket: Socket;
   },
 ): JSX.Element => {
-  const { columns, rows } = Deno.consoleSize();
+  const { columns, rows } = terminalSize();
   if (mahjong === undefined) {
     return <CountDownTSX timeout={20} height={rows} width={columns} />;
   }
@@ -61,7 +72,6 @@ const App = (
       <Box
         flexDirection="row"
         justifyContent="space-between"
-        justifyItems="center"
         alignItems="center"
         height={60}
         width={110}
@@ -80,7 +90,14 @@ const App = (
           <ToimenTSX toimen={toimen} height={4} width={100} />
           {mahjong.status !== "playing"
             ? <ResultTSX mahjong={mahjong} socketId={socket.id ?? ""} />
-            : <MainTSX mahjong={mahjong} socket={socket} height={14 * 3} width={24 * 3} />}
+            : (
+              <MainTSX
+                mahjong={mahjong}
+                socket={socket}
+                height={14 * 3}
+                width={24 * 3}
+              />
+            )}
           <JichaTSX
             jicha={jicha}
             actions={actions}
@@ -114,11 +131,21 @@ const MainTSX = ({ mahjong, socket }: {
   return (
     <Box flexDirection="row" alignItems="center" width={24 * 3} height={14 * 3}>
       <Box flexDirection="column">
-        <Box height={14} width={24} flexDirection="column" justifyContent="flex-end">
+        <Box
+          height={14}
+          width={24}
+          flexDirection="column"
+          justifyContent="flex-end"
+        >
           <ToimenKawaExtraTSX toimen={toimen} height={8} width={24} />
         </Box>
         <KamichaKawaTSX kamicha={kamicha} height={14} width={24} />
-        <Box height={14} width={24} flexDirection="row" justifyContent="flex-end">
+        <Box
+          height={14}
+          width={24}
+          flexDirection="row"
+          justifyContent="flex-end"
+        >
           <KamichaKawaExtraTSX kamicha={kamicha} height={14} width={12} />
         </Box>
       </Box>
@@ -145,21 +172,50 @@ const MainTSX = ({ mahjong, socket }: {
   );
 };
 
-const attempts = 3;
-const socket = await io("http://localhost:8080", { reconnectionAttempts: attempts - 1 });
+const main = async (endpoint: string) => {
+  const attempts = 3;
+  const socket = await io(endpoint, { reconnectionAttempts: attempts - 1 });
 
-socket.on("connect", async () => {
   const ink = render(<App mahjong={undefined} name="" socket={socket} />);
-  socket.on("output", (name: string, data: Mahjong) => {
-    ink.rerender(<App mahjong={data} name={name} socket={socket} />);
+  socket.on("connect", async () => {
+    socket.on("output", (name: string, data: Mahjong) => {
+      ink.rerender(<App mahjong={data} name={name} socket={socket} />);
+    });
+    await socket.emit("join");
   });
-  await socket.emit("join");
-});
 
-let cnt = 0;
-socket.on("connect_error", (_) => {
-  cnt++;
-  if (cnt >= attempts) {
-    console.log(`failed to connect to ${attempts} times`);
-  }
-});
+  let cnt = 0;
+  socket.on("connect_error", (_) => {
+    cnt++;
+    if (cnt >= attempts) {
+      console.log(
+        `Failed to establish WebSocket connection. Please check if the server is running and accessible at ${endpoint}.`,
+      );
+    }
+  });
+  process.on("SIGINT", () => {
+    socket.close();
+    ink.unmount();
+  });
+};
+
+await new Command()
+  .name("mahjong-tui")
+  .version("1.0.0")
+  .description("Mahjong TUI")
+  .helpOption("--help", "Print help info.")
+  .option("-h, --host [host:string]", "Host", { default: "localhost" })
+  .option("-p, --port [port:number]", "Port", { default: 8080 })
+  .action((options: { host: string | true; port: number | true }) => {
+    if (options.host === true) {
+      options.host = "localhost";
+    }
+    if (options.port === true) {
+      options.port = 8080;
+    }
+    const isLocal = (host: string) =>
+      host === "localhost" || host.startsWith("127.") || host === "::1";
+    const protocol = isLocal(options.host) ? "ws" : "wss";
+    main(`${protocol}://${options.host}:${options.port}`);
+  })
+  .parse(process.argv.slice(2));

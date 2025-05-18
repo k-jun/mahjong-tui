@@ -1,10 +1,10 @@
-import { MahjongUser } from "../models/mahjong_user.ts";
-import { Box, Text, useInput } from "npm:ink";
 import { Pai } from "@k-jun/mahjong";
-import { Mahjong, MahjongAction, MahjongActionType, MahjongInput } from "../models/mahjong.ts";
+import { Box, Text, useInput } from "ink";
+import { MahjongUser } from "./mahjong_user.ts";
+import { MahjongAction, MahjongActionType, MahjongInput } from "./mahjong.ts";
 import { EmptyTSX, PaiTSX } from "./pai.tsx";
-import React, { JSX, useEffect, useState } from "npm:react";
-import { Socket } from "npm:socket.io-client";
+import React, { JSX, useEffect, useState } from "react";
+import { Socket } from "socket.io-client";
 
 enum Mode {
   PAI = 1,
@@ -47,8 +47,12 @@ export const JichaTSX = (
   const paiRest = jicha?.paiRest.sort((a, b) => b.id - a.id) ?? [];
   const userActions = actions.filter((e) => e.user.id === jicha.id);
   const validActions = userActions
-    .filter((e) => e.enable === undefined && e.type !== MahjongActionType.DAHAI);
-  const isDahaiExist = userActions.map((e) => e.type).includes(MahjongActionType.DAHAI);
+    .filter((e) =>
+      e.enable === undefined && e.type !== MahjongActionType.DAHAI
+    );
+  const isDahaiExist = userActions.map((e) => e.type).includes(
+    MahjongActionType.DAHAI,
+  );
   if (userActions.length > 0 && !isDahaiExist) {
     validActions.push({ type: MahjongActionType.SKIP, user: jicha });
   }
@@ -58,7 +62,9 @@ export const JichaTSX = (
     setMode(Mode.PAI);
   }
 
-  const [userActionExist, setUserActionExist] = useState<boolean>(userActions.length > 0);
+  const [userActionExist, setUserActionExist] = useState<boolean>(
+    userActions.length > 0,
+  );
   const [countdown, setCountdown] = useState<number>(20);
   if (userActionExist !== (userActions.length > 0)) {
     if (!userActionExist && (userActions.length > 0)) {
@@ -82,9 +88,9 @@ export const JichaTSX = (
         case Mode.RCH: {
           const richi = validActions[actPointer].options?.richi ?? [];
           const paiAll = [jicha.paiTsumo, ...paiRest];
-          const idx = paiAll.slice(paiPointer + 1, paiAll.length).findIndex((e) =>
-            richi.map((e) => e.paiId).includes(e?.id ?? -1)
-          );
+          const idx = paiAll.slice(paiPointer + 1, paiAll.length).findIndex((
+            e,
+          ) => richi.map((e) => e.paiId).includes(e?.id ?? -1));
           if (idx !== -1) {
             setPaiPointer(Math.min(paiAll.length, paiPointer + idx + 1));
           }
@@ -106,7 +112,9 @@ export const JichaTSX = (
         case Mode.RCH: {
           const richi = validActions[actPointer].options?.richi ?? [];
           const paiAll = [jicha.paiTsumo, ...paiRest];
-          const idx = paiAll.slice(0, paiPointer).findLastIndex((e) => richi.map((e) => e.paiId).includes(e?.id ?? -1));
+          const idx = paiAll.slice(0, paiPointer).findLastIndex((e) =>
+            richi.map((e) => e.paiId).includes(e?.id ?? -1)
+          );
           if (idx !== -1) {
             setPaiPointer(Math.max(jicha.paiTsumo ? 0 : 1, idx));
           }
@@ -145,14 +153,23 @@ export const JichaTSX = (
     if (key.return) {
       switch (mode) {
         case Mode.PAI: {
-          const pai = paiPointer === 0 ? jicha.paiTsumo : paiRest[paiPointer - 1];
-          socket.emit("input", name, MahjongInput.DAHAI, { state, usrId: socket.id, dahai: { paiId: pai?.id ?? -1 } });
+          const pai = paiPointer === 0
+            ? jicha.paiTsumo
+            : paiRest[paiPointer - 1];
+          socket.emit("input", name, MahjongInput.DAHAI, {
+            state,
+            usrId: socket.id,
+            dahai: { paiId: pai?.id ?? -1 },
+          });
           break;
         }
         case Mode.ACT: {
           const action = validActions[actPointer];
           if (action.type === MahjongActionType.SKIP) {
-            socket.emit("input", name, MahjongInput.SKIP, { state, usrId: socket.id });
+            socket.emit("input", name, MahjongInput.SKIP, {
+              state,
+              usrId: socket.id,
+            });
           }
           switch (action.type) {
             case MahjongActionType.CHI:
@@ -189,7 +206,9 @@ export const JichaTSX = (
             }
             case MahjongActionType.RICHI: {
               const richi = action.options?.richi ?? [];
-              const idx = paiRest.findIndex((e) => richi.map((e) => e.paiId).includes(e.id));
+              const idx = paiRest.findIndex((e) =>
+                richi.map((e) => e.paiId).includes(e.id)
+              );
               if (idx !== -1) {
                 setPaiPointer(idx + 1);
               }
@@ -219,7 +238,9 @@ export const JichaTSX = (
           break;
         }
         case Mode.RCH: {
-          const pai = paiPointer === 0 ? jicha.paiTsumo : paiRest[paiPointer - 1];
+          const pai = paiPointer === 0
+            ? jicha.paiTsumo
+            : paiRest[paiPointer - 1];
           socket.emit("input", name, MahjongInput.RICHI, {
             state,
             usrId: socket.id,
@@ -236,7 +257,9 @@ export const JichaTSX = (
   const paiIdx = [Mode.PAI, Mode.RCH].includes(mode) ? paiPointer : -1;
   const cmdIdx = [Mode.ACT].includes(mode) ? actPointer : -1;
   const optIdx = [Mode.OPT].includes(mode) ? optPointer : -1;
-  const nakis = [Mode.OPT].includes(mode) ? validActions[actPointer]?.options?.naki ?? [] : [];
+  const nakis = [Mode.OPT].includes(mode)
+    ? validActions[actPointer]?.options?.naki ?? []
+    : [];
 
   return (
     <Box
@@ -246,23 +269,32 @@ export const JichaTSX = (
       alignItems="center"
       justifyContent="flex-end"
     >
-      <Box flexDirection="row" alignItems="center" justifyContent="space-around" width={width}>
-        {mode === Mode.OPT && [...nakis].reverse().map((e, idx) => (
-          <Box key={`options-${idx}`}>
-            {e.pmyId.map((e) => (
-              <PaiTSX
-                text={new Pai(e).dsp}
-                key={e}
-                forceHeight={optIdx === nakis.length - 1 - idx ? 5 : 4}
-              />
-            ))}
-          </Box>
-        ))}
-        {mode !== Mode.OPT && [...validActions].reverse().map((e, idx) => (
-          <Box key={`actions-${idx}`}>
-            <Text inverse={cmdIdx === validActions.length - 1 - idx}>{e.type}</Text>
-          </Box>
-        ))}
+      <Box
+        flexDirection="row"
+        alignItems="center"
+        justifyContent="space-around"
+        width={width}
+      >
+        {mode === Mode.OPT &&
+          [...nakis].reverse().map((e, idx) => (
+            <Box key={`options-${idx}`}>
+              {e.pmyId.map((e) => (
+                <PaiTSX
+                  text={new Pai(e).dsp}
+                  key={e}
+                  forceHeight={optIdx === nakis.length - 1 - idx ? 5 : 4}
+                />
+              ))}
+            </Box>
+          ))}
+        {mode !== Mode.OPT &&
+          [...validActions].reverse().map((e, idx) => (
+            <Box key={`actions-${idx}`}>
+              <Text inverse={cmdIdx === validActions.length - 1 - idx}>
+                {e.type}
+              </Text>
+            </Box>
+          ))}
       </Box>
       <Box
         flexDirection="row"
@@ -290,7 +322,13 @@ export const JichaTSX = (
           )
           : <EmptyTSX />}
         <EmptyTSX />
-        <Box height={4} width={4} flexDirection="column" justifyContent="center" alignItems="center">
+        <Box
+          height={4}
+          width={4}
+          flexDirection="column"
+          justifyContent="center"
+          alignItems="center"
+        >
           {userActionExist && <Text>{countdown}</Text>}
         </Box>
         <EmptyTSX />
@@ -301,7 +339,11 @@ export const JichaTSX = (
 };
 
 export const JichaKawaTSX = (
-  { jicha, height, width }: { jicha: MahjongUser; height: number; width: number },
+  { jicha, height, width }: {
+    jicha: MahjongUser;
+    height: number;
+    width: number;
+  },
 ): JSX.Element => {
   const columns: number[][] = [[], [], [], [], [], []];
   jicha.paiKawa.slice(0, 18).forEach((e, idx) => {
@@ -334,11 +376,20 @@ export const JichaKawaTSX = (
 };
 
 export const JichaKawaExtraTSX = (
-  { jicha, height, width }: { jicha: MahjongUser; height: number; width: number },
+  { jicha, height, width }: {
+    jicha: MahjongUser;
+    height: number;
+    width: number;
+  },
 ): JSX.Element => {
   const pais = jicha.paiKawa.slice(18, 24);
   return (
-    <Box flexDirection="row" alignItems="flex-end" width={width} height={height}>
+    <Box
+      flexDirection="row"
+      alignItems="flex-end"
+      width={width}
+      height={height}
+    >
       {pais.map((e) => <PaiTSX text={new Pai(e.id).dsp} key={e.id} />)}
     </Box>
   );
