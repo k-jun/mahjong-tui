@@ -1,7 +1,8 @@
-import { Command } from "@cliffy/command";
-import React, { JSX, useEffect, useState } from "react";
-import { Box, render, Text } from "ink";
+import { Command } from "commander";
 import { io, Socket } from "socket.io-client";
+import React, { JSX, useEffect, useState } from "react";
+import { Box, Instance, render, Text } from "ink";
+
 import { Mahjong } from "./mahjong.ts";
 import { ToimenKawaExtraTSX, ToimenKawaTSX, ToimenTSX } from "./toimen.tsx";
 import { KamichaKawaExtraTSX, KamichaKawaTSX, KamichaTSX } from "./kamicha.tsx";
@@ -176,8 +177,9 @@ const main = async (endpoint: string) => {
   const attempts = 3;
   const socket = await io(endpoint, { reconnectionAttempts: attempts - 1 });
 
-  const ink = render(<App mahjong={undefined} name="" socket={socket} />);
+  let ink: Instance;
   socket.on("connect", async () => {
+    ink = render(<App mahjong={undefined} name="" socket={socket} />);
     socket.on("output", (name: string, data: Mahjong) => {
       ink.rerender(<App mahjong={data} name={name} socket={socket} />);
     });
@@ -195,7 +197,7 @@ const main = async (endpoint: string) => {
   });
   process.on("SIGINT", () => {
     socket.close();
-    ink.unmount();
+    ink?.unmount();
   });
 };
 
@@ -204,18 +206,12 @@ await new Command()
   .version("1.0.0")
   .description("Mahjong TUI")
   .helpOption("--help", "Print help info.")
-  .option("-h, --host [host:string]", "Host", { default: "localhost" })
-  .option("-p, --port [port:number]", "Port", { default: 8080 })
-  .action((options: { host: string | true; port: number | true }) => {
-    if (options.host === true) {
-      options.host = "localhost";
-    }
-    if (options.port === true) {
-      options.port = 8080;
-    }
+  .option("-h, --host <host>", "Host", "localhost")
+  .option("-p, --port <port>", "Port", "8080")
+  .action((options: { host: string; port: string }) => {
     const isLocal = (host: string) =>
       host === "localhost" || host.startsWith("127.") || host === "::1";
     const protocol = isLocal(options.host) ? "ws" : "wss";
     main(`${protocol}://${options.host}:${options.port}`);
   })
-  .parse(process.argv.slice(2));
+  .parse();

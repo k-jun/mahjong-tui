@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
 // main.tsx
-import { Command } from "@cliffy/command";
+import { Command } from "commander";
+import { io } from "socket.io-client";
 import React8, { useEffect as useEffect2, useState as useState2 } from "react";
 import { Box as Box8, render, Text as Text5 } from "ink";
-import { io } from "socket.io-client";
 
 // toimen.tsx
 import { Box as Box2 } from "ink";
@@ -305,25 +305,11 @@ import { Box as Box5, Text as Text2, useInput } from "ink";
 
 // mahjong.ts
 import {
-  Pai as Pai5,
-  PaiAll,
-  PaiKaze,
-  PaiSet as PaiSet2,
-  PaiSetType as PaiSetType2,
-  Player as Player2,
-  Tokuten
+  Pai as Pai5
 } from "@k-jun/mahjong";
-import { createMutex } from "@117/mutex";
 
 // mahjong_user.ts
-import {
-  Pai as Pai4,
-  PaiAllKind,
-  PaiSet,
-  PaiSetType,
-  Player,
-  Shanten
-} from "@k-jun/mahjong";
+import { Pai as Pai4 } from "@k-jun/mahjong";
 
 // jicha.tsx
 import React5, { useEffect, useState } from "react";
@@ -1131,8 +1117,9 @@ var MainTSX = ({ mahjong, socket }) => {
 var main = async (endpoint) => {
   const attempts = 3;
   const socket = await io(endpoint, { reconnectionAttempts: attempts - 1 });
-  const ink = render(/* @__PURE__ */ React8.createElement(App, { mahjong: void 0, name: "", socket }));
+  let ink;
   socket.on("connect", async () => {
+    ink = render(/* @__PURE__ */ React8.createElement(App, { mahjong: void 0, name: "", socket }));
     socket.on("output", (name, data) => {
       ink.rerender(/* @__PURE__ */ React8.createElement(App, { mahjong: data, name, socket }));
     });
@@ -1149,17 +1136,11 @@ var main = async (endpoint) => {
   });
   process.on("SIGINT", () => {
     socket.close();
-    ink.unmount();
+    ink?.unmount();
   });
 };
-await new Command().name("mahjong-tui").version("1.0.0").description("Mahjong TUI").helpOption("--help", "Print help info.").option("-h, --host [host:string]", "Host", { default: "localhost" }).option("-p, --port [port:number]", "Port", { default: 8080 }).action((options) => {
-  if (options.host === true) {
-    options.host = "localhost";
-  }
-  if (options.port === true) {
-    options.port = 8080;
-  }
+await new Command().name("mahjong-tui").version("1.0.0").description("Mahjong TUI").helpOption("--help", "Print help info.").option("-h, --host <host>", "Host", "localhost").option("-p, --port <port>", "Port", "8080").action((options) => {
   const isLocal = (host) => host === "localhost" || host.startsWith("127.") || host === "::1";
   const protocol = isLocal(options.host) ? "ws" : "wss";
   main(`${protocol}://${options.host}:${options.port}`);
-}).parse(process.argv.slice(2));
+}).parse();
