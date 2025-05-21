@@ -77,7 +77,7 @@ export const OnServerJoinRoom = (
       let room = rooms[name.toString()];
       if (room == undefined) {
         room = new Room(name.toString(), async (mjg) => {
-          await io.to(name.toString()).emit("output", name, mjg);
+          io.to(name.toString()).emit("output", name, mjg);
         });
         rooms[name.toString()] = room;
       }
@@ -95,12 +95,12 @@ export const OnServerJoinRoom = (
 const JoinCPU = async (rooms: { [key: string]: Room }, room: Room) => {
   await room.mutex.acquire();
   if (rooms[room.name] == undefined) {
-    await room.mutex.release();
+    room.mutex.release();
     return;
   }
   const sizeNonCPU = room.sizeNonCPU();
   if (sizeNonCPU === 0) {
-    await room.mutex.release();
+    room.mutex.release();
     return;
   }
   let cnt = 1;
@@ -110,7 +110,7 @@ const JoinCPU = async (rooms: { [key: string]: Room }, room: Room) => {
     }
     cnt++;
   }
-  await room.mutex.release();
+  room.mutex.release();
 };
 
 export const OnServerLeaveRoom = (

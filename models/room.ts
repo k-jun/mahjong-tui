@@ -86,8 +86,8 @@ export class Room {
         this.output(mjg);
         if (mjg.status !== "playing") {
           await sleep(7 * 1000);
-          await mjg.gameReset();
-          await mjg.gameStart(mjg.generate());
+          mjg.gameReset();
+          mjg.gameStart(mjg.generate());
         }
       },
     );
