@@ -31,3 +31,9 @@ Mahjong TUI の Test は以下の通りに実行します。天鳳の牌譜を�
 ```bash
 deno test -A
 ```
+
+## Build
+
+```bash
+docker buildx build --platform linux/amd64,linux/arm64 -t ghcr.io/k-jun/mahjong-tui:latest --push .
+```
