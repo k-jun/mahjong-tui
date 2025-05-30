@@ -37,3 +37,11 @@ deno test -A
 ```bash
 docker buildx build --platform linux/amd64,linux/arm64 -t ghcr.io/k-jun/mahjong-tui:latest --push .
 ```
+
+## Release
+
+```bash
+
+```
+cd client && npm publish
+
