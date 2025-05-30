@@ -14,7 +14,7 @@
     "mahjong-tui": "dist/main.js"
   },
   "dependencies": {
-    "@k-jun/mahjong": "^0.4.11",
+    "@k-jun/mahjong": "^0.4.12",
     "commander": "^14.0.0",
     "esbuild": "^0.25.4",
     "esbuild-node-loader": "^0.8.0",

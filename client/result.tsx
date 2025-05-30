@@ -117,7 +117,7 @@ const ResultEndedAgariTSX = (
           <PaiTSX
             key={`result-uradora-${e}`}
             text={input.paiDoraUra[e]?.id
-              ? new Pai(input.paiDoraUra[e].id).dsp
+              ? (new Pai(input.paiDoraUra[e].id)).prev().dsp
               : "  "}
           />
         ))}
