@@ -14,8 +14,6 @@ Mahjong TUI は [NPM](https://www.npmjs.com/package/@k-jun/mahjong-tui) で公�
 ```bash
 npm i @k-jun/mahjong-tui
 ```
-```
-
 
 ## Run
 
