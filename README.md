@@ -6,6 +6,17 @@ Mhjong TUI は Terminal 上で動作する麻雀ゲームです。具体的な U
 
 ゲームを起動すると、マッチングは自動で行われます。最大 20秒間の待ち時間の後に、ゲームが開始します。参加人数が 4人に満たなかった場合には、CPU が不足人数分代理で入ります。ゲームを Ctrl-C などで途中退出した場合には、以降のプレイは CPU が代理で行います。
 
+## Install
+
+Mahjong TUI は [NPM](https://www.npmjs.com/package/@k-jun/mahjong-tui) で公開しています。
+
+
+```bash
+npm i @k-jun/mahjong-tui
+```
+```
+
+
 ## Run
 
 ### Server
@@ -18,10 +29,10 @@ deno run -A server/main.ts
 
 ### Client
 
-Mahjong TUI の Client は以下の通りに実行します。Client はデフォルトで `http://localhost:8080` へと接続します。
+Mahjong TUI の Client は以下の通りに実行します。Client はデフォルトで `https://mahjong-tui.k-jun.net:443` へと接続します。
 
 ```bash
-deno run -A server/main.ts
+deno run -A client/main.tsx
 ```
 
 ## Test

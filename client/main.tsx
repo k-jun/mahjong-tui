@@ -206,8 +206,8 @@ await new Command()
   .version("1.0.0")
   .description("Mahjong TUI")
   .helpOption("--help", "Print help info.")
-  .option("-h, --host <host>", "Host", "localhost")
-  .option("-p, --port <port>", "Port", "8080")
+  .option("-h, --host <host>", "Host", "mahjong-tui.k-jun.net")
+  .option("-p, --port <port>", "Port", "443")
   .action((options: { host: string; port: string }) => {
     const isLocal = (host: string) =>
       host === "localhost" || host.startsWith("127.") || host === "::1";
