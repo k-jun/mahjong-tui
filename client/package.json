@@ -1,6 +1,6 @@
 {
   "name": "@k-jun/mahjong-tui",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "",
   "license": "ISC",
   "author": "",
@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@k-jun/mahjong": "^0.4.12",
+    "@k-jun/mahjong-tui": "^0.2.0",
     "commander": "^14.0.0",
     "esbuild": "^0.25.4",
     "esbuild-node-loader": "^0.8.0",
