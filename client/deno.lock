@@ -847,6 +847,7 @@
   "workspace": {
     "packageJson": {
       "dependencies": [
+        "npm:@k-jun/mahjong-tui@0.2",
         "npm:@k-jun/mahjong@~0.4.12",
         "npm:commander@14",
         "npm:esbuild-node-loader@0.8",

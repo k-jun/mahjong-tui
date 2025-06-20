@@ -867,7 +867,7 @@ var ResultEndedAgariTSX = ({ mahjong, socketId }) => {
       PaiTSX,
       {
         key: `result-uradora-${e}`,
-        text: input.paiDoraUra[e]?.id ? new Pai8(input.paiDoraUra[e].id).dsp : "  "
+        text: input.paiDoraUra[e]?.id ? new Pai8(input.paiDoraUra[e].id).prev().dsp : "  "
       }
     ))),
     /* @__PURE__ */ React7.createElement(
@@ -1139,7 +1139,7 @@ var main = async (endpoint) => {
     ink?.unmount();
   });
 };
-await new Command().name("mahjong-tui").version("1.0.0").description("Mahjong TUI").helpOption("--help", "Print help info.").option("-h, --host <host>", "Host", "localhost").option("-p, --port <port>", "Port", "8080").action((options) => {
+await new Command().name("mahjong-tui").version("0.2.2").description("Mahjong TUI").helpOption("--help", "Print help info.").option("-h, --host <host>", "Host", "mahjong-tui.k-jun.net").option("-p, --port <port>", "Port", "443").action((options) => {
   const isLocal = (host) => host === "localhost" || host.startsWith("127.") || host === "::1";
   const protocol = isLocal(options.host) ? "ws" : "wss";
   main(`${protocol}://${options.host}:${options.port}`);

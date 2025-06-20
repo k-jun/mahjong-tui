@@ -203,7 +203,7 @@ const main = async (endpoint: string) => {
 
 await new Command()
   .name("mahjong-tui")
-  .version("0.2.1")
+  .version("0.2.2")
   .description("Mahjong TUI")
   .helpOption("--help", "Print help info.")
   .option("-h, --host <host>", "Host", "mahjong-tui.k-jun.net")
