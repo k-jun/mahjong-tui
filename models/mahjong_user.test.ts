@@ -559,8 +559,7 @@ Deno.test("should return valid richi candidates", async (t) => {
       ];
       user.paiTsumo = new Pai("s3");
       const results = user.canRichi();
-      expect(results.length).toBe(8);
-      expect(results[0].fmt).toBe("s9");
+      expect(results.length).toBe(0);
     },
   );
 });

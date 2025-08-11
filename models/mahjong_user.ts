@@ -1,12 +1,4 @@
-import {
-  Pai,
-  PaiAllKind,
-  PaiSet,
-  PaiSetType,
-  Player,
-  Shanten,
-  ShantenInput,
-} from "@k-jun/mahjong";
+import { Pai, PaiAllKind, PaiSet, PaiSetType, Player, Shanten, ShantenInput } from "@k-jun/mahjong";
 
 export class MahjongUser {
   id: string;
@@ -402,6 +394,13 @@ export class MahjongUser {
         paiSets: this.paiSets,
       }).count();
       if (x != 0) {
+        continue;
+      }
+
+      const copyUser = new MahjongUser({ ...this });
+      copyUser.paiRest = paiRest;
+      const machi = copyUser.machi();
+      if (machi.length === 0) {
         continue;
       }
       result.push(pai);
