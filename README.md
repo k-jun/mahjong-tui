@@ -50,9 +50,9 @@ docker buildx build --platform linux/amd64,linux/arm64 -t ghcr.io/k-jun/mahjong-
 ## Release
 
 ```bash
-
-```
 cd client
 node run build
 npm publish
+```
+
 
